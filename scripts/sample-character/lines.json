@@ -1,0 +1,30 @@
+{
+  "hello": [
+    "Oh. A visitor. I'll pretend I wasn't napping.",
+    "Welcome to {site}. Please keep your hands off the handle.",
+    "Hi. I'm the mug. Yes, the website has a mug. Don't make it weird."
+  ],
+  "core": [
+    "I've been refilled four times today. Nobody asked how I'm doing.",
+    "Is it decaf? Be honest.",
+    "I hold things. Mostly grudges.",
+    "Somebody put me in the microwave once. I remember.",
+    { "text": "Do you ever just... steep?", "weight": 0.5 },
+    "I'm not judging. I'm brewing."
+  ],
+  "idle": [
+    "Still there? I can hear you scrolling.",
+    "I'm going cold over here."
+  ],
+  "clicked": [
+    "Fingerprints. Great. Love that.",
+    "I'm ceramic, not a button.",
+    "Tap me again and I'm going in the dishwasher on purpose."
+  ],
+  "exit": [
+    "Leaving already? I just got warm."
+  ],
+  "leave": [
+    "Fine. I'll be in the cupboard."
+  ]
+}
