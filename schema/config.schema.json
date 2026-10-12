@@ -46,6 +46,7 @@
     "height": { "description": "Rendered frame height in CSS px, overriding the character's default.", "type": ["number", "null"], "minimum": 40, "maximum": 1000 },
     "announce": { "description": "Announce speech bubbles to screen readers.", "type": "boolean", "default": false },
     "ambient": { "description": "Random walks, glances and chatter while idle.", "type": "boolean", "default": true },
+    "restAfter": { "description": "Seconds without visitor input after which the idle animation pauses to save CPU. 0 never rests.", "type": "number", "minimum": 0, "maximum": 86400, "default": 30 },
     "menu": {
       "type": "object",
       "additionalProperties": false,

@@ -160,6 +160,8 @@ export interface GaryConfig {
   announce?: boolean;
   /** Ambient behaviour: random walks, glances and chatter. */
   ambient?: boolean;
+  /** Seconds without visitor input after which the idle animation pauses to save CPU (0 = never). */
+  restAfter?: number;
   menu?: { credit?: CreditLink | false };
   zIndex?: number;
 }
@@ -177,6 +179,7 @@ export interface ResolvedConfig {
   height: number | null;
   announce: boolean;
   ambient: boolean;
+  restAfter: number;
   menu: { credit: CreditLink | false | null };
   zIndex: number;
 }

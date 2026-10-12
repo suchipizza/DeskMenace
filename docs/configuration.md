@@ -47,6 +47,7 @@ Configuration can come from four places. Later sources win:
 | `position.side` | `"right"` | Side he enters from and starts on |
 | `height` | character default | Rendered height in CSS px. He scales down on small screens |
 | `ambient` | `true` | Random walks, stares, glances and chatter while idle |
+| `restAfter` | `30` | Seconds without mouse, keyboard, touch or scroll input after which the character freezes on its current frame to save CPU and battery. Any input wakes it instantly. `0` keeps it animating |
 | `announce` | `false` | Announce speech bubbles to screen readers (polite live region) |
 | `menu.credit` | character's credit | `{ label, url }` for the menu's credit link, or `false` to hide it |
 | `zIndex` | `2147483000` | Stacking order of the overlay |

@@ -51,6 +51,7 @@ export const DEFAULT_CREDIT: CreditLink = { label: 'Powered by gary.js', url: 'h
 
 const UNSUPPORTED = new Set(['phone', 'card', 'steal-cursor']);
 const CLICK_SEQUENCE_MS = 1500;
+const INPUT_EVENTS = ['pointermove', 'pointerdown', 'keydown', 'scroll', 'wheel', 'touchstart'] as const;
 const REACT_CLICKS_AT = 3;
 
 export class Engine {
@@ -66,6 +67,10 @@ export class Engine {
   private readonly limiter: SpeechLimiter;
   private activity: Activity | null = null;
   private ambientTimer = 0;
+  /** Rest mode: the idle animation freezes while the visitor is inactive, to save CPU. */
+  private resting = false;
+  private restTimer = 0;
+  private lastInput = Date.now();
   private lastVariant = 0;
   private clicks: number[] = [];
   private grab = { dx: 0, dy: 0 };
@@ -174,6 +179,11 @@ export class Engine {
     this.offs.push(() => cancelAnimationFrame(resizeRaf));
     on(document, 'visibilitychange', () => this.onVisibility(), { passive: true });
     on(document, 'focusin', (e) => this.onFocusIn(e as FocusEvent), { passive: true });
+    const onInput = () => {
+      this.lastInput = Date.now();
+      if (this.resting) this.wake();
+    };
+    for (const t of INPUT_EVENTS) on(window, t, onInput, { passive: true, capture: true });
     const mq = matchMedia('(prefers-reduced-motion: reduce)');
     const onMotion = () => {
       this.reduced = mq.matches;
@@ -214,6 +224,8 @@ export class Engine {
 
   private teardown(): void {
     this.abort.abort();
+    window.clearTimeout(this.restTimer);
+    this.resting = false;
     if (this.activity) this.activity.token.cancelled = true;
     this.activity = null;
     window.clearTimeout(this.ambientTimer);
@@ -244,6 +256,8 @@ export class Engine {
     if (this.activity) this.activity.token.cancelled = true;
     this.overlay.stopMove();
     window.clearTimeout(this.ambientTimer);
+    window.clearTimeout(this.restTimer);
+    this.resting = false;
     const token: Token = { cancelled: false };
     const act: Activity = { prio, token };
     this.activity = act;
@@ -286,9 +300,35 @@ export class Engine {
       this.scheduleAmbient();
       return;
     }
+    this.resting = false;
     if (this.reduced) void this.player.showFrame(this.character.poster.clip, this.character.poster.frame);
     else void this.playRole('idle', { loop: true });
     this.scheduleAmbient();
+    this.armRest();
+  }
+
+  private armRest(): void {
+    window.clearTimeout(this.restTimer);
+    const after = this.config.restAfter * 1000;
+    if (!after || this.reduced || !this.alive) return;
+    this.restTimer = window.setTimeout(() => this.checkRest(), Math.max(0, after - (Date.now() - this.lastInput)));
+  }
+
+  /** Freezes the idle animation once nobody has touched the page for `restAfter` seconds. */
+  private checkRest(): void {
+    if (this.state !== 'idle' || this.activity || !this.player) return; // idle() re-arms later
+    if (Date.now() - this.lastInput < this.config.restAfter * 1000) return this.armRest();
+    this.resting = true;
+    window.clearTimeout(this.ambientTimer);
+    this.player.pause();
+  }
+
+  private wake(): void {
+    if (!this.resting) return;
+    this.resting = false;
+    this.player?.resume();
+    this.scheduleAmbient();
+    this.armRest();
   }
 
   private async enter(): Promise<void> {
@@ -515,7 +555,7 @@ export class Engine {
 
   private scheduleAmbient(): void {
     window.clearTimeout(this.ambientTimer);
-    if (!this.alive || !this.config.ambient || this.state !== 'idle' || this.activity) return;
+    if (!this.alive || !this.config.ambient || this.state !== 'idle' || this.activity || this.resting) return;
     if (document.visibilityState === 'hidden') return;
     const delay = 5000 + Math.random() * 9000;
     this.ambientTimer = window.setTimeout(() => this.ambient(), delay);
@@ -679,6 +719,7 @@ export class Engine {
       lift: this.overlay?.lift ?? null,
       scale: this.overlay?.scale ?? null,
       reduced: this.reduced,
+      resting: this.resting,
     };
   }
 

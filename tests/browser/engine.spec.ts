@@ -203,6 +203,26 @@ test.describe('API and behaviours', () => {
   });
 });
 
+test.describe('rest mode', () => {
+  test('the idle animation pauses while the visitor is inactive and resumes on input', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, restAfter: 1 } });
+    await expect.poll(async () => (await debug(page)).resting, { timeout: 5000 }).toBe(true);
+    const d = await debug(page);
+    expect(d.player.scheduled).toBe(false);
+    expect(d.frame.paused).toBe(true);
+    await page.mouse.move(10, 10);
+    await page.mouse.move(40, 40);
+    await expect.poll(async () => (await debug(page)).resting).toBe(false);
+    expect((await debug(page)).player.scheduled).toBe(true);
+  });
+
+  test('restAfter: 0 never rests', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, restAfter: 0 } });
+    await page.waitForTimeout(1500);
+    expect((await debug(page)).resting).toBe(false);
+  });
+});
+
 test.describe('dragging', () => {
   test('drag picks the character up, release drops it back to the ground', async ({ page }) => {
     await boot(page);

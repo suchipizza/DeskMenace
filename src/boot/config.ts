@@ -39,6 +39,7 @@ export function defaults(): ResolvedConfig {
     height: null,
     announce: false,
     ambient: true,
+    restAfter: 30,
     menu: { credit: null },
     zIndex: 2147483000,
   };
@@ -151,6 +152,10 @@ export function mergeConfig(base: ResolvedConfig, layer: unknown, source: string
           if (cr) out.menu.credit = cr;
           else warn('menu.credit', 'must be { label, url } with an http(s) URL, or false');
         }
+        break;
+      case 'restAfter':
+        if (isNum(v) && v >= 0 && v <= 86400) out.restAfter = v;
+        else warn(key, 'must be a number of seconds (0 disables resting)');
         break;
       case 'zIndex':
         if (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 2147483647) out.zIndex = v as number;
