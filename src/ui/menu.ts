@@ -17,7 +17,7 @@ export class Menu {
   private returnFocus = false;
   private readonly offs: (() => void)[] = [];
 
-  constructor(private readonly overlay: Overlay, private readonly name: string, private readonly credit: CreditLink | null, private readonly actions: MenuActions) {
+  constructor(private readonly overlay: Overlay, private readonly name: string, private credit: CreditLink | null, private readonly actions: MenuActions) {
     this.el = document.createElement('div');
     this.el.className = 'menu';
     this.el.setAttribute('role', 'menu');
@@ -37,6 +37,10 @@ export class Menu {
     h.addEventListener('keydown', onHandleKey);
     this.el.addEventListener('keydown', this.onKey);
     this.offs.push(() => h.removeEventListener('click', onHandleClick), () => h.removeEventListener('keydown', onHandleKey), () => this.el.removeEventListener('keydown', this.onKey));
+  }
+
+  setCredit(credit: CreditLink | null): void {
+    this.credit = credit;
   }
 
   get isOpen(): boolean {

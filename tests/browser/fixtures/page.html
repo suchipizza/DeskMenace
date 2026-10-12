@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gary.js test page</title>
+<script>
+  // Query: bundle=core|classic, char=<manifest URL>, cfg=<inline JSON>
+  window.__log = [];
+  var p = new URLSearchParams(location.search);
+  if (p.get('cfg')) {
+    var c = document.createElement('script');
+    c.type = 'application/json';
+    c.setAttribute('data-gary-config', '');
+    c.textContent = p.get('cfg');
+    document.head.appendChild(c);
+  }
+  if (p.get('bundle') !== 'none') {
+    var s = document.createElement('script');
+    s.src = '/dist/' + (p.get('bundle') === 'classic' ? 'gary.js' : 'gary.core.js');
+    s.defer = true;
+    if (p.get('char')) s.dataset.character = p.get('char');
+    if (p.get('autostart')) s.dataset.autostart = p.get('autostart');
+    window.__errors = [];
+    s.onload = function () { Gary.on('error', function (e) { window.__errors.push(e.message); }); };
+    document.head.appendChild(s);
+  }
+  new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { if (!e.hadRecentInput) window.__cls = (window.__cls || 0) + e.value; }); }).observe({ type: 'layout-shift', buffered: true });
+</script>
+<style>
+  body { margin: 0; font: 16px system-ui; min-height: 150vh; }
+  #under { position: fixed; right: 0; bottom: 0; width: 45vw; height: 60vh; background: #eef; border: 0; font: inherit; }
+  #field { position: fixed; left: 20px; top: 20px; }
+  #link { position: fixed; left: 20px; top: 70px; }
+</style>
+</head>
+<body>
+<h1>Test page</h1>
+<input id="field" placeholder="type here">
+<a id="link" href="#clicked" onclick="__log.push('link')">a link</a>
+<button id="under" onclick="__log.push('under')">Button under the character</button>
+</body>
+</html>

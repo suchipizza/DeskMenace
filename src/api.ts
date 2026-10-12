@@ -19,7 +19,14 @@ export interface CreateOptions {
   baseReady?: Promise<void>;
 }
 
-export function createGary(options: CreateOptions = {}): GaryAPI & { _debug(): unknown } {
+export interface DebugAPI {
+  /** Internal state snapshot for tests and examples. Not part of the stable API. */
+  _debug(): unknown;
+  /** Internal: whether a viewport point is on an opaque pixel of the character. */
+  _hit(x: number, y: number): boolean;
+}
+
+export function createGary(options: CreateOptions = {}): GaryAPI & DebugAPI {
   const events = new Emitter();
   let engine: Engine | null = null;
   let config: ResolvedConfig | null = null;
@@ -77,7 +84,7 @@ export function createGary(options: CreateOptions = {}): GaryAPI & { _debug(): u
     resolveReady();
   }
 
-  const api: GaryAPI & { _debug(): unknown } = {
+  const api: GaryAPI & DebugAPI = {
     ready,
     version: VERSION,
 
@@ -147,6 +154,10 @@ export function createGary(options: CreateOptions = {}): GaryAPI & { _debug(): u
 
     _debug(): unknown {
       return engine ? { ...engine.snapshot(), character: engine.character?.id ?? null } : null;
+    },
+
+    _hit(x: number, y: number): boolean {
+      return !!engine?.hitTest(x, y);
     },
   };
   return api;

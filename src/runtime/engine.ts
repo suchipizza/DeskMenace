@@ -198,6 +198,7 @@ export class Engine {
     if (!ch) return;
     this.book = new LineBook([ch.lines, new Map(Object.entries(this.config.lines))]);
     this.limiter.setLimits(this.config.limits);
+    this.menu?.setCredit(this.creditFor(ch));
     this.triggers?.stop();
     this.triggers = new Triggers(this.config.triggers, (rule, target) => this.onRule(rule, target), ch.id);
     if (this.state !== 'loading' && this.state !== 'entering') this.triggers.start();
@@ -583,6 +584,11 @@ export class Engine {
     const ov = this.overlay;
     if (!ov || this.state !== 'dragging') return;
     const height = ov.lift;
+    // The drag activity outranks the drop; release it explicitly.
+    if (this.activity?.prio === PRIORITY.drag) {
+      this.activity.token.cancelled = true;
+      this.activity = null;
+    }
     await this.run(PRIORITY.drop, 'falling', async (t) => {
       if (cancelled || height < 4) {
         ov.lift = 0;
