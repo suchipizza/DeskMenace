@@ -1,0 +1,39 @@
+name: Bug report
+description: Something doesn't work, or the character gets in the way of a page
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: A minimal page or CodePen helps a lot. Include your script tag and configuration.
+      render: html
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: gary.js version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser, OS and device
+      placeholder: Safari 18 on iPhone 15, Chrome 140 on Windows 11, …
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: Any `[gary.js]` warnings or errors.
+      render: text

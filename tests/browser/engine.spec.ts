@@ -379,7 +379,7 @@ test.describe('touch @touch', () => {
     const { opaque } = await probePoints(page);
     const cdp = await page.context().newCDPSession(page).catch(() => null);
     test.skip(!cdp, 'touch synthesis needs CDP (Chromium)');
-    const touch = (type: string, x: number, y: number) => cdp!.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
+    const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', x: number, y: number) => cdp!.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
     await touch('touchStart', opaque!.x, opaque!.y);
     for (let i = 1; i <= 6; i++) await touch('touchMove', opaque!.x - i * 10, opaque!.y - i * 20);
     await waitState(page, 'dragging');
