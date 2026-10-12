@@ -1,0 +1,29 @@
+# Dependencies and build output
+node_modules/
+dist/
+*.tgz
+coverage/
+
+# Test output
+test-results/
+playwright-report/
+tests/reports/local/
+
+# Local character assets that are not part of this repository.
+# Gary's artwork is distributed under its own licence and is added only through a reviewed release.
+characters/gary/
+.local/
+.private/
+
+# Media and debug captures
+*.trace.zip
+docs/media/*.local.*
+screenshots/
+
+# Editors, OS, secrets
+.DS_Store
+.idea/
+.vscode/
+*.log
+.env
+.env.*

@@ -1,0 +1,81 @@
+{
+  "name": "gary.js",
+  "version": "0.1.0",
+  "description": "A passive-aggressive coworker for your website. An animated browser character engine with speech bubbles, triggers and custom characters.",
+  "license": "MIT",
+  "author": "Noémie Rakotomalala",
+  "homepage": "https://github.com/suchipizza/DeskMenace#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/suchipizza/DeskMenace.git"
+  },
+  "bugs": {
+    "url": "https://github.com/suchipizza/DeskMenace/issues"
+  },
+  "keywords": [
+    "character",
+    "mascot",
+    "animation",
+    "sprite",
+    "easter-egg",
+    "404",
+    "website",
+    "browser",
+    "fun"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./dist/gary.js",
+    "./dist/gary.core.js"
+  ],
+  "main": "./dist/gary.mjs",
+  "module": "./dist/gary.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/gary.mjs"
+    },
+    "./classic": "./dist/gary.js",
+    "./core": "./dist/gary.core.js",
+    "./schema/character.schema.json": "./schema/character.schema.json",
+    "./schema/config.schema.json": "./schema/config.schema.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/gary.js",
+    "dist/gary.core.js",
+    "dist/gary.mjs",
+    "dist/*.d.ts",
+    "dist/**/*.d.ts",
+    "schema/",
+    "characters/sample/",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:browser": "playwright test",
+    "schema:check": "vitest run tests/unit/schema.test.ts",
+    "budget": "node scripts/bundle-budget.mjs",
+    "audit:pack": "node scripts/pack-audit.mjs",
+    "audit:private": "node scripts/no-private-assets.mjs",
+    "serve": "node scripts/serve.mjs",
+    "sample:build": "python3 scripts/sample-character/build.py",
+    "ci": "npm run typecheck && npm run test:unit && npm run build && npm run budget && npm run audit:private && npm run audit:pack"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "ajv": "^8.20.0",
+    "esbuild": "^0.28.2",
+    "happy-dom": "^21.0.1",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.4"
+  }
+}
