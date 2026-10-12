@@ -202,6 +202,7 @@ export class ClipPlayer {
     this.finish('interrupted');
     this.cancel();
     this.current = r;
+    this.evict();
     this.mirrored = !!opts.mirrored;
     this.loop = opts.loop ?? r.clip.loop;
     this.paused = false;

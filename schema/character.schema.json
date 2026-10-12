@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/suchipizza/DeskMenace/schema/character.schema.json",
+  "title": "gary.js character manifest",
+  "description": "Describes a character's animation clips, display size and optional lines. Relative URLs resolve against the manifest's own URL.",
+  "type": "object",
+  "required": ["schemaVersion", "id", "name", "licence", "assetRevision", "clips"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$", "not": { "enum": ["__proto__", "constructor", "prototype"] } },
+    "name": { "type": "string", "minLength": 1, "maxLength": 60 },
+    "licence": {
+      "description": "Licence of the character's artwork and lines (not of the engine).",
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        {
+          "type": "object",
+          "required": ["name"],
+          "additionalProperties": false,
+          "properties": { "name": { "type": "string", "minLength": 1 }, "url": { "type": "string", "format": "uri-reference" } }
+        }
+      ]
+    },
+    "assetRevision": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "display": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "height": { "description": "Rendered height of the idle clip's frame box, in CSS pixels (default 200). The engine scales down on small viewports.", "type": "number", "minimum": 40, "maximum": 1000 },
+        "minHeight": { "description": "Smallest rendered frame height on small screens.", "type": "number", "minimum": 24, "maximum": 1000 },
+        "walkSpeed": { "description": "Walking speed in CSS px per second at `height`.", "type": "number", "minimum": 5, "maximum": 2000 }
+      }
+    },
+    "poster": {
+      "description": "Still frame used with reduced motion. Defaults to frame 0 of the idle clip.",
+      "type": "object",
+      "required": ["clip"],
+      "additionalProperties": false,
+      "properties": { "clip": { "type": "string" }, "frame": { "type": "integer", "minimum": 0 } }
+    },
+    "bubble": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "anchor": { "description": "Point above the head, normalised [x, y] in the idle frame.", "$ref": "#/$defs/unitPoint" } }
+    },
+    "menu": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "credit": {
+          "description": "Credit link shown in the character menu. null hides it.",
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/link" }]
+        }
+      }
+    },
+    "lines": { "$ref": "#/$defs/linePools" },
+    "clips": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 64,
+      "propertyNames": { "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$", "not": { "enum": ["__proto__", "constructor", "prototype"] } },
+      "additionalProperties": { "$ref": "#/$defs/clip" }
+    }
+  },
+  "$defs": {
+    "unitPoint": { "type": "array", "prefixItems": [{ "type": "number", "minimum": 0, "maximum": 1 }, { "type": "number", "minimum": 0, "maximum": 1 }], "minItems": 2, "maxItems": 2 },
+    "link": {
+      "type": "object",
+      "required": ["label", "url"],
+      "additionalProperties": false,
+      "properties": { "label": { "type": "string", "minLength": 1, "maxLength": 60 }, "url": { "type": "string", "pattern": "^(https?:)?[^\\s]*$" } }
+    },
+    "line": {
+      "oneOf": [
+        { "type": "string", "minLength": 1, "maxLength": 500 },
+        {
+          "type": "object",
+          "required": ["text"],
+          "additionalProperties": false,
+          "properties": { "text": { "type": "string", "minLength": 1, "maxLength": 500 }, "weight": { "type": "number", "minimum": 0, "maximum": 1000 } }
+        }
+      ]
+    },
+    "linePools": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$", "not": { "enum": ["__proto__", "constructor", "prototype"] } },
+      "additionalProperties": { "type": "array", "maxItems": 2000, "items": { "$ref": "#/$defs/line" } }
+    },
+    "clip": {
+      "type": "object",
+      "required": ["size", "frameMs", "sources"],
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "description": "What the engine uses this clip for. Known roles: idle (required), idle.variant, walk.left, walk.right, judge, judge.pointer, held, drop.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9.-]{0,40}$"
+        },
+        "loop": { "type": "boolean", "default": false },
+        "load": { "enum": ["initial", "lazy"], "default": "lazy" },
+        "mirror": { "description": "The clip may be flipped horizontally to stand in for the opposite walk direction.", "type": "boolean", "default": false },
+        "size": { "description": "Frame size in image pixels [width, height].", "type": "array", "prefixItems": [{ "type": "integer", "minimum": 1, "maximum": 4096 }, { "type": "integer", "minimum": 1, "maximum": 4096 }], "minItems": 2, "maxItems": 2 },
+        "anchor": { "type": "object", "additionalProperties": false, "properties": { "feet": { "$ref": "#/$defs/unitPoint" } } },
+        "hit": { "description": "Coarse hit rectangle [x, y, width, height] in frame pixels. x and y may be negative.", "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 },
+        "frameMs": { "type": "array", "minItems": 1, "maxItems": 1024, "items": { "type": "number", "exclusiveMinimum": 0, "maximum": 60000 } },
+        "durationMs": { "type": "number", "exclusiveMinimum": 0 },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": ["type", "url", "grid"],
+                "additionalProperties": false,
+                "properties": {
+                  "type": { "const": "atlas" },
+                  "url": { "type": "string", "minLength": 1 },
+                  "mime": { "type": "string" },
+                  "bytes": { "type": "integer", "minimum": 0 },
+                  "grid": {
+                    "type": "object",
+                    "required": ["columns", "rows", "frames"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "columns": { "type": "integer", "minimum": 1 },
+                      "rows": { "type": "integer", "minimum": 1 },
+                      "frames": { "type": "integer", "minimum": 1 }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/suchipizza/DeskMenace/schema/config.schema.json",
+  "title": "gary.js configuration",
+  "description": "Configuration for inline JSON, data-config files and Gary.init(). Unknown or invalid fields are ignored with a console warning.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "enabled": { "type": "boolean", "default": true },
+    "character": { "description": "Character manifest URL.", "type": "string", "minLength": 1 },
+    "behaviours": { "type": "array", "items": { "$ref": "#/$defs/behaviour" } },
+    "behaviors": { "type": "array", "items": { "$ref": "#/$defs/behaviour" } },
+    "packs": { "description": "Line pools used for ambient chatter.", "type": "array", "items": { "$ref": "#/$defs/poolName" }, "default": ["core"] },
+    "lines": {
+      "description": "Line pools merged by name with the character's own pools (a pool given here replaces the character's pool of the same name).",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/poolName" },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            { "type": "string", "minLength": 1, "maxLength": 500 },
+            { "type": "object", "required": ["text"], "additionalProperties": false, "properties": { "text": { "type": "string", "minLength": 1, "maxLength": 500 }, "weight": { "type": "number", "minimum": 0 } } }
+          ]
+        }
+      }
+    },
+    "vars": {
+      "description": "Values for {name} placeholders in lines. {site} defaults to the page's hostname.",
+      "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9_]{0,31}$" },
+      "additionalProperties": { "type": ["string", "number"] }
+    },
+    "triggers": { "description": "Replaces the default triggers.", "type": "array", "items": { "$ref": "#/$defs/trigger" } },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minGapSeconds": { "type": "number", "minimum": 0, "maximum": 3600, "default": 20 },
+        "maxLinesPerMinute": { "type": "number", "minimum": 0, "maximum": 30, "default": 2 }
+      }
+    },
+    "position": { "type": "object", "additionalProperties": false, "properties": { "side": { "enum": ["left", "right"], "default": "right" } } },
+    "height": { "description": "Rendered frame height in CSS px, overriding the character's default.", "type": ["number", "null"], "minimum": 40, "maximum": 1000 },
+    "announce": { "description": "Announce speech bubbles to screen readers.", "type": "boolean", "default": false },
+    "ambient": { "description": "Random walks, glances and chatter while idle.", "type": "boolean", "default": true },
+    "menu": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "credit": {
+          "oneOf": [
+            { "const": false },
+            { "type": "object", "required": ["label", "url"], "additionalProperties": false, "properties": { "label": { "type": "string", "minLength": 1, "maxLength": 60 }, "url": { "type": "string" } } }
+          ]
+        }
+      }
+    },
+    "zIndex": { "type": "integer", "minimum": 0, "maximum": 2147483647 }
+  },
+  "$defs": {
+    "behaviour": { "enum": ["enter", "walk", "idle", "judge", "say", "drag", "react-clicks", "leave"] },
+    "poolName": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$" },
+    "trigger": {
+      "type": "object",
+      "required": ["on"],
+      "anyOf": [{ "required": ["say"] }, { "required": ["do"] }],
+      "additionalProperties": false,
+      "properties": {
+        "on": { "enum": ["load", "idle", "hover", "click", "visible", "scroll", "exit", "gary-click", "time", "event"] },
+        "selector": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "after": { "type": "number", "minimum": 0, "maximum": 86400 },
+        "every": { "type": "number", "minimum": 1, "maximum": 86400 },
+        "threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+        "event": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "count": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "say": { "description": "A line, or #pool to pick from a line pool.", "type": "string", "minLength": 1, "maxLength": 500 },
+        "do": { "$ref": "#/$defs/behaviour" },
+        "chance": { "type": "number", "minimum": 0, "maximum": 1 },
+        "cooldown": { "type": "number", "minimum": 0, "maximum": 86400 },
+        "once": { "type": "boolean" },
+        "maxPerSession": { "type": "integer", "minimum": 0 }
+      },
+      "allOf": [
+        { "if": { "properties": { "on": { "enum": ["hover", "click", "visible"] } } }, "then": { "required": ["selector"] } },
+        { "if": { "properties": { "on": { "const": "event" } } }, "then": { "required": ["event"] } }
+      ]
+    }
+  }
+}
