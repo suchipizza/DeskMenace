@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portfolio · gary.js</title>
+<link rel="stylesheet" href="../examples.css">
+<script type="application/json" data-gary-config>
+{
+  "schemaVersion": 1,
+  "packs": ["core", "boast"],
+  "vars": { "owner": "Sam" },
+  "lines": {
+    "pricing": ["Pricing? Let's set up a call to discuss a call."]
+  },
+  "triggers": [
+    { "on": "load", "after": 1.5, "say": "#hello", "once": true },
+    { "on": "hover", "selector": "#projects a", "say": "#boast", "cooldown": 30 },
+    { "on": "hover", "selector": ".old", "say": "#roast", "cooldown": 30 },
+    { "on": "click", "selector": "#contact", "say": "#pricing" },
+    { "on": "visible", "selector": "#testimonials", "say": "Testimonials. Written by {owner}'s mum, presumably.", "once": true },
+    { "on": "idle", "after": 30, "say": "#idle", "cooldown": 60 }
+  ],
+  "limits": { "minGapSeconds": 12, "maxLinesPerMinute": 3 }
+}
+</script>
+<script defer src="../../dist/gary.js"></script>
+<style>
+  #projects { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); margin: 24px 0 48px; }
+  #projects a { display: block; padding: 22px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); color: inherit; text-decoration: none; }
+  #projects a.old { opacity: .7; }
+  #testimonials { margin-top: 520px; padding: 24px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sam Example — Designer</h1>
+  <p class="lead">Hover the projects. Gary has opinions.</p>
+  <section id="projects">
+    <a href="#">Rebrand for a bakery</a>
+    <a href="#">Banking app redesign</a>
+    <a href="#" class="old">My 2014 Flash site</a>
+  </section>
+  <p><a id="contact" href="#">Contact &amp; pricing</a></p>
+  <section id="testimonials"><b>Testimonials</b><p>"Sam is great." — Someone</p></section>
+</main>
+</body>
+</html>

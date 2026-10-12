@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bring your own character · gary.js</title>
+<link rel="stylesheet" href="../examples.css">
+<!-- gary.core.js has no default character. The manifest below is served from a second origin
+     (port 8701) to show that clip URLs resolve against the manifest, not the page. -->
+<script defer src="../../dist/gary.core.js"
+        data-character="http://127.0.0.1:8701/characters/sample/character.json"></script>
+</head>
+<body>
+<main>
+  <h1>Meet Mugsy</h1>
+  <p class="lead">A custom character running on the same engine. Mugsy is public-domain sample art made for this repository.</p>
+  <pre>&lt;script defer src="gary.core.js"
+        data-character="https://your.cdn/mugsy/character.json"&gt;&lt;/script&gt;</pre>
+  <p>Mugsy only has a walk-right clip and marks it <code>"mirror": true</code>, so the engine flips it to walk left. Mugsy has no pointer-inspection or idle-variant clip; those parts of the behaviours are simply skipped.</p>
+  <p>
+    <button class="demo" onclick="Gary.say('#core')">Gary.say('#core')</button>
+    <button class="demo" onclick="Gary.do('judge')">Gary.do('judge')</button>
+    <button class="demo" onclick="Gary.do('walk')">Gary.do('walk')</button>
+    <button class="demo" onclick="Gary.reset()">Gary.reset()</button>
+  </p>
+</main>
+</body>
+</html>

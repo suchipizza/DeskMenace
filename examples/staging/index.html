@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staging · gary.js</title>
+<link rel="stylesheet" href="../examples.css">
+<script>
+  // Only load the character outside production.
+  if (!/^(www\.)?example\.com$/.test(location.hostname)) {
+    var s = document.createElement('script');
+    s.src = '../../dist/gary.js';
+    s.defer = true;
+    s.dataset.config = 'gary.staging.json';
+    document.head.appendChild(s);
+  }
+</script>
+</head>
+<body>
+<main>
+  <h1>Settings — <span style="color:var(--accent)">staging</span></h1>
+  <p class="lead">The character only appears on non-production hosts and keeps reminding everyone where they are.</p>
+  <p>Configuration lives in <code>gary.staging.json</code>, loaded with <code>data-config</code>.</p>
+</main>
+</body>
+</html>

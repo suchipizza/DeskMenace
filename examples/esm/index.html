@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ES module · gary.js</title>
+<link rel="stylesheet" href="../examples.css">
+</head>
+<body>
+<main>
+  <h1>ES module</h1>
+  <p class="lead">Importing the module does nothing by itself. <code>init()</code> starts the character you name.</p>
+  <pre id="code"></pre>
+  <p>
+    <button class="demo" id="say">say something</button>
+    <button class="demo" id="emit">emit('deploy')</button>
+  </p>
+  <p>Events: <code id="log">—</code></p>
+</main>
+<script type="module" id="src">
+import Gary from '../../dist/gary.mjs';
+
+Gary.on('entered', () => log('entered'));
+Gary.on('spoke', (line) => log(`spoke: ${line}`));
+Gary.on('error', (e) => log(`error: ${e.message}`));
+
+await Gary.init({
+  character: '../../characters/sample/character.json',
+  triggers: [{ on: 'event', event: 'deploy', say: 'A Friday deploy? Brave. I\'ll be in the cupboard.' }],
+});
+
+document.querySelector('#say').onclick = () => Gary.say('Hello from the API.');
+document.querySelector('#emit').onclick = () => Gary.emit('deploy');
+function log(s) { document.querySelector('#log').textContent = s; }
+</script>
+<script>document.getElementById('code').textContent = document.getElementById('src').textContent.trim();</script>
+</body>
+</html>

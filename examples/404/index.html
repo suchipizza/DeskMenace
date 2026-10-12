@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found · gary.js</title>
+<link rel="stylesheet" href="../examples.css">
+<script type="application/json" data-gary-config>
+{
+  "schemaVersion": 1,
+  "packs": ["404"],
+  "triggers": [
+    { "on": "load", "after": 1, "say": "#404", "once": true },
+    { "on": "time", "after": 25, "every": 40, "say": "#404" },
+    { "on": "hover", "selector": "a[href='/']", "say": "Yes. Go home. Reflect on what you did." }
+  ],
+  "limits": { "minGapSeconds": 15, "maxLinesPerMinute": 2 }
+}
+</script>
+<script defer src="../../dist/gary.js"></script>
+<style> main { text-align: center; padding-top: 18vh; } .big { font-size: clamp(72px, 18vw, 160px); font-weight: 800; margin: 0; letter-spacing: -0.04em; } </style>
+</head>
+<body>
+<main>
+  <p class="big">404</p>
+  <p class="lead">This page doesn't exist. Someone is going to hear about it.</p>
+  <p><a href="/">Back to the homepage</a></p>
+</main>
+</body>
+</html>
