@@ -10,6 +10,7 @@
     "schemaVersion": { "const": 1 },
     "enabled": { "type": "boolean", "default": true },
     "character": { "description": "Character manifest URL.", "type": "string", "minLength": 1 },
+    "preset": { "description": "Name of a ready-made set of lines, scenes and triggers offered by the character (its manifest's \"presets\"). Options the page sets itself win over the preset.", "type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$" },
     "behaviours": { "type": "array", "items": { "$ref": "#/$defs/behaviour" } },
     "behaviors": { "type": "array", "items": { "$ref": "#/$defs/behaviour" } },
     "packs": { "description": "Line pools used for ambient chatter.", "type": "array", "items": { "$ref": "#/$defs/poolName" }, "default": ["core"] },
@@ -34,6 +35,8 @@
       "additionalProperties": { "type": ["string", "number"] }
     },
     "triggers": { "description": "Replaces the default triggers.", "type": "array", "items": { "$ref": "#/$defs/trigger" } },
+    "scenes": { "description": "Named sequences of steps that triggers (\"scene\") and Gary.do(name) can play.", "type": "object", "maxProperties": 50, "propertyNames": { "$ref": "#/$defs/poolName" }, "additionalProperties": { "$ref": "#/$defs/scene" } },
+    "surfaces": { "description": "CSS selector of page elements the character may wander onto and stand on. Elements with a data-gary-surface attribute always qualify.", "type": ["string", "null"], "minLength": 1, "maxLength": 500 },
     "limits": {
       "type": "object",
       "additionalProperties": false,
@@ -46,6 +49,7 @@
     "height": { "description": "Rendered frame height in CSS px, overriding the character's default.", "type": ["number", "null"], "minimum": 40, "maximum": 1000 },
     "announce": { "description": "Announce speech bubbles to screen readers.", "type": "boolean", "default": false },
     "ambient": { "description": "Random walks, glances and chatter while idle.", "type": "boolean", "default": true },
+    "pace": { "description": "How often ambient behaviour happens. \"busy\" wanders a lot.", "enum": ["calm", "normal", "busy"], "default": "normal" },
     "restAfter": { "description": "Seconds without visitor input after which the idle animation pauses to save CPU. 0 never rests.", "type": "number", "minimum": 0, "maximum": 86400, "default": 30 },
     "quality": { "description": "Artwork sharpness when the character offers several image sizes: auto matches the screen, standard always loads the smallest images, high always the sharpest.", "enum": ["auto", "standard", "high"], "default": "auto" },
     "menu": {
@@ -65,28 +69,45 @@
   "$defs": {
     "behaviour": { "enum": ["enter", "walk", "idle", "judge", "say", "drag", "react-clicks", "leave"] },
     "poolName": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$" },
+    "scene": { "type": "array", "minItems": 1, "maxItems": 20, "items": { "$ref": "#/$defs/sceneStep" } },
+    "sceneStep": {
+      "description": "One step with exactly one action: walkTo, say, play or wait.",
+      "type": "object",
+      "oneOf": [{ "required": ["walkTo"] }, { "required": ["say"] }, { "required": ["play"] }, { "required": ["wait"] }],
+      "additionalProperties": false,
+      "properties": {
+        "walkTo": { "description": "CSS selector of an element to walk to and stand on, or \"floor\".", "type": "string", "minLength": 1, "maxLength": 500 },
+        "at": { "description": "Where on the element to stop.", "enum": ["center", "left", "right", "random"] },
+        "say": { "description": "A line, or #pool.", "type": "string", "minLength": 1, "maxLength": 500 },
+        "play": { "description": "Clip role to play once, e.g. judge, judge.pointer, idle.variant.", "type": "string", "pattern": "^[a-z][a-z0-9.-]{0,40}$" },
+        "wait": { "description": "Seconds to stand still.", "type": "number", "minimum": 0, "maximum": 60 }
+      }
+    },
     "trigger": {
       "type": "object",
       "required": ["on"],
-      "anyOf": [{ "required": ["say"] }, { "required": ["do"] }],
+      "anyOf": [{ "required": ["say"] }, { "required": ["do"] }, { "required": ["scene"] }],
       "additionalProperties": false,
       "properties": {
-        "on": { "enum": ["load", "idle", "hover", "click", "visible", "scroll", "exit", "gary-click", "time", "event"] },
+        "on": { "enum": ["load", "idle", "hover", "click", "visible", "scroll", "exit", "gary-click", "time", "event", "scrolling", "near"] },
         "selector": { "type": "string", "minLength": 1, "maxLength": 500 },
         "after": { "type": "number", "minimum": 0, "maximum": 86400 },
         "every": { "type": "number", "minimum": 1, "maximum": 86400 },
         "threshold": { "type": "number", "minimum": 0, "maximum": 1 },
         "event": { "type": "string", "minLength": 1, "maxLength": 100 },
         "count": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "distance": { "description": "For \"near\": distance in CSS px between the pointer and the character (default 80).", "type": "number", "minimum": 0, "maximum": 2000 },
         "say": { "description": "A line, or #pool to pick from a line pool.", "type": "string", "minLength": 1, "maxLength": 500 },
         "do": { "$ref": "#/$defs/behaviour" },
+        "scene": { "description": "Scene to play. With a list, each firing plays the next scene and the last one repeats.", "oneOf": [{ "$ref": "#/$defs/poolName" }, { "type": "array", "minItems": 1, "maxItems": 20, "items": { "$ref": "#/$defs/poolName" } }] },
+        "group": { "description": "Rules with the same group share one escalation step.", "$ref": "#/$defs/poolName" },
         "chance": { "type": "number", "minimum": 0, "maximum": 1 },
         "cooldown": { "type": "number", "minimum": 0, "maximum": 86400 },
         "once": { "type": "boolean" },
         "maxPerSession": { "type": "integer", "minimum": 0 }
       },
       "allOf": [
-        { "if": { "properties": { "on": { "enum": ["hover", "click", "visible"] } } }, "then": { "required": ["selector"] } },
+        { "if": { "properties": { "on": { "enum": ["hover", "visible"] } } }, "then": { "required": ["selector"] } },
         { "if": { "properties": { "on": { "const": "event" } } }, "then": { "required": ["event"] } }
       ]
     }

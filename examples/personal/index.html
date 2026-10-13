@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Personal website · gary.js</title>
+<link rel="stylesheet" href="../examples.css">
+<!-- The "personal" preset: the character wanders over headings and pictures, stops and comments
+     when the visitor scrolls, and reacts to the projects and the contact link. -->
+<script defer src="../../dist/gary.js" data-preset="personal"></script>
+<style>
+  .hero { display: grid; grid-template-columns: 1fr 180px; gap: 24px; align-items: center; margin-bottom: 48px; }
+  .hero img { width: 180px; height: 180px; border-radius: 50%; }
+  h2 { margin: 56px 0 16px; }
+  #projects .cards img { width: 100%; height: 120px; border-radius: 10px; margin-bottom: 10px; }
+  @media (max-width: 600px) { .hero { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div>
+      <h1>Sam Example</h1>
+      <p class="lead">Designer and occasional developer. I make websites that are mostly on time.</p>
+    </div>
+    <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cdefs%3E%3ClinearGradient id='g' x2='1' y2='1'%3E%3Cstop stop-color='%23f6c177'/%3E%3Cstop offset='1' stop-color='%23e4572e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='10' height='10' fill='url(%23g)'/%3E%3C/svg%3E">
+  </section>
+
+  <h2>About</h2>
+  <p>I've spent ten years turning vague briefs into slightly less vague websites. I like grids, good coffee and clients who reply to email.</p>
+  <p>Before that I sold printers, which taught me patience and how to say "have you tried turning it off and on again" with a straight face.</p>
+
+  <section id="projects">
+    <h2>Projects</h2>
+    <div class="cards">
+      <a class="card" href="#"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%2390c2e7'/%3E%3C/svg%3E"><b>Bakery rebrand</b><span>Logo, menu boards, a very serious croissant.</span></a>
+      <a class="card" href="#"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23a3d9a5'/%3E%3C/svg%3E"><b>Banking app</b><span>Made moving money slightly less frightening.</span></a>
+      <a class="card" href="#"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23d7b8f3'/%3E%3C/svg%3E"><b>Museum website</b><span>Opening hours you can actually find.</span></a>
+    </div>
+  </section>
+
+  <h2>Writing</h2>
+  <p>Notes on design systems, naming things, and why every project needs one person who says "no".</p>
+  <p>Most recent: "The button should probably be a link", a 4,000-word essay.</p>
+
+  <section id="contact">
+    <h2>Contact</h2>
+    <p>Available for projects from next month. <a href="mailto:sam@example.com">sam@example.com</a></p>
+  </section>
+</main>
+</body>
+</html>

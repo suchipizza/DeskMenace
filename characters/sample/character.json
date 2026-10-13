@@ -55,6 +55,12 @@
       "Fine. I'll be in the cupboard."
     ]
   },
+  "presets": {
+    "404": "presets/404.json",
+    "personal": "presets/personal.json",
+    "website": "presets/website.json",
+    "staging": "presets/staging.json"
+  },
   "clips": {
     "idle": {
       "role": "idle",

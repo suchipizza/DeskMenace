@@ -2,11 +2,65 @@
 // the options button and the menu. It reserves no layout space (fixed, 0x0 host), never moves
 // host elements, and is click-through everywhere except the controls themselves. Character
 // hits are decided by the input module using the current frame's alpha.
+//
+// The character stands either on the floor (the bottom of the viewport) or on a "surface": the
+// top edge of a page element. On a surface its position follows the element as the page
+// scrolls; the engine decides when the element no longer fits and the character must get down.
 
 import type { Character, Clip } from '../characters/manifest';
 import { STYLES } from '../ui/styles';
 
 export type MoveResult = 'arrived' | 'interrupted';
+
+const REPLACED = /^(IMG|PICTURE|VIDEO|CANVAS|SVG|IFRAME|INPUT|SELECT|TEXTAREA|BUTTON|HR)$/i;
+
+type Rect = { left: number; right: number; top: number };
+let cache: Map<Element, Rect> | null = null;
+
+/** Runs `fn` with surface measurements cached, so one frame measures each element once. */
+export function measure<T>(fn: () => T): T {
+  if (cache) return fn();
+  cache = new Map();
+  try {
+    return fn();
+  } finally {
+    cache = null;
+  }
+}
+
+/** False for an element that left the document or has no box (display: none). */
+export function usable(el: Element): boolean {
+  if (!el.isConnected) return false;
+  const r = el.getBoundingClientRect();
+  return r.width > 0 || r.height > 0;
+}
+
+/**
+ * The part of an element the character can stand on, in viewport px. A plain text element
+ * (a heading, a paragraph) is only as wide as its text, not its full-width box; images and
+ * elements with a background or border use their box.
+ */
+export function surfaceRect(el: Element): Rect {
+  const hit = cache?.get(el);
+  if (hit) return hit;
+  const out = measureSurface(el);
+  cache?.set(el, out);
+  return out;
+}
+
+function measureSurface(el: Element): Rect {
+  const r = el.getBoundingClientRect();
+  if (REPLACED.test(el.tagName)) return r;
+  const cs = getComputedStyle(el);
+  const painted = (cs.backgroundColor !== 'transparent' && !/^rgba\(.*,\s*0\)$/.test(cs.backgroundColor)) || cs.backgroundImage !== 'none' || parseFloat(cs.borderTopWidth) > 0;
+  if (painted) return r;
+  // Geometry only: the extent of the element's content, never the text itself.
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const t = range.getBoundingClientRect();
+  if (!t.width) return r;
+  return { left: Math.max(r.left, t.left), right: Math.min(r.right, t.right), top: Math.max(r.top, t.top) };
+}
 
 export class Overlay {
   readonly host: HTMLElement;
@@ -21,6 +75,11 @@ export class Overlay {
   feetX = 0;
   /** Height of the feet above the ground line, in CSS px (dragging). */
   lift = 0;
+  /** Page element the character stands on, or null for the floor. */
+  surface: Element | null = null;
+  /** Bottom inset of the floor (safe area), in CSS px. */
+  private floorInset = 0;
+  private hop: Animation | null = null;
   private clip: Clip;
   private mirrored = false;
   private moveDone: ((r: MoveResult) => void) | null = null;
@@ -79,6 +138,7 @@ export class Overlay {
     if (vw < 600) h = Math.min(h, Math.round(want * 0.62));
     h = Math.max(Math.min(this.character.minHeight, want), h);
     this.scale = h / idle.h;
+    this.floorInset = parseFloat(getComputedStyle(this.wrap).bottom) || 0;
     this.applyClip(this.clip, this.mirrored);
     this.clampX();
   }
@@ -135,9 +195,21 @@ export class Overlay {
     return (1 - this.clip.feet[1]) * this.clip.h * this.scale;
   }
 
+  /** Viewport y of the line the feet stand on. */
+  groundY(surface = this.surface): number {
+    const floor = this.viewportH - this.floorInset;
+    // An element that vanished (removed, display: none) counts as the floor.
+    return surface && usable(surface) ? surfaceRect(surface).top : floor;
+  }
+
+  private transformFor(feetX: number, surface: Element | null, lift: number): string {
+    const x = this.leftFor(feetX);
+    const y = this.dropFor() - lift + this.groundY(surface) - this.groundY(null);
+    return `translate3d(${Math.round(x * 10) / 10}px, ${Math.round(y * 10) / 10}px, 0)`;
+  }
+
   place(): void {
-    const x = this.leftFor(this.feetX);
-    this.wrap.style.transform = `translate3d(${Math.round(x * 10) / 10}px, ${Math.round((this.dropFor() - this.lift) * 10) / 10}px, 0)`;
+    this.wrap.style.transform = this.transformFor(this.feetX, this.surface, this.lift);
   }
 
   show(): void {
@@ -148,16 +220,26 @@ export class Overlay {
     this.wrap.setAttribute('data-hidden', '');
   }
 
-  /** Legal range for the feet so the character's box stays fully on screen. */
-  range(): [number, number] {
+  /**
+   * Legal range for the feet so the character's box stays fully on screen and, on a surface,
+   * the feet stay on the element.
+   */
+  range(surface = this.surface): [number, number] {
     const ax = this.anchorX();
-    return [ax + 4, this.viewportW - (this.boxW - ax) - 4];
+    let lo = ax + 4;
+    let hi = this.viewportW - (this.boxW - ax) - 4;
+    if (surface) {
+      const r = surfaceRect(surface);
+      lo = Math.max(lo, r.left + 6);
+      hi = Math.min(hi, r.right - 6);
+    }
+    return [lo, hi];
   }
 
   clampX(): void {
     const [lo, hi] = this.range();
-    this.feetX = hi < lo ? this.viewportW / 2 : Math.min(hi, Math.max(lo, this.feetX));
-    if (!this.moveDone) this.place();
+    this.feetX = hi < lo ? (this.surface ? (lo + hi) / 2 : this.viewportW / 2) : Math.min(hi, Math.max(lo, this.feetX));
+    if (!this.moving) this.place();
   }
 
   /** Off-screen feet position for entering/leaving on a side. */
@@ -191,8 +273,56 @@ export class Overlay {
     });
   }
 
-  /** Freezes a running move at its current on-screen position. */
+  /**
+   * Moves the character from where it is now onto `surface` (null = floor) at feet `x`, along an
+   * arc that rises `rise` CSS px above the higher end (0 = a plain fall). Compositor-driven.
+   */
+  jump(surface: Element | null, x: number, ms: number, rise: number): Promise<MoveResult> {
+    this.stopMove();
+    const from = this.transformFor(this.feetX, this.surface, this.lift);
+    const fromY = this.groundY() - this.lift;
+    const x0 = this.feetX;
+    this.surface = surface;
+    this.feetX = x;
+    this.lift = 0;
+    const to = this.transformFor(x, surface, 0);
+    this.place();
+    if (typeof this.wrap.animate !== 'function' || ms <= 0) return Promise.resolve('arrived');
+    const top = Math.min(fromY, this.groundY()) - rise;
+    const midX = this.leftFor((x + x0) / 2);
+    const mid = `translate3d(${Math.round(midX)}px, ${Math.round(this.dropFor() + top - this.groundY(null))}px, 0)`;
+    const frames: Keyframe[] = rise > 0
+      ? [{ transform: from, easing: 'cubic-bezier(.2,.6,.4,1)' }, { transform: mid, easing: 'cubic-bezier(.6,0,.8,.4)' }, { transform: to }]
+      : [{ transform: from, easing: 'cubic-bezier(.55,0,1,.45)' }, { transform: to }];
+    const anim = (this.hop = this.wrap.animate(frames, { duration: ms }));
+    return new Promise<MoveResult>((resolve) => {
+      let settled = false;
+      const done = (r: MoveResult) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        if (this.hop === anim) this.hop = null;
+        resolve(r);
+      };
+      // finish may not fire in a hidden tab: a timer backs it up.
+      const timer = window.setTimeout(() => done('arrived'), ms + 120);
+      anim.onfinish = () => done('arrived');
+      anim.oncancel = () => done('interrupted');
+    });
+  }
+
+  /** True when the character is moving (walking or jumping). */
+  get moving(): boolean {
+    return !!this.moveDone || !!this.hop;
+  }
+
+  /** Freezes a running move at its current on-screen position. A jump is completed instead. */
   stopMove(): void {
+    if (this.hop) {
+      const h = this.hop;
+      this.hop = null;
+      h.cancel();
+    }
     if (!this.moveDone) return;
     const m = getComputedStyle(this.wrap).transform;
     const left = parseMatrixX(m);

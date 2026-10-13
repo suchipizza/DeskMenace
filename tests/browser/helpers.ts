@@ -5,6 +5,12 @@ export const CROSS_SAMPLE = 'http://127.0.0.1:8711/characters/sample/character.j
 export const MINIMAL = '/tests/browser/fixtures/minimal/character.json';
 export const QUIET = { ambient: false, triggers: [] };
 
+export function surfacesUrl(q: Record<string, unknown>): string {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(q)) p.set(k, typeof v === 'string' ? v : JSON.stringify(v));
+  return `/tests/browser/fixtures/surfaces.html?${p}`;
+}
+
 export function pageUrl(q: Record<string, unknown>): string {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(q)) p.set(k, typeof v === 'string' ? v : JSON.stringify(v));

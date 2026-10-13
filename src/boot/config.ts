@@ -4,7 +4,7 @@
 // Arrays replace the previous value. Objects (lines, vars, limits, position, menu) merge by key.
 // Invalid fields are reported as warnings and ignored, so one typo never takes a page down.
 
-import type { BehaviorId, GaryConfig, LineEntry, ResolvedConfig, TriggerKind, TriggerRule } from '../types';
+import type { BehaviorId, GaryConfig, LineEntry, ResolvedConfig, SceneStep, TriggerKind, TriggerRule } from '../types';
 import { BEHAVIORS } from '../types';
 import { parseCredit, parseLines } from '../characters/manifest';
 import { pageBase, safeHttpUrl } from '../util/url';
@@ -16,7 +16,10 @@ export class ConfigError extends Error {
   }
 }
 
-const TRIGGERS: readonly TriggerKind[] = ['load', 'idle', 'hover', 'click', 'visible', 'scroll', 'exit', 'gary-click', 'time', 'event'];
+const TRIGGERS: readonly TriggerKind[] = ['load', 'idle', 'hover', 'click', 'visible', 'scroll', 'exit', 'gary-click', 'time', 'event', 'scrolling', 'near'];
+const NAME_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$/;
+const MAX_SCENES = 50;
+const MAX_STEPS = 20;
 const RESERVED = new Set(['__proto__', 'constructor', 'prototype']);
 
 export const DEFAULT_TRIGGERS: TriggerRule[] = [
@@ -29,20 +32,25 @@ export function defaults(): ResolvedConfig {
   return {
     enabled: true,
     character: null,
+    preset: null,
     behaviours: [...BEHAVIORS],
     packs: ['core'],
     lines: {},
     vars: {},
     triggers: DEFAULT_TRIGGERS.map((t) => ({ ...t })),
+    scenes: {},
+    surfaces: null,
     limits: { minGapSeconds: 20, maxLinesPerMinute: 2 },
     position: { side: 'right' },
     height: null,
     announce: false,
     ambient: true,
+    pace: 'normal',
     restAfter: 30,
     quality: 'auto',
     menu: { credit: null },
     zIndex: 2147483000,
+    explicit: [],
   };
 }
 
@@ -60,6 +68,11 @@ export function mergeConfig(base: ResolvedConfig, layer: unknown, source: string
     limits: { ...base.limits },
     position: { ...base.position },
     menu: { ...base.menu },
+    scenes: { ...base.scenes },
+    explicit: [...base.explicit],
+  };
+  const mark = (k: string) => {
+    if (!out.explicit.includes(k)) out.explicit.push(k);
   };
   if (layer === undefined || layer === null) return { config: out, warnings };
   if (!isObj(layer)) throw new ConfigError(`${source}: configuration must be a JSON object`);
@@ -68,6 +81,8 @@ export function mergeConfig(base: ResolvedConfig, layer: unknown, source: string
 
   for (const key of Object.keys(c)) {
     const v = c[key];
+    if (key === 'limits' && isObj(v)) for (const k of Object.keys(v)) mark(`limits.${k}`);
+    else mark(key === 'behaviors' ? 'behaviours' : key);
     switch (key) {
       case 'schemaVersion':
         break;
@@ -94,8 +109,27 @@ export function mergeConfig(base: ResolvedConfig, layer: unknown, source: string
         out.behaviours = list;
         break;
       }
+      case 'preset':
+        if (v === null || (typeof v === 'string' && NAME_RE.test(v))) out.preset = v as string | null;
+        else warn(key, 'must be a preset name');
+        break;
+      case 'scenes': {
+        if (!isObj(v)) { warn(key, 'must be an object of scenes'); break; }
+        const names = Object.keys(v);
+        for (const name of names.slice(0, MAX_SCENES)) {
+          const res = NAME_RE.test(name) && !RESERVED.has(name) ? validateScene(v[name]) : 'has an invalid name';
+          if (typeof res === 'string') warnings.push(`${source}: scene "${name}" ${res}; ignored`);
+          else out.scenes[name] = res;
+        }
+        if (names.length > MAX_SCENES) warnings.push(`${source}: only the first ${MAX_SCENES} scenes are used`);
+        break;
+      }
+      case 'surfaces':
+        if (v === null || (typeof v === 'string' && v.trim() && v.length <= 500 && isValidSelector(v))) out.surfaces = v as string | null;
+        else warn(key, 'must be a CSS selector');
+        break;
       case 'packs':
-        if (Array.isArray(v) && v.every((p) => typeof p === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$/.test(p))) out.packs = [...v];
+        if (Array.isArray(v) && v.every((p) => typeof p === 'string' && NAME_RE.test(p))) out.packs = [...v];
         else warn(key, 'must be an array of pool names');
         break;
       case 'lines': {
@@ -158,6 +192,10 @@ export function mergeConfig(base: ResolvedConfig, layer: unknown, source: string
         if (isNum(v) && v >= 0 && v <= 86400) out.restAfter = v;
         else warn(key, 'must be a number of seconds (0 disables resting)');
         break;
+      case 'pace':
+        if (v === 'calm' || v === 'normal' || v === 'busy') out.pace = v;
+        else warn(key, 'must be "calm", "normal" or "busy"');
+        break;
       case 'quality':
         if (v === 'auto' || v === 'standard' || v === 'high') out.quality = v;
         else warn(key, 'must be "auto", "standard" or "high"');
@@ -187,12 +225,21 @@ export function validateRule(r: unknown): TriggerRule | string {
     if (!(BEHAVIORS as readonly unknown[]).includes(r.do)) return `do ${JSON.stringify(r.do)} is not a supported behaviour`;
     rule.do = r.do as BehaviorId;
   }
-  if (!rule.say && !rule.do) return 'needs "say" or "do"';
+  if (r.scene !== undefined) {
+    const list = typeof r.scene === 'string' ? [r.scene] : r.scene;
+    if (!Array.isArray(list) || !list.length || list.length > 20 || !list.every((n) => typeof n === 'string' && NAME_RE.test(n))) return 'scene must be a scene name or a list of them';
+    rule.scene = [...list];
+  }
+  if (!rule.say && !rule.do && !rule.scene) return 'needs "say", "do" or "scene"';
+  if (r.group !== undefined) {
+    if (typeof r.group !== 'string' || !NAME_RE.test(r.group)) return 'group must be a name';
+    rule.group = r.group;
+  }
   if (r.selector !== undefined) {
     if (typeof r.selector !== 'string' || !r.selector.trim() || r.selector.length > 500 || !isValidSelector(r.selector)) return 'has an invalid selector';
     rule.selector = r.selector;
   }
-  if ((on === 'hover' || on === 'click' || on === 'visible') && !rule.selector) return `"${on}" needs a selector`;
+  if ((on === 'hover' || on === 'visible') && !rule.selector) return `"${on}" needs a selector`;
   if (r.event !== undefined) {
     if (typeof r.event !== 'string' || !r.event || r.event.length > 100) return 'event must be a name';
     rule.event = r.event;
@@ -203,6 +250,7 @@ export function validateRule(r: unknown): TriggerRule | string {
     ['every', 1, 86400],
     ['threshold', 0, 1],
     ['count', 1, 100],
+    ['distance', 0, 2000],
     ['chance', 0, 1],
     ['cooldown', 0, 86400],
     ['maxPerSession', 0, 10000],
@@ -218,6 +266,71 @@ export function validateRule(r: unknown): TriggerRule | string {
     rule.once = r.once;
   }
   return rule;
+}
+
+/** Validates one scene: a list of steps with exactly one action each. */
+export function validateScene(v: unknown): SceneStep[] | string {
+  if (!Array.isArray(v) || !v.length || v.length > MAX_STEPS) return `must be a list of 1 to ${MAX_STEPS} steps`;
+  const steps: SceneStep[] = [];
+  for (const [i, s] of v.entries()) {
+    if (!isObj(s)) return `step ${i + 1} must be an object`;
+    const actions = ['walkTo', 'say', 'play', 'wait'].filter((k) => s[k] !== undefined);
+    if (actions.length !== 1) return `step ${i + 1} needs exactly one of walkTo, say, play or wait`;
+    const step: SceneStep = {};
+    if (s.walkTo !== undefined) {
+      if (typeof s.walkTo !== 'string' || !s.walkTo.trim() || s.walkTo.length > 500 || (s.walkTo !== 'floor' && !isValidSelector(s.walkTo))) return `step ${i + 1}: walkTo must be a CSS selector or "floor"`;
+      step.walkTo = s.walkTo;
+      if (s.at !== undefined) {
+        if (!['center', 'left', 'right', 'random'].includes(s.at as string)) return `step ${i + 1}: at must be "center", "left", "right" or "random"`;
+        step.at = s.at as SceneStep['at'];
+      }
+    } else if (s.say !== undefined) {
+      if (typeof s.say !== 'string' || !s.say.trim() || s.say.length > 500) return `step ${i + 1}: say must be a line or #pool`;
+      step.say = s.say;
+    } else if (s.play !== undefined) {
+      if (typeof s.play !== 'string' || !/^[a-z][a-z0-9.-]{0,40}$/.test(s.play)) return `step ${i + 1}: play must be a clip role`;
+      step.play = s.play;
+    } else {
+      if (!isNum(s.wait) || s.wait < 0 || s.wait > 60) return `step ${i + 1}: wait must be 0 to 60 seconds`;
+      step.wait = s.wait;
+    }
+    steps.push(step);
+  }
+  return steps;
+}
+
+/** Keys a preset may set. Where the page sets the same option, the page wins. */
+const PRESET_KEYS = new Set(['behaviours', 'behaviors', 'packs', 'lines', 'vars', 'triggers', 'scenes', 'surfaces', 'limits', 'ambient', 'pace', 'restAfter', 'position']);
+
+/**
+ * Layers a character preset under the page's own configuration: options the page set itself
+ * (see `explicit`) keep the page's value; line pools, variables and scenes merge by name with
+ * the page's entries winning.
+ */
+export function applyPreset(config: ResolvedConfig, preset: unknown, source: string): { config: ResolvedConfig; warnings: string[] } {
+  if (!isObj(preset)) throw new ConfigError(`${source}: must be a JSON object`);
+  const layer: Record<string, unknown> = {};
+  const warnings: string[] = [];
+  for (const k of Object.keys(preset)) {
+    if (k === 'schemaVersion') layer[k] = preset[k];
+    else if (PRESET_KEYS.has(k)) layer[k] = preset[k];
+    else warnings.push(`${source}: "${k}" can't be set by a preset; ignored`);
+  }
+  const r = mergeConfig(defaults(), layer, source);
+  const p = r.config;
+  const ex = new Set(config.explicit);
+  const out: ResolvedConfig = { ...config };
+  for (const k of ['behaviours', 'packs', 'triggers', 'surfaces', 'ambient', 'pace', 'restAfter', 'position'] as const) {
+    if (!ex.has(k)) (out as unknown as Record<string, unknown>)[k] = p[k];
+  }
+  out.lines = { ...p.lines, ...config.lines };
+  out.vars = { ...p.vars, ...config.vars };
+  out.scenes = { ...p.scenes, ...config.scenes };
+  out.limits = {
+    minGapSeconds: ex.has('limits.minGapSeconds') ? config.limits.minGapSeconds : p.limits.minGapSeconds,
+    maxLinesPerMinute: ex.has('limits.maxLinesPerMinute') ? config.limits.maxLinesPerMinute : p.limits.maxLinesPerMinute,
+  };
+  return { config: out, warnings: [...warnings, ...r.warnings] };
 }
 
 function isValidSelector(s: string): boolean {

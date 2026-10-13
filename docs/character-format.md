@@ -98,6 +98,13 @@ Without walk clips, the character appears in place and never walks. Missing opti
 | `bubble.anchor` | Point just above the head, normalised in the idle frame. The speech bubble's tail points here |
 | `menu.credit` | Link shown in the character menu, or `null` for none. Defaults to "Powered by gary.js" |
 | `lines` | Default line pools (see [configuration](configuration.md#lines)) |
+| `presets` | Ready-made packages for kinds of pages: `{ "404": "presets/404.json" }`. See [Presets](#presets) |
+
+## Presets
+
+A preset is a JSON file next to your manifest, written exactly like a [page configuration](configuration.md) but limited to `lines`, `vars`, `packs`, `behaviours`, `triggers`, `scenes`, `surfaces`, `limits`, `ambient`, `pace`, `restAfter` and `position`. List it in the manifest under `presets`; pages pick it with `data-preset="name"`. The preset is fetched only when a page asks for it, and its lines stay under your character's licence.
+
+Use the conventional names `404`, `personal`, `website` and `staging` where they fit, so pages can switch characters without changing the attribute. Mugsy's presets in [`characters/sample/presets/`](../characters/sample/presets/) are a starting point. Scenes use clip roles, so a preset written for one character works for another; steps that need a clip the character doesn't have are skipped.
 
 ## Making the art
 

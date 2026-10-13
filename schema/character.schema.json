@@ -56,6 +56,13 @@
       }
     },
     "lines": { "$ref": "#/$defs/linePools" },
+    "presets": {
+      "description": "Ready-made configurations for kinds of pages: preset name -> URL of a JSON file (relative to this manifest) with lines, scenes, triggers and other page options.",
+      "type": "object",
+      "maxProperties": 50,
+      "propertyNames": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$" },
+      "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 2048 }
+    },
     "clips": {
       "type": "object",
       "minProperties": 1,

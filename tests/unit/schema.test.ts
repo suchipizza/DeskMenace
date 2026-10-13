@@ -23,7 +23,8 @@ describe('published JSON schemas', () => {
 
   it('accept every example configuration', () => {
     const inline = (f: string) => JSON.parse(readFileSync(f, 'utf8').match(/<script type="application\/json" data-gary-config>([\s\S]*?)<\/script>/)![1]);
-    for (const cfg of [inline('examples/portfolio/index.html'), inline('examples/404/index.html'), read('examples/staging/gary.staging.json')]) {
+    const presets = ['404', 'personal', 'website', 'staging'].map((n) => read(`characters/sample/presets/${n}.json`));
+    for (const cfg of [inline('examples/portfolio/index.html'), ...presets]) {
       expect(config(cfg), JSON.stringify(config.errors)).toBe(true);
     }
   });
@@ -33,5 +34,9 @@ describe('published JSON schemas', () => {
     expect(config({ triggers: [{ on: 'hover', say: 'x' }] })).toBe(false);
     expect(config({ triggers: [{ on: 'load' }] })).toBe(false);
     expect(config({ triggers: [{ on: 'gary-click', count: 3, do: 'react-clicks' }] })).toBe(true);
+    expect(config({ triggers: [{ on: 'click', scene: ['a', 'b'], group: 'g' }, { on: 'scrolling', scene: 'a' }, { on: 'near', distance: 100, do: 'judge' }] })).toBe(true);
+    expect(config({ scenes: { a: [{ walkTo: 'h1', at: 'center' }, { play: 'judge' }, { say: '#x' }, { wait: 1 }] }, surfaces: 'h1', preset: '404' })).toBe(true);
+    expect(config({ scenes: { a: [{ say: 'x', wait: 1 }] } })).toBe(false);
+    expect(config({ scenes: { a: [] } })).toBe(false);
   });
 });

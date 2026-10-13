@@ -8,6 +8,11 @@ export type RuleHandler = (rule: TriggerRule, target: Element | null) => boolean
 
 const MAX_OBSERVED = 100;
 const ACTIVITY = ['pointermove', 'pointerdown', 'keydown', 'scroll', 'touchstart', 'wheel'] as const;
+/** A scroll gesture ends after this much quiet; the next scroll input starts a new one. */
+const GESTURE_GAP_MS = 600;
+const SCROLL_KEYS = new Set(['PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'Home', 'End', ' ']);
+
+export type BoxGetter = () => { left: number; top: number; width: number; height: number } | null;
 
 /** Eligibility bookkeeping: chance, cooldown, once and maxPerSession. */
 export class RuleGate {
@@ -42,7 +47,7 @@ export class Triggers {
   private readonly gate: RuleGate;
   private lastActivity = Date.now();
 
-  constructor(private readonly rules: TriggerRule[], private readonly handler: RuleHandler, ns: string) {
+  constructor(private readonly rules: TriggerRule[], private readonly handler: RuleHandler, ns: string, private readonly box: BoxGetter = () => null) {
     this.gate = new RuleGate(ns);
   }
 
@@ -126,10 +131,63 @@ export class Triggers {
         break;
       case 'click':
         this.listen(document, 'click', (e) => {
-          const el = closest(e.target, sel!);
+          // Without a selector: a click anywhere on the page (clicks on the character never get here).
+          if (!sel) {
+            if (!(e.target instanceof Element) || e.target.closest('[data-garyjs]')) return;
+            return this.fire(i);
+          }
+          const el = closest(e.target, sel);
           if (el) this.fire(i, el);
         });
         break;
+      case 'scrolling': {
+        // The start of a scroll gesture: wheel, touch drag, scroll keys or any scroller moving.
+        // Also fires on pages that can't scroll, where scrolling is only attempted.
+        // Scroll events count only right after visitor input, so carousels, smooth anchor
+        // scrolling and widgets that scroll by themselves don't fire it.
+        let last = 0;
+        let lastInput = 0;
+        const input = (e: Event) => {
+          if (e.type === 'scroll' && Date.now() - lastInput > 1000) return;
+          if (e.type === 'keydown') {
+            const k = e as KeyboardEvent;
+            const t = k.target as HTMLElement | null;
+            if (!SCROLL_KEYS.has(k.key) || (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))) return;
+          }
+          if (e.type !== 'scroll') lastInput = Date.now();
+          const now = Date.now();
+          const fresh = now - last > GESTURE_GAP_MS;
+          last = now;
+          if (fresh) this.fire(i);
+        };
+        for (const t of ['wheel', 'touchmove', 'keydown']) this.listen(window, t, input, { passive: true, capture: true });
+        // Dragging a scrollbar: the press that starts it counts as input.
+        this.listen(window, 'pointerdown', () => (lastInput = Date.now()), { passive: true, capture: true });
+        this.listen(document, 'scroll', input, { passive: true, capture: true });
+        break;
+      }
+      case 'near': {
+        const distance = rule.distance ?? 80;
+        let inside = false;
+        let raf = 0;
+        this.listen(window, 'pointermove', (e) => {
+          const pe = e as PointerEvent;
+          if ((pe.pointerType && pe.pointerType !== 'mouse') || raf) return;
+          const { clientX: x, clientY: y } = pe;
+          raf = requestAnimationFrame(() => {
+            raf = 0;
+            const b = this.box();
+            if (!b || !b.width) return;
+            const dx = Math.max(b.left - x, 0, x - (b.left + b.width));
+            const dy = Math.max(b.top - y, 0, y - (b.top + b.height));
+            const near = Math.hypot(dx, dy) <= distance;
+            if (near && !inside) this.fire(i);
+            inside = near;
+          });
+        }, { passive: true, capture: true });
+        this.cleanups.push(() => raf && cancelAnimationFrame(raf));
+        break;
+      }
       case 'visible': {
         if (typeof IntersectionObserver === 'undefined') break;
         const threshold = rule.threshold ?? 0.5;

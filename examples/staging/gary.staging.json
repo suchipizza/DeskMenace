@@ -1,9 +1,0 @@
-{
-  "schemaVersion": 1,
-  "packs": ["staging"],
-  "position": { "side": "left" },
-  "triggers": [
-    { "on": "load", "after": 1, "say": "#staging", "once": true },
-    { "on": "time", "after": 45, "every": 60, "say": "#staging" }
-  ]
-}

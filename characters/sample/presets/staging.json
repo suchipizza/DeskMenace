@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "surfaces": "h1, h2, [data-gary-staging]",
+  "lines": {
+    "staging": [
+      "This is the test site. Nothing here counts. Like my opinion.",
+      "Not live yet. Neither am I, before coffee."
+    ],
+    "scrolled": ["Careful, the paint's still wet down there."]
+  },
+  "scenes": {
+    "inspect": [{ "walkTo": "[data-gary-staging], h1", "at": "random" }, { "play": "judge" }, { "say": "#staging" }],
+    "scrolled": [{ "play": "judge" }, { "say": "#scrolled" }]
+  },
+  "triggers": [
+    { "on": "load", "after": 1.5, "scene": "inspect", "once": true },
+    { "on": "time", "after": 60, "every": 90, "say": "#staging" },
+    { "on": "scrolling", "scene": "scrolled", "chance": 0.4, "cooldown": 60 },
+    { "on": "exit", "say": "#exit", "maxPerSession": 1 }
+  ]
+}

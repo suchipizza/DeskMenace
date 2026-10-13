@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "surfaces": "h1, h2, h3, img, figure",
+  "pace": "busy",
+  "lines": {
+    "scrolled": [
+      "Oh, so we're scrolling now.",
+      "Slow down. I was standing on that.",
+      "There's more down there. Mostly words."
+    ],
+    "projects": ["Projects. I was in the first one. As a mug."],
+    "contact": ["Go on, send an email. I'll wait. I'm a mug, I'm good at waiting."]
+  },
+  "scenes": {
+    "scrolled": [{ "play": "judge" }, { "say": "#scrolled" }]
+  },
+  "triggers": [
+    { "on": "load", "after": 1.5, "say": "#hello", "once": true },
+    { "on": "scrolling", "scene": "scrolled", "cooldown": 25 },
+    { "on": "visible", "selector": "[data-gary-projects], #projects", "say": "#projects", "once": true },
+    { "on": "hover", "selector": "a[href^='mailto:'], [data-gary-contact], #contact a", "say": "#contact", "cooldown": 60 },
+    { "on": "idle", "after": 40, "say": "#idle", "cooldown": 90 },
+    { "on": "exit", "say": "#exit", "maxPerSession": 1 }
+  ]
+}

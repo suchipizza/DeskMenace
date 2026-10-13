@@ -16,7 +16,7 @@ const ALLOW = [
   /^dist\/gary\.mjs$/,
   /^dist\/.*\.d\.ts$/,
   /^schema\/(character|config)\.schema\.json$/,
-  /^characters\/sample\/(character\.json|LICENSE\.md|README\.md|atlas\/[a-z]+\.webp)$/,
+  /^characters\/sample\/(character\.json|LICENSE\.md|README\.md|atlas\/[a-z]+\.webp|presets\/[a-z0-9-]+\.json)$/,
 ];
 const problems = [];
 for (const f of files) if (!ALLOW.some((re) => re.test(f))) problems.push(`not on the package allowlist: ${f}`);

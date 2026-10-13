@@ -19,7 +19,7 @@
 Gary walks onto your page, stands around unproductively, judges your visitors and offers unsolicited corporate feedback. Visitors can drag him around, mute him or send him home. You decide what he says and when he says it, or swap him for a completely different character on the same engine.
 
 - **One script tag.** No build step, no framework, no backend, no account.
-- **Small and polite.** About 20 KB gzipped. Artwork loads only after your page has painted, causes no layout shift, stops entirely in background tabs, and rests when nobody's around.
+- **Small and polite.** About 24 KB gzipped. Artwork loads only after your page has painted, causes no layout shift, stops entirely in background tabs, and rests when nobody's around.
 - **Never in the way.** Clicks pass straight through every transparent pixel. Forms, links and buttons behind him keep working.
 - **Visitor-friendly.** Mute or remove him from a menu (mouse, keyboard or touch). Removal sticks. No tracking, no cookies.
 - **Yours to script.** Your own lines, page triggers and a small JavaScript API.
@@ -55,7 +55,7 @@ The ES module has no default character and never loads one on its own; pass a ma
 | Behaviour | What happens |
 |---|---|
 | `enter` | Walks in from the side of the screen once your page has loaded |
-| `walk` | Short, aimless walks along the bottom of the screen |
+| `walk` | Short, aimless walks along the bottom of the screen, or over headings and images when you let him |
 | `idle` | Stands there. Occasionally checks his phone |
 | `judge` | A long managerial stare, or a pointed look at whatever you're doing |
 | `say` | A speech bubble, placed above his head and kept inside the screen |
@@ -64,6 +64,16 @@ The ES module has no default character and never loads one on its own; pass a ma
 | `leave` | Walks off when a visitor removes him, and stays gone |
 
 He respects `prefers-reduced-motion` (a still pose, no walking or falling) and steps out of the way of a focused form field.
+
+## Ready-made packages
+
+One attribute turns him into a 404 page, a personal-site sidekick, a general nuisance or a staging-server reminder:
+
+```html
+<script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js" data-preset="404"></script>
+```
+
+On a 404 page he walks onto the "404", stares at it and tells your visitor what went wrong. Keep clicking or scrolling and he gets more irritated. Presets: `404`, `personal`, `website`, `staging`; anything you configure yourself wins. See [presets](docs/configuration.md#presets).
 
 ## Make him say your things
 
@@ -89,7 +99,7 @@ Add a JSON block anywhere in the page:
 <script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"></script>
 ```
 
-`#name` picks a random line from a pool. Triggers: `load`, `idle`, `hover`, `click`, `visible`, `scroll`, `exit`, `gary-click`, `time` and your own `event`s. Lines are rate-limited (by default at most 2 a minute, 20 seconds apart) so he stays funny instead of exhausting. Full reference: [docs/configuration.md](docs/configuration.md).
+`#name` picks a random line from a pool. Triggers: `load`, `idle`, `hover`, `click`, `visible`, `scroll`, `scrolling`, `near`, `exit`, `gary-click`, `time` and your own `event`s, and they can play [scenes](docs/configuration.md#scenes) that walk him onto page elements. Lines are rate-limited (by default at most 2 a minute, 20 seconds apart) so he stays funny instead of exhausting. Full reference: [docs/configuration.md](docs/configuration.md).
 
 ## Script him
 
@@ -139,7 +149,7 @@ An idle clip is all you need; add walks, a stare, a held pose and a fall when yo
 
 `npm install && npm run build && npm run serve`, then open <http://127.0.0.1:8700/examples/>:
 
-[zero config](examples/zero-config/) · [portfolio](examples/portfolio/) · [404 page](examples/404/) · [staging banner](examples/staging/) · [custom character](examples/custom-character/) · [ES module](examples/esm/) · [host compatibility](examples/host-compat/)
+[zero config](examples/zero-config/) · [portfolio](examples/portfolio/) · [404 page](examples/404/) · [personal website](examples/personal/) · [any website](examples/website/) · [staging banner](examples/staging/) · [custom character](examples/custom-character/) · [ES module](examples/esm/) · [host compatibility](examples/host-compat/)
 
 ## Browser support, privacy and accessibility
 

@@ -6,12 +6,15 @@
 // A request with a lower priority than the running activity is refused (returns false); an
 // equal or higher one interrupts it. Interrupted activities stop at their next await point,
 // and every clip promise they were waiting on settles.
+//
+// The character stands on the floor or on a page element ("surface"). Scenes (named step lists
+// from the configuration or a character preset) walk it to elements, play clips and show lines.
 
-import type { BehaviorId, CreditLink, ResolvedConfig, TriggerRule } from '../types';
+import type { BehaviorId, CreditLink, ResolvedConfig, SceneStep, TriggerRule } from '../types';
 import { BEHAVIORS } from '../types';
 import { parseCharacter, type Character } from '../characters/manifest';
 import { ClipLoadError, ClipPlayer, type PlayResult } from '../render/clip-player';
-import { Overlay } from '../render/overlay';
+import { measure, Overlay, surfaceRect, usable } from '../render/overlay';
 import { Bubble, focusedFieldRect } from '../ui/bubble';
 import { Menu } from '../ui/menu';
 import { Input } from '../ui/input';
@@ -20,6 +23,7 @@ import { interpolate, LineBook, SpeechLimiter } from '../content/lines';
 import { Triggers } from '../triggers/triggers';
 import type { Emitter } from '../util/events';
 import { afterFirstPaint } from '../boot/start';
+import { applyPreset } from '../boot/config';
 
 export type State =
   | 'loading'
@@ -40,6 +44,14 @@ type Priority = (typeof PRIORITY)[keyof typeof PRIORITY];
 
 interface Token {
   cancelled: boolean;
+  /** Called once when the activity is cancelled (ends waits early). */
+  wake?: () => void;
+}
+
+function cancel(t: Token): void {
+  if (t.cancelled) return;
+  t.cancelled = true;
+  t.wake?.();
 }
 
 interface Activity {
@@ -53,6 +65,9 @@ const UNSUPPORTED = new Set(['phone', 'card', 'steal-cursor']);
 const CLICK_SEQUENCE_MS = 1500;
 const INPUT_EVENTS = ['pointermove', 'pointerdown', 'keydown', 'scroll', 'wheel', 'touchstart'] as const;
 const REACT_CLICKS_AT = 3;
+/** Free space a surface needs above the character's head for a speech bubble, in CSS px. */
+const HEAD_ROOM = 40;
+const MAX_SURFACES = 100;
 
 export class Engine {
   state: State = 'loading';
@@ -74,7 +89,20 @@ export class Engine {
   private lastVariant = 0;
   private clicks: number[] = [];
   private grab = { dx: 0, dy: 0 };
+  /** Where a drag started, to put the character back if the drag is cancelled. */
+  private dragFrom: { surface: Element | null; feetX: number } = { surface: null, feetX: 0 };
+  private surfaceObserver: ResizeObserver | null = null;
+  private observed: Element | null = null;
+  private surfaceRaf = 0;
+  private surfaceTimer = 0;
   private reduced = false;
+  /** Escalation step per rule group (or per rule). */
+  private readonly stages = new Map<unknown, number>();
+  /** The scene running as the current activity, if any. */
+  private sceneRun: { name: string; token: Token } | null = null;
+  /** Fetched preset files by name (null = unavailable). */
+  private readonly presetCache = new Map<string, unknown>();
+  private contentGen = 0;
   private readonly offs: (() => void)[] = [];
   private readonly abort = new AbortController();
 
@@ -114,6 +142,13 @@ export class Engine {
       if (!this.alive) return;
       this.character = ch;
       for (const w of ch.warnings) console.warn(`[gary.js] ${w}`);
+      if (this.config.preset) {
+        const gen = this.contentGen;
+        const json = await this.fetchPreset(ch, this.config.preset);
+        if (!this.alive) return;
+        // A re-init during the fetch has layered its own preset already.
+        if (gen === this.contentGen && json !== null) this.layerPreset(this.config, json);
+      }
       this.mount(ch);
       await this.player!.load(ch.roles.get('idle')!);
       if (!this.alive) return;
@@ -127,6 +162,39 @@ export class Engine {
       if (!this.alive || this.abort.signal.aborted) return;
       this.fail(e);
     }
+  }
+
+  /** Fetches a preset file once per name. Resolves null when the character has none or it fails. */
+  private async fetchPreset(ch: Character, name: string): Promise<unknown> {
+    if (this.presetCache.has(name)) return this.presetCache.get(name);
+    const url = ch.presets.get(name);
+    let json: unknown = null;
+    if (!url) console.warn(`[gary.js] ${ch.name} has no preset "${name}"; ignored`);
+    else {
+      try {
+        const res = await fetch(url, { mode: 'cors', credentials: 'omit', signal: this.abort.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        json = await res.json();
+      } catch (e) {
+        if (this.abort.signal.aborted) throw e;
+        console.warn(`[gary.js] Could not load preset "${name}" (${(e as Error).message}); ignored`);
+      }
+    }
+    this.presetCache.set(name, json);
+    return json;
+  }
+
+  /** Makes `base` + the preset the current config. */
+  private layerPreset(base: ResolvedConfig, json: unknown): void {
+    try {
+      const r = applyPreset(base, json, `preset "${base.preset}"`);
+      for (const w of r.warnings) console.warn(`[gary.js] ${w}`);
+      this.config = r.config;
+    } catch (e) {
+      console.warn(`[gary.js] ${(e as Error).message}`);
+      this.config = base;
+    }
+    this.limiter.setLimits(this.config.limits);
   }
 
   /** Image pixels per clip pixel this screen can show, per the `quality` option. */
@@ -196,6 +264,18 @@ export class Engine {
       if (this.resting) this.wake();
     };
     for (const t of INPUT_EVENTS) on(window, t, onInput, { passive: true, capture: true });
+    // Any scroller, and any layout change, can move the element the character stands on.
+    on(document, 'scroll', () => this.queueSurfaceCheck(), { passive: true, capture: true });
+    if (typeof ResizeObserver !== 'undefined') {
+      this.surfaceObserver = new ResizeObserver(() => this.queueSurfaceCheck());
+      this.surfaceObserver.observe(document.documentElement);
+    }
+    this.offs.push(() => {
+      cancelAnimationFrame(this.surfaceRaf);
+      window.clearTimeout(this.surfaceTimer);
+      this.surfaceObserver?.disconnect();
+      this.surfaceObserver = null;
+    });
     const mq = matchMedia('(prefers-reduced-motion: reduce)');
     const onMotion = () => {
       this.reduced = mq.matches;
@@ -215,14 +295,29 @@ export class Engine {
 
   /** Rebuilds lines, limits and triggers from the current config (used by a repeated init). */
   applyContent(config?: ResolvedConfig): void {
-    if (config) this.config = config;
     const ch = this.character;
+    if (config) {
+      this.config = config;
+      const gen = ++this.contentGen;
+      if (ch && config.preset) {
+        if (this.presetCache.has(config.preset)) {
+          const json = this.presetCache.get(config.preset);
+          if (json !== null) this.layerPreset(config, json);
+        } else
+          void this.fetchPreset(ch, config.preset).then((json) => {
+            if (gen !== this.contentGen || !this.alive) return;
+            if (json !== null) this.layerPreset(config, json);
+            this.applyContent();
+          }, () => {});
+      }
+    }
     if (!ch) return;
     this.book = new LineBook([ch.lines, new Map(Object.entries(this.config.lines))]);
     this.limiter.setLimits(this.config.limits);
     this.menu?.setCredit(this.creditFor(ch));
+    this.stages.clear();
     this.triggers?.stop();
-    this.triggers = new Triggers(this.config.triggers, (rule, target) => this.onRule(rule, target), ch.id);
+    this.triggers = new Triggers(this.config.triggers, (rule, target) => this.onRule(rule, target), ch.id, () => (this.overlay && this.state !== 'loading' ? this.overlay.box() : null));
     if (this.state !== 'loading' && this.state !== 'entering') this.triggers.start();
     this.scheduleAmbient();
   }
@@ -238,7 +333,7 @@ export class Engine {
     this.abort.abort();
     window.clearTimeout(this.restTimer);
     this.resting = false;
-    if (this.activity) this.activity.token.cancelled = true;
+    if (this.activity) cancel(this.activity.token);
     this.activity = null;
     window.clearTimeout(this.ambientTimer);
     this.triggers?.stop();
@@ -265,7 +360,7 @@ export class Engine {
   private async run(prio: Priority, state: State, fn: (t: Token) => Promise<void | boolean>): Promise<boolean> {
     if (!this.alive || !this.overlay) return false;
     if (this.activity && this.activity.prio > prio) return false;
-    if (this.activity) this.activity.token.cancelled = true;
+    if (this.activity) cancel(this.activity.token);
     this.overlay.stopMove();
     window.clearTimeout(this.ambientTimer);
     window.clearTimeout(this.restTimer);
@@ -317,6 +412,7 @@ export class Engine {
     else void this.playRole('idle', { loop: true });
     this.scheduleAmbient();
     this.armRest();
+    this.queueSurfaceCheck();
   }
 
   private armRest(): void {
@@ -403,14 +499,245 @@ export class Engine {
       else target = canLeft && (!canRight || Math.random() < 0.5) ? ov.feetX - dist : ov.feetX + dist;
     }
     target = Math.min(hi, Math.max(lo, target));
-    const dir = target < ov.feetX ? 'left' : 'right';
-    const walk = ch.walk[dir];
+    const walk = ch.walk[target < ov.feetX ? 'left' : 'right'];
     if (!walk || Math.abs(target - ov.feetX) < 4) return Promise.resolve(false);
-    return this.run(prio, 'walking', async (t) => {
-      void this.player!.play(walk.clip, { loop: true, mirrored: walk.mirrored }).catch(() => {});
-      if (t.cancelled) return;
-      await ov.moveTo(target!, this.speed());
+    return this.run(prio, 'walking', (t) => this.stroll(target!, t));
+  }
+
+  /** Walks along the current ground to feet x (clamped). Resolves false when interrupted. */
+  private async stroll(x: number, t: Token): Promise<boolean> {
+    const ch = this.character!;
+    const ov = this.overlay!;
+    const [lo, hi] = ov.range();
+    const target = hi < lo ? ov.feetX : Math.min(hi, Math.max(lo, x));
+    const walk = ch.walk[target < ov.feetX ? 'left' : 'right'];
+    if (!walk || Math.abs(target - ov.feetX) < 4) return !t.cancelled;
+    this.setState('walking');
+    void this.player!.play(walk.clip, { loop: true, mirrored: walk.mirrored }).catch(() => {});
+    if (t.cancelled) return false;
+    return (await ov.moveTo(target, this.speed())) === 'arrived' && !t.cancelled;
+  }
+
+  // ------------------------------------------------------------------ surfaces
+
+  /** Height of the standing character in CSS px. */
+  private standH(): number {
+    const ch = this.character!;
+    return ch.clips.get(ch.roles.get('idle')!)!.h * this.overlay!.scale;
+  }
+
+  /** Whether the character can stand on `el` right now (on screen, wide enough, room above). */
+  private fits(el: Element): boolean {
+    const ov = this.overlay;
+    if (!ov || !el.isConnected || ov.host.contains(el)) return false;
+    const box = el.getBoundingClientRect();
+    if (box.width < 24 || box.height <= 0) return false;
+    const r = surfaceRect(el);
+    if (r.right - r.left < 24) return false;
+    if (r.top < this.standH() + HEAD_ROOM || r.top > ov.groundY(null) - this.standH() / 3) return false;
+    const [lo, hi] = ov.range(el);
+    return hi >= lo;
+  }
+
+  /** Page elements the character may wander onto: `surfaces` plus [data-gary-surface]. */
+  private surfaceCandidates(): Element[] {
+    const sel = [this.config.surfaces, '[data-gary-surface]'].filter(Boolean).join(',');
+    try {
+      return [...document.querySelectorAll(sel)].slice(0, MAX_SURFACES);
+    } catch {
+      return [];
+    }
+  }
+
+  private pickX(el: Element | null, at: SceneStep['at'] = 'center'): number {
+    const ov = this.overlay!;
+    const [lo, hi] = ov.range(el);
+    if (hi < lo) return (lo + hi) / 2;
+    if (at === 'left') return lo + (hi - lo) * 0.1;
+    if (at === 'right') return hi - (hi - lo) * 0.1;
+    if (at === 'random') return lo + Math.random() * (hi - lo);
+    return (lo + hi) / 2;
+  }
+
+  /**
+   * Goes to `el` (null = the floor) and stops at `at`. From the floor the character walks below
+   * the spot, then is lifted up (held pose); getting down is a fall. If the element can't hold
+   * the character, it walks to the spot below it on the floor instead.
+   */
+  private async goTo(el: Element | null, at: SceneStep['at'], t: Token): Promise<boolean> {
+    const ov = this.overlay!;
+    if (el && !this.fits(el)) {
+      // Too high, too low or off screen: stand below it on the floor.
+      const r = surfaceRect(el);
+      const w = r.right - r.left;
+      const x = at === 'left' ? r.left + w * 0.1 : at === 'right' ? r.right - w * 0.1 : at === 'random' ? r.left + Math.random() * w : r.left + w / 2;
+      if (ov.surface && !(await this.hopTo(null, ov.feetX, t))) return false;
+      return this.stroll(x, t);
+    }
+    if (el === ov.surface) return this.stroll(this.pickX(el, at), t);
+    const x = this.pickX(el, at);
+    if (!el && !ov.surface) return this.stroll(x, t);
+    if (!el) return (await this.hopTo(null, Math.min(Math.max(ov.feetX, ov.range(null)[0]), ov.range(null)[1]), t)) && this.stroll(x, t);
+    if (!ov.surface && !(await this.stroll(x, t))) return false;
+    return this.hopTo(el, x, t);
+  }
+
+  /** Lifts the character onto `el`, or drops it onto the floor (el = null). */
+  private async hopTo(el: Element | null, x: number, t: Token): Promise<boolean> {
+    const ov = this.overlay!;
+    if (t.cancelled) return false;
+    if (el) {
+      // The page may have scrolled or changed during the walk over.
+      if (!this.fits(el)) return false;
+      const [lo, hi] = ov.range(el);
+      x = Math.min(hi, Math.max(lo, x));
+    }
+    const fromY = ov.groundY() - ov.lift;
+    const toY = ov.groundY(el);
+    const up = toY < fromY - 2;
+    const dist = Math.hypot(x - ov.feetX, toY - fromY);
+    this.setState(up ? 'walking' : 'falling');
+    if (this.has('held')) void this.playRole('held', { loop: true });
+    const ms = up ? Math.round(Math.min(1000, 420 + dist * 0.8)) : Math.round(Math.min(650, 160 + Math.sqrt(dist) * 22));
+    const r = await ov.jump(el, x, ms, up ? Math.max(24, Math.min(80, dist * 0.15)) : 0);
+    if (t.cancelled || r !== 'arrived') return false;
+    if (!up && dist > 60 && this.has('drop')) await this.playRole('drop', { loop: false });
+    else void this.playRole('idle', { loop: true });
+    return !t.cancelled;
+  }
+
+  private queueSurfaceCheck(): void {
+    if (this.surfaceRaf || !this.overlay?.surface) return;
+    this.surfaceRaf = requestAnimationFrame(() => {
+      this.surfaceRaf = 0;
+      measure(() => this.checkSurface());
     });
+  }
+
+  /**
+   * Keeps the character on its element as the page scrolls or its layout changes; it falls off
+   * when it can't stay, and drops to the floor when the element is gone.
+   */
+  private checkSurface(): void {
+    const ov = this.overlay;
+    window.clearTimeout(this.surfaceTimer);
+    if (!ov?.surface || !this.alive || document.visibilityState === 'hidden') return;
+    if (this.state === 'dragging' || this.state === 'leaving') return;
+    // Moves that neither scroll nor resize anything (transforms, absolute positioning) are
+    // caught by a slow re-check while the character stands on an element.
+    this.surfaceTimer = window.setTimeout(() => this.queueSurfaceCheck(), 1000);
+    const el = ov.surface;
+    if (this.observed !== el && this.surfaceObserver) {
+      if (this.observed) this.surfaceObserver.unobserve(this.observed);
+      this.surfaceObserver.observe(el);
+      this.observed = el;
+    }
+    if (this.fits(el)) {
+      if (ov.moving && this.activity) {
+        // A walk along the element can't follow the scroll: stop where it is.
+        ov.stopMove();
+      }
+      ov.place();
+      this.bubble?.position();
+      return;
+    }
+    const below = !usable(el) || surfaceRect(el).top >= ov.groundY(null) - this.standH() / 3;
+    if (below || this.reduced) {
+      ov.stopMove();
+      ov.surface = null;
+      ov.clampX();
+      ov.place();
+      return;
+    }
+    void this.run(PRIORITY.drop, 'falling', async (t) => {
+      const [lo, hi] = ov.range(null);
+      await this.hopTo(null, Math.min(hi, Math.max(lo, ov.feetX)), t);
+    });
+  }
+
+  /** Ambient wandering between page elements. */
+  private roam(prio: Priority): Promise<boolean> {
+    const ov = this.overlay!;
+    if (this.reduced) return Promise.resolve(false);
+    if (ov.surface && Math.random() < 0.35) return this.run(prio, 'walking', (t) => this.goTo(null, 'random', t));
+    const options = this.surfaceCandidates().filter((el) => el !== ov.surface && this.fits(el));
+    if (!options.length) return this.walk(prio);
+    const el = options[Math.floor(Math.random() * options.length)];
+    return this.run(prio, 'walking', (t) => this.goTo(el, 'random', t));
+  }
+
+  // ------------------------------------------------------------------ scenes
+
+  /** Plays a named scene from the configuration. */
+  scene(name: string, prio: Priority): Promise<boolean> {
+    const steps = Object.prototype.hasOwnProperty.call(this.config.scenes, name) ? this.config.scenes[name] : null;
+    if (!steps || !this.alive || !this.character || this.state === 'loading' || this.state === 'entering') return Promise.resolve(false);
+    if (document.visibilityState === 'hidden') return Promise.resolve(false);
+    return this.run(prio, 'idle', async (t) => {
+      const mine = (this.sceneRun = { name, token: t });
+      try {
+        for (const step of steps) {
+          if (t.cancelled || !this.alive) return;
+          await this.sceneStep(step, t, prio);
+        }
+      } finally {
+        if (this.sceneRun === mine) this.sceneRun = null;
+      }
+    });
+  }
+
+  /** Name of the scene that is playing right now (not one that was interrupted). */
+  private get scenePlaying(): string | null {
+    const r = this.sceneRun;
+    return r && !r.token.cancelled && this.activity?.token === r.token ? r.name : null;
+  }
+
+  private async sceneStep(step: SceneStep, t: Token, prio: Priority): Promise<void> {
+    if (step.walkTo !== undefined) {
+      if (this.reduced || !this.enabled('walk')) return;
+      let el: Element | null = null;
+      if (step.walkTo !== 'floor') {
+        // The first match that can hold the character, else the first match (reached from below).
+        let all: Element[] = [];
+        try {
+          all = [...document.querySelectorAll(step.walkTo)].slice(0, MAX_SURFACES);
+        } catch {
+          /* validated already */
+        }
+        el = all.find((e) => this.fits(e)) ?? all[0] ?? null;
+        if (!el) return;
+      }
+      await this.goTo(el, step.at, t);
+      if (!t.cancelled) this.standStill();
+    } else if (step.say !== undefined) {
+      const text = this.book.resolve(step.say);
+      if (!text) return;
+      this.standStill();
+      // Scenes started by the page share the speech limits; API scenes don't.
+      await this.showLine(text, prio < PRIORITY.api);
+    } else if (step.play !== undefined) {
+      if (!this.has(step.play) || this.reduced) return;
+      this.setState('judging');
+      await this.playRole(step.play, { loop: false });
+      if (!t.cancelled) this.standStill();
+    } else if (step.wait !== undefined) {
+      this.standStill();
+      await new Promise<void>((r) => {
+        const id = setTimeout(r, step.wait! * 1000);
+        t.wake = () => {
+          clearTimeout(id);
+          r();
+        };
+      });
+      t.wake = undefined;
+    }
+  }
+
+  /** Idle loop inside an activity (without ending it). */
+  private standStill(): void {
+    this.setState('idle');
+    if (this.reduced) void this.player?.showFrame(this.character!.poster.clip, this.character!.poster.frame);
+    else if (this.player?.getCurrentFrame().clip !== this.character!.roles.get('idle')) void this.playRole('idle', { loop: true });
   }
 
   private judge(prio: Priority, pointer = Math.random() < 0.4): Promise<boolean> {
@@ -434,17 +761,8 @@ export class Engine {
     if (!this.alive || !this.bubble || !this.overlay || prefs.isMuted() || !this.enabled('say')) return false;
     if (document.visibilityState === 'hidden') return false;
     if (capped && !this.limiter.canSpeak()) return false;
-    const line = interpolate(text, { site: location.hostname, ...this.config.vars });
-    if (!line) return false;
-    const bubble = this.bubble;
-    const showLine = async () => {
-      const shown = bubble.show(line);
-      if (!bubble.visible) return false;
-      this.limiter.record();
-      this.events.emit('spoke', line);
-      await shown;
-      return true;
-    };
+    if (!interpolate(text, this.vars())) return false;
+    const showLine = () => this.showLine(text, capped);
     // While being dragged or falling, talk without changing the animation.
     if (this.activity && this.activity.prio >= PRIORITY.drop) return showLine();
     let shownAny = false;
@@ -459,6 +777,25 @@ export class Engine {
     return ran || shownAny;
   }
 
+  private vars(): Record<string, string> {
+    return { site: location.hostname, ...this.config.vars };
+  }
+
+  /** Shows a line in the bubble without changing the activity. Resolves when it is hidden. */
+  private async showLine(text: string, capped: boolean): Promise<boolean> {
+    const bubble = this.bubble;
+    if (!bubble || prefs.isMuted() || !this.enabled('say') || document.visibilityState === 'hidden') return false;
+    if (capped && !this.limiter.canSpeak()) return false;
+    const line = interpolate(text, this.vars());
+    if (!line) return false;
+    const shown = bubble.show(line);
+    if (!bubble.visible) return false;
+    this.limiter.record();
+    this.events.emit('spoke', line);
+    await shown;
+    return true;
+  }
+
   private async leave(): Promise<void> {
     const ov = this.overlay;
     if (!ov || !this.character) return this.finishLeave();
@@ -470,7 +807,11 @@ export class Engine {
     this.triggers?.stop();
     await this.run(PRIORITY.dismiss, 'leaving', async (t) => {
       const goodbye = this.book.pick('leave');
-      if (goodbye && !prefs.isMuted() && this.enabled('say')) void this.bubble?.show(interpolate(goodbye, { site: location.hostname, ...this.config.vars }), 1800);
+      if (goodbye && !prefs.isMuted() && this.enabled('say')) void this.bubble?.show(interpolate(goodbye, this.vars()), 1800);
+      if (ov.surface) {
+        await ov.jump(null, Math.min(Math.max(ov.feetX, ov.range(null)[0]), ov.range(null)[1]), 300, 0);
+        this.setState('leaving');
+      }
       void this.player!.play(walk.clip, { loop: true, mirrored: walk.mirrored }).catch(() => {});
       if (t.cancelled) return;
       await ov.moveTo(ov.offscreenX(side), this.speed() * 1.3);
@@ -507,6 +848,7 @@ export class Engine {
 
   /** Runs a behaviour by id. Resolves false for unknown, disabled or unavailable behaviours. */
   async do(id: string, prio: Priority = PRIORITY.api): Promise<boolean> {
+    if (!(BEHAVIORS as readonly string[]).includes(id) && Object.prototype.hasOwnProperty.call(this.config.scenes, id)) return this.scene(id, prio);
     if (UNSUPPORTED.has(id) || !(BEHAVIORS as readonly string[]).includes(id)) return false;
     const b = id as BehaviorId;
     if (!this.enabled(b) || !this.alive || !this.character || this.state === 'loading' || this.state === 'entering') return false;
@@ -549,6 +891,20 @@ export class Engine {
 
   private onRule(rule: TriggerRule, target: Element | null): boolean {
     if (!this.alive || this.state === 'leaving') return false;
+    // A page trigger never cuts into a running scene.
+    if (this.scenePlaying) return false;
+    if (rule.scene) {
+      // Escalation only advances when the scene actually starts.
+      if (this.state === 'loading' || this.state === 'entering') return false;
+      if (this.activity && this.activity.prio > PRIORITY.dom) return false;
+      const key = rule.group ?? rule;
+      const stage = this.stages.get(key) ?? 0;
+      const name = rule.scene[Math.min(stage, rule.scene.length - 1)];
+      if (!Object.prototype.hasOwnProperty.call(this.config.scenes, name)) return false;
+      this.stages.set(key, stage + 1);
+      void this.scene(name, PRIORITY.dom);
+      return true;
+    }
     if (rule.say) {
       const text = this.book.resolve(rule.say);
       if (!text) return false;
@@ -569,15 +925,17 @@ export class Engine {
     window.clearTimeout(this.ambientTimer);
     if (!this.alive || !this.config.ambient || this.state !== 'idle' || this.activity || this.resting) return;
     if (document.visibilityState === 'hidden') return;
-    const delay = 5000 + Math.random() * 9000;
+    const pace = this.config.pace === 'busy' ? 0.35 : this.config.pace === 'calm' ? 1.6 : 1;
+    const delay = (5000 + Math.random() * 9000) * pace;
     this.ambientTimer = window.setTimeout(() => this.ambient(), delay);
   }
 
   private ambient(): void {
     if (this.activity || this.state !== 'idle') return;
-    const r = Math.random();
+    // Busy: more of the ambient turns are walks.
+    const r = this.config.pace === 'busy' && Math.random() < 0.4 ? 0 : Math.random();
     const variantDue = Date.now() - this.lastVariant > 45_000;
-    if (r < 0.42 && this.enabled('walk')) void this.walk(PRIORITY.ambient);
+    if (r < 0.42 && this.enabled('walk')) void (this.surfaceCandidates().length || this.overlay?.surface ? this.roam(PRIORITY.ambient) : this.walk(PRIORITY.ambient));
     else if (r < 0.54 && this.enabled('judge')) void this.judge(PRIORITY.ambient);
     else if (r < 0.62 && variantDue && this.enabled('idle')) void this.idleVariant(PRIORITY.ambient);
     else if (r < 0.75 && this.enabled('say') && this.limiter.canSpeak()) {
@@ -608,12 +966,18 @@ export class Engine {
   }
 
   private groundY(): number {
-    return this.overlay!.viewportH;
+    return this.overlay!.groundY(null);
   }
 
   private dragStart(x: number, y: number): void {
     const ov = this.overlay!;
     ov.stopMove();
+    this.dragFrom = { surface: ov.surface, feetX: ov.feetX };
+    if (ov.surface) {
+      // Picked up from an element: from now on the height counts from the floor.
+      ov.lift += this.groundY() - ov.groundY();
+      ov.surface = null;
+    }
     this.grab = { dx: x - ov.feetX, dy: this.groundY() - ov.lift - y };
     void this.run(PRIORITY.drag, 'dragging', async () => {
       if (this.has('held')) await this.playRole('held', { loop: true });
@@ -638,11 +1002,29 @@ export class Engine {
     const height = ov.lift;
     // The drag activity outranks the drop; release it explicitly.
     if (this.activity?.prio === PRIORITY.drag) {
-      this.activity.token.cancelled = true;
+      cancel(this.activity.token);
       this.activity = null;
     }
+    // Released above an element it can stand on: land there instead of on the floor.
+    const feetY = this.groundY() - height;
+    const landing = cancelled || height < 4 ? null : this.surfaceCandidates()
+      .filter((el) => {
+        const r = surfaceRect(el);
+        return r.left <= ov.feetX && ov.feetX <= r.right && r.top >= feetY - 2 && this.fits(el);
+      })
+      .sort((a, b) => surfaceRect(a).top - surfaceRect(b).top)[0];
     await this.run(PRIORITY.drop, 'falling', async (t) => {
-      if (cancelled || height < 4) {
+      if (landing) {
+        const [lo, hi] = ov.range(landing);
+        await ov.jump(landing, Math.min(hi, Math.max(lo, ov.feetX)), Math.round(Math.min(600, 120 + Math.sqrt(Math.max(1, surfaceRect(landing).top - feetY)) * 22)), 0);
+      } else if (cancelled || height < 4) {
+        // A cancelled drag puts the character back where it was picked up.
+        const from = this.dragFrom;
+        if (cancelled && from.surface && this.fits(from.surface)) {
+          ov.surface = from.surface;
+          ov.feetX = from.feetX;
+          ov.clampX();
+        }
         ov.lift = 0;
         ov.place();
         if (cancelled) return;
@@ -669,7 +1051,7 @@ export class Engine {
       this.bubble?.hide();
       if (this.state === 'leaving') return this.finishLeave();
       if (this.activity && this.activity.prio < PRIORITY.dismiss && this.state !== 'entering') {
-        this.activity.token.cancelled = true;
+        cancel(this.activity.token);
         this.activity = null;
         this.overlay?.stopMove();
         this.overlay!.lift = 0;
@@ -685,10 +1067,14 @@ export class Engine {
     const ov = this.overlay;
     if (!ov || !this.alive) return;
     if (this.state === 'walking' && this.activity) {
-      this.activity.token.cancelled = true;
+      cancel(this.activity.token);
       this.activity = null;
       ov.stopMove();
       this.idle();
+    }
+    if (ov.surface && !this.fits(ov.surface)) {
+      ov.stopMove();
+      ov.surface = null;
     }
     ov.layout(this.config.height);
     this.bubble?.position();
@@ -729,6 +1115,8 @@ export class Engine {
       player: this.player?.stats() ?? null,
       feetX: this.overlay?.feetX ?? null,
       lift: this.overlay?.lift ?? null,
+      surface: this.overlay?.surface ? describe(this.overlay.surface) : null,
+      scene: this.scenePlaying,
       scale: this.overlay?.scale ?? null,
       reduced: this.reduced,
       resting: this.resting,
@@ -739,4 +1127,9 @@ export class Engine {
   hitTest(x: number, y: number): boolean {
     return !!this.input?.hit(x, y);
   }
+}
+
+/** Short, data-free description of an element for the debug snapshot. */
+function describe(el: Element): string {
+  return el.id ? `#${el.id}` : el.tagName.toLowerCase();
 }

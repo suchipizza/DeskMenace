@@ -25,6 +25,19 @@ describe('character manifest', () => {
     expect(ch.clips.get('idle')!.atlas.url).toBe('http://localhost/characters/sample/atlas/idle.webp');
   });
 
+  it('resolves preset URLs against the manifest and rejects bad ones', () => {
+    const ch = parseCharacter(manifest({ presets: { '404': 'presets/404.json', portfolio: 'https://cdn.example.net/p.json' } }), BASE);
+    expect(errorsOf(manifest({ presets: { x: 'https://elsewhere.example/p.json' } })).join()).toMatch(/same origin/);
+    expect([...ch.presets]).toEqual([
+      ['404', 'https://cdn.example.net/chars/tester/presets/404.json'],
+      ['portfolio', 'https://cdn.example.net/p.json'],
+    ]);
+    expect(errorsOf(manifest({ presets: { x: 'javascript:alert(1)' } })).join()).toMatch(/presets\.x/);
+    expect(errorsOf(manifest({ presets: { '../x': 'a.json' } })).join()).toMatch(/presets/);
+    expect(errorsOf(manifest({ presets: ['a.json'] })).join()).toMatch(/presets/);
+    expect(parseCharacter(manifest(), BASE).presets.size).toBe(0);
+  });
+
   it('resolves clip URLs against the manifest URL, not the page', () => {
     const ch = parseCharacter(manifest(), BASE);
     expect(ch.clips.get('idle')!.atlas.url).toBe('https://cdn.example.net/chars/tester/atlas/idle.webp');

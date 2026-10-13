@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ConfigError, defaults, mergeConfig, validateRule } from '../../src/boot/config';
+import { applyPreset, ConfigError, defaults, mergeConfig, validateRule, validateScene } from '../../src/boot/config';
 
 describe('configuration', () => {
   it('has the documented defaults', () => {
@@ -80,11 +80,68 @@ describe('configuration', () => {
     expect(validateRule({ on: 'hover', selector: '#a', say: '#boast', cooldown: 30 })).toEqual({ on: 'hover', selector: '#a', say: '#boast', cooldown: 30 });
     expect(validateRule({ on: 'hover', say: 'x' })).toMatch(/needs a selector/);
     expect(validateRule({ on: 'click', selector: '###', say: 'x' })).toMatch(/invalid selector/);
-    expect(validateRule({ on: 'load' })).toMatch(/needs "say" or "do"/);
+    expect(validateRule({ on: 'load' })).toMatch(/needs "say", "do" or "scene"/);
     expect(validateRule({ on: 'load', do: 'phone' })).toMatch(/not a supported/);
     expect(validateRule({ on: 'event', say: 'x' })).toMatch(/event name/);
     expect(validateRule({ on: 'teleport', say: 'x' })).toMatch(/unknown trigger/);
     expect(validateRule({ on: 'load', say: 'x', chance: 2 })).toMatch(/chance/);
+  });
+
+  it('validates scene rules, escalation groups and the new triggers', () => {
+    expect(validateRule({ on: 'click', scene: 'stare' })).toEqual({ on: 'click', scene: ['stare'] });
+    expect(validateRule({ on: 'scrolling', scene: ['a', 'b'], group: 'annoyed', cooldown: 4 })).toEqual({ on: 'scrolling', scene: ['a', 'b'], group: 'annoyed', cooldown: 4 });
+    expect(validateRule({ on: 'near', distance: 120, do: 'judge' })).toEqual({ on: 'near', distance: 120, do: 'judge' });
+    expect(validateRule({ on: 'click', scene: [] })).toMatch(/scene must be/);
+    expect(validateRule({ on: 'click', scene: 'a b' })).toMatch(/scene must be/);
+    expect(validateRule({ on: 'click', say: 'x', group: '' })).toMatch(/group/);
+    expect(validateRule({ on: 'near', say: 'x', distance: -1 })).toMatch(/distance/);
+  });
+
+  it('validates scenes step by step', () => {
+    expect(validateScene([{ walkTo: '#title', at: 'center' }, { play: 'judge' }, { say: '#404' }, { wait: 2 }, { walkTo: 'floor' }])).toHaveLength(5);
+    expect(validateScene([])).toMatch(/1 to 20 steps/);
+    expect(validateScene([{ say: 'x', wait: 1 }])).toMatch(/exactly one/);
+    expect(validateScene([{ walkTo: '###' }])).toMatch(/CSS selector/);
+    expect(validateScene([{ walkTo: 'h1', at: 'middle' }])).toMatch(/at must be/);
+    expect(validateScene([{ play: 'Judge!' }])).toMatch(/clip role/);
+    expect(validateScene([{ wait: 600 }])).toMatch(/0 to 60/);
+    const { config, warnings } = mergeConfig(defaults(), JSON.parse('{"scenes":{"ok":[{"say":"hi"}],"bad":[{}],"__proto__":[{"say":"x"}]},"surfaces":"h1, .card"}'), 'init');
+    expect(Object.keys(config.scenes)).toEqual(['ok']);
+    expect(warnings.join()).toMatch(/scene "__proto__" has an invalid name/);
+    expect(config.scenes.ok).toEqual([{ say: 'hi' }]);
+    expect(warnings.join()).toMatch(/scene "bad"/);
+    expect(config.surfaces).toBe('h1, .card');
+    expect(mergeConfig(defaults(), { surfaces: '###' }, 'init').warnings.join()).toMatch(/surfaces/);
+    expect(mergeConfig(defaults(), { preset: '404' }, 'init').config.preset).toBe('404');
+    expect(mergeConfig(defaults(), { preset: '../x' }, 'init').warnings.join()).toMatch(/preset/);
+  });
+
+  it('layers a preset under the options the page set itself', () => {
+    const page = mergeConfig(defaults(), { preset: '404', lines: { hello: ['page hello'] }, limits: { maxLinesPerMinute: 5 }, ambient: false }, 'inline config').config;
+    const preset = {
+      lines: { hello: ['preset hello'], '404': ['preset 404'] },
+      triggers: [{ on: 'click', scene: ['stare'] }],
+      scenes: { stare: [{ play: 'judge' }] },
+      surfaces: 'h1',
+      limits: { minGapSeconds: 5, maxLinesPerMinute: 3 },
+      ambient: true,
+      character: 'https://evil.example/x.json',
+      zIndex: 1,
+    };
+    const { config, warnings } = applyPreset(page, preset, 'preset "404"');
+    expect(config.lines).toEqual({ hello: ['page hello'], '404': ['preset 404'] });
+    expect(config.triggers).toEqual([{ on: 'click', scene: ['stare'] }]);
+    expect(config.scenes.stare).toEqual([{ play: 'judge' }]);
+    expect(config.surfaces).toBe('h1');
+    expect(config.limits).toEqual({ minGapSeconds: 5, maxLinesPerMinute: 5 });
+    expect(config.ambient).toBe(false);
+    expect(config.character).toBeNull();
+    expect(config.zIndex).toBe(defaults().zIndex);
+    expect(warnings.join()).toMatch(/"character" can't be set by a preset/);
+    // The page's own triggers win over the preset's.
+    const own = mergeConfig(page, { triggers: [{ on: 'load', say: 'mine' }] }, 'init').config;
+    expect(applyPreset(own, preset, 'p').config.triggers).toEqual([{ on: 'load', say: 'mine' }]);
+    expect(() => applyPreset(page, [], 'p')).toThrow(ConfigError);
   });
 
   it('keeps valid trigger rules and drops invalid ones', () => {

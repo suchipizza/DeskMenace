@@ -13,7 +13,7 @@ One page instance shows at most one character. Calling `init()` again updates it
 | `ready` | `Promise<void>` | Resolves once the character has entered, or once it is clear it won't (disabled, removed by the visitor, failed). Never rejects |
 | `init(config?)` | `Promise<void>` | Starts or reconfigures. Calls are serialised. A visitor's earlier removal is respected: `init()` won't bring the character back. Never rejects; problems arrive as `error` events |
 | `say(textOrTag)` | `Promise<boolean>` | Shows a line, or a random line from `#pool`. Resolves `true` after the bubble has been shown, `false` if muted, removed, hidden tab, reduced to nothing, or busy with something more important (being removed) |
-| `do(behaviour)` | `Promise<boolean>` | Runs `walk`, `idle`, `judge`, `say`, `react-clicks` or `leave`. `false` for unknown, disabled or unavailable behaviours (for example `judge` on a character without a stare clip). `enter` and `drag` are driven by page load and the visitor |
+| `do(behaviour)` | `Promise<boolean>` | Runs `walk`, `idle`, `judge`, `say`, `react-clicks` or `leave`, or a [scene](configuration.md#scenes) by name. Resolves when it has finished. `false` for unknown, disabled or unavailable behaviours (for example `judge` on a character without a stare clip). `enter` and `drag` are driven by page load and the visitor |
 | `mute()` / `unmute()` | — | Hides speech for this browser session. The character keeps moving |
 | `dismiss()` | — | Same as the visitor choosing *Remove*: stored immediately, then the character walks off |
 | `reset()` | — | Clears removal and mute and starts again. For demos, settings pages and your own "bring him back" button; never called automatically |

@@ -103,6 +103,8 @@ export interface CharacterManifest {
   bubble?: { anchor?: [number, number] };
   menu?: { credit?: CreditLink | null };
   lines?: Record<string, LineEntry[]>;
+  /** Ready-made configurations: preset name -> JSON file URL (relative to the manifest). */
+  presets?: Record<string, string>;
   clips: Record<string, ClipManifest>;
 }
 
@@ -118,7 +120,9 @@ export type TriggerKind =
   | 'exit'
   | 'gary-click'
   | 'time'
-  | 'event';
+  | 'event'
+  | 'scrolling'
+  | 'near';
 
 export interface TriggerRule {
   on: TriggerKind;
@@ -133,9 +137,18 @@ export interface TriggerRule {
   event?: string;
   /** Number of clicks for `gary-click`. */
   count?: number;
+  /** Distance in CSS px between the pointer and the character for `near` (default 80). */
+  distance?: number;
   /** Line text, or `#pool` to pick from a line pool. */
   say?: string;
   do?: BehaviorId;
+  /**
+   * Scene to play. With several names, each firing plays the next one and the last repeats
+   * (escalation).
+   */
+  scene?: string[];
+  /** Rules with the same group share one escalation step. */
+  group?: string;
   /** 0..1 probability that the rule fires when triggered. */
   chance?: number;
   /** Seconds before the rule may fire again. */
@@ -144,12 +157,28 @@ export interface TriggerRule {
   maxPerSession?: number;
 }
 
+/** One step of a scene. Each step has exactly one action. */
+export interface SceneStep {
+  /** CSS selector of an element to walk to and stand on, or "floor". */
+  walkTo?: string;
+  /** Where on the element to stop (default "center"). */
+  at?: 'center' | 'left' | 'right' | 'random';
+  /** Line text or `#pool`. */
+  say?: string;
+  /** Clip role to play once, e.g. "judge", "judge.pointer", "idle.variant". */
+  play?: string;
+  /** Seconds to stand still. */
+  wait?: number;
+}
+
 export interface GaryConfig {
   schemaVersion?: 1;
   /** Set to false to keep the character off the page. */
   enabled?: boolean;
   /** Character manifest URL. */
   character?: string;
+  /** Name of a ready-made set of lines, scenes and triggers offered by the character. */
+  preset?: string;
   behaviours?: BehaviorId[];
   /** Line pools used for ambient chatter. */
   packs?: string[];
@@ -157,6 +186,10 @@ export interface GaryConfig {
   lines?: Record<string, LineEntry[]>;
   vars?: Record<string, string>;
   triggers?: TriggerRule[];
+  /** Named sequences of steps that triggers and `Gary.do()` can play. */
+  scenes?: Record<string, SceneStep[]>;
+  /** CSS selector of page elements the character may wander onto and stand on. */
+  surfaces?: string;
   limits?: { minGapSeconds?: number; maxLinesPerMinute?: number };
   position?: { side?: 'left' | 'right' };
   /** Override the character's display height in CSS pixels. */
@@ -165,6 +198,8 @@ export interface GaryConfig {
   announce?: boolean;
   /** Ambient behaviour: random walks, glances and chatter. */
   ambient?: boolean;
+  /** How often ambient behaviour happens: "calm", "normal" or "busy" (wanders a lot). */
+  pace?: 'calm' | 'normal' | 'busy';
   /** Seconds without visitor input after which the idle animation pauses to save CPU (0 = never). */
   restAfter?: number;
   /**
@@ -180,20 +215,26 @@ export interface GaryConfig {
 export interface ResolvedConfig {
   enabled: boolean;
   character: string | null;
+  preset: string | null;
   behaviours: BehaviorId[];
   packs: string[];
   lines: Record<string, LineEntry[]>;
   vars: Record<string, string>;
   triggers: TriggerRule[];
+  scenes: Record<string, SceneStep[]>;
+  surfaces: string | null;
   limits: { minGapSeconds: number; maxLinesPerMinute: number };
   position: { side: 'left' | 'right' };
   height: number | null;
   announce: boolean;
   ambient: boolean;
+  pace: 'calm' | 'normal' | 'busy';
   restAfter: number;
   quality: 'auto' | 'standard' | 'high';
   menu: { credit: CreditLink | false | null };
   zIndex: number;
+  /** Options set by the page (top-level keys and `limits.*`), which a preset never overrides. */
+  explicit: string[];
 }
 
 // ---------------------------------------------------------------- API

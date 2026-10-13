@@ -110,3 +110,27 @@ test('all behaviours run on the default character', async ({ page }) => {
   expect(d.player.rgbaBytes).toBeLessThanOrEqual(30 * 1024 * 1024 * density * density);
   expect(d.frame.mirrored).toBe(false);
 });
+
+test('the 404 example: Gary walks onto the 404, speaks, and escalates on clicks', async ({ page }) => {
+  await page.goto('/examples/404/');
+  await page.evaluate(() => {
+    (window as any).__spoke = [];
+  });
+  await page.waitForFunction(() => (window as any).Gary?.on, null, { timeout: 10_000 });
+  await page.evaluate(() => (window as any).Gary.on('spoke', (l: string) => (window as any).__spoke.push(l)));
+  await page.waitForFunction(() => (window as any).__spoke.length === 1, null, { timeout: 30_000 });
+  const d = await debug(page);
+  expect(d.surface).toBe('h1');
+  const preset = await (await page.request.get('/characters/gary/presets/404.json')).json();
+  expect(preset.lines['404']).toContain((await page.evaluate(() => (window as any).__spoke))[0]);
+  // First click: a stare. Second click (after the cooldown): a stare and a new line.
+  // Clicks during the arrival scene are ignored, so wait for it to end.
+  await page.waitForFunction(() => (window as any).Gary._debug().scene === null, null, { timeout: 15_000 });
+  await page.mouse.click(40, 40);
+  await page.waitForFunction(() => (window as any).Gary._debug().scene === 'stare');
+  await page.waitForFunction(() => (window as any).Gary._debug().scene === null, null, { timeout: 15_000 });
+  await page.waitForTimeout(3100);
+  await page.mouse.click(40, 40);
+  await page.waitForFunction(() => (window as any).__spoke.length === 2, null, { timeout: 20_000 });
+  expect(preset.lines['404-again']).toContain((await page.evaluate(() => (window as any).__spoke))[1]);
+});

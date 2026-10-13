@@ -1,0 +1,272 @@
+import { expect, test, type Page } from '@playwright/test';
+import { canvasBox, debug, SAMPLE, surfacesUrl, waitState } from './helpers';
+
+// Standing on page elements, scenes, presets and the visitor-reaction triggers, with Mugsy
+// (170 px tall) on a 1280 x 720 viewport. #target (top 400) fits; #high (top 60) does not.
+
+const QUIET = { ambient: false, triggers: [] };
+
+async function boot(page: Page, q: Record<string, unknown>): Promise<void> {
+  await page.goto(surfacesUrl({ char: SAMPLE, ...q }));
+  await waitState(page, 'idle');
+}
+
+function rect(page: Page, sel: string) {
+  return page.evaluate((s) => {
+    const r = document.querySelector(s)!.getBoundingClientRect();
+    return { left: r.left, right: r.right, top: r.top };
+  }, sel);
+}
+
+/** Waits until the character stands still on `surface` (null = floor). */
+async function settledOn(page: Page, surface: string | null, timeout = 15_000): Promise<void> {
+  await page.waitForFunction((s) => {
+    const d = (window as any).Gary._debug();
+    return d && d.surface === s && d.state === 'idle' && d.activity === null;
+  }, surface, { timeout });
+}
+
+const feetY = async (page: Page) => {
+  const b = await canvasBox(page);
+  return b.y + b.h;
+};
+
+test.describe('standing on page elements', () => {
+  test('a scene walks to an element, gets onto it, judges and speaks', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, scenes: { go: [{ walkTo: '#target' }, { play: 'judge' }, { say: 'Up here.' }] } } });
+    expect(await page.evaluate(() => (window as any).Gary.do('go'))).toBe(true);
+    const d = await debug(page);
+    expect(d.surface).toBe('#target');
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['Up here.']);
+    const t = await rect(page, '#target');
+    // Mugsy's feet are at the bottom of the frame box.
+    expect(Math.abs((await feetY(page)) - t.top)).toBeLessThan(3);
+    expect(d.feetX).toBeGreaterThanOrEqual(t.left);
+    expect(d.feetX).toBeLessThanOrEqual(t.right);
+    // Hit testing still works up there.
+    const b = await canvasBox(page);
+    expect(await page.evaluate(([x, y]) => (window as any).Gary._hit(x, y), [b.x + b.w * 0.5, b.y + b.h * 0.55])).toBe(true);
+  });
+
+  test('an element without room above is reached from the floor below it', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, scenes: { go: [{ walkTo: '#high' }] } } });
+    await page.evaluate(() => (window as any).Gary.do('go'));
+    const d = await debug(page);
+    expect(d.surface).toBeNull();
+    const h = await rect(page, '#high');
+    expect(Math.abs(d.feetX - (h.left + h.right) / 2)).toBeLessThan(6);
+    expect(Math.abs((await feetY(page)) - 720)).toBeLessThan(3);
+  });
+
+  test('follows its element while the page scrolls and falls off when it leaves', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, scenes: { go: [{ walkTo: '#target' }] } } });
+    await page.evaluate(() => (window as any).Gary.do('go'));
+    await page.evaluate(() => window.scrollBy(0, 100));
+    await page.waitForTimeout(150);
+    expect((await debug(page)).surface).toBe('#target');
+    expect(Math.abs((await feetY(page)) - (await rect(page, '#target')).top)).toBeLessThan(3);
+    // #target now at 300: one more 200 px leaves no room above the head, so it falls.
+    await page.evaluate(() => window.scrollBy(0, 200));
+    await settledOn(page, null);
+    expect(Math.abs((await feetY(page)) - 720)).toBeLessThan(3);
+  });
+
+  test('goes from one element to another and back to the floor', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, scenes: { go: [{ walkTo: '#target', at: 'left' }, { walkTo: '#other' }, { walkTo: 'floor' }] } } });
+    const states: string[] = [];
+    await page.exposeFunction('__state', (s: string) => states.push(s));
+    await page.evaluate(() => (window as any).Gary.on('state', (s: string) => (window as any).__state(s)));
+    expect(await page.evaluate(() => (window as any).Gary.do('go'))).toBe(true);
+    expect((await debug(page)).surface).toBeNull();
+    expect(states).toContain('falling');
+    expect(Math.abs((await feetY(page)) - 720)).toBeLessThan(3);
+  });
+
+  test('dropped above an element after a drag, it lands on the element', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, surfaces: '#target' } });
+    const t = await rect(page, '#target');
+    const b = await canvasBox(page);
+    const start = { x: b.x + b.w * 0.5, y: b.y + b.h * 0.55 };
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    // Carry it above the middle of #target, feet ~60 px above the element.
+    const dx = (t.left + t.right) / 2 - (b.x + b.w / 2);
+    const dy = t.top - 60 - (b.y + b.h);
+    for (let i = 1; i <= 8; i++) await page.mouse.move(start.x + (dx * i) / 8, start.y + (dy * i) / 8);
+    await page.mouse.up();
+    await settledOn(page, '#target');
+    expect(Math.abs((await feetY(page)) - t.top)).toBeLessThan(3);
+  });
+
+  test('falls back to the floor when its element is removed or hidden', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, scenes: { go: [{ walkTo: '#target' }], other: [{ walkTo: '#other' }] } } });
+    await page.evaluate(() => (window as any).Gary.do('go'));
+    await page.evaluate(() => document.getElementById('target')!.remove());
+    await settledOn(page, null);
+    expect(Math.abs((await feetY(page)) - 720)).toBeLessThan(3);
+    await page.evaluate(() => (window as any).Gary.do('other'));
+    expect((await debug(page)).surface).toBe('#other');
+    await page.evaluate(() => (document.getElementById('other')!.style.display = 'none'));
+    await settledOn(page, null);
+    expect(Math.abs((await feetY(page)) - 720)).toBeLessThan(3);
+  });
+
+  test('moves with its element when the layout shifts without scrolling', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, scenes: { go: [{ walkTo: '#target' }] } } });
+    await page.evaluate(() => (window as any).Gary.do('go'));
+    await page.evaluate(() => (document.getElementById('target')!.style.top = '460px'));
+    // Caught by the once-a-second re-check (nothing scrolled or resized).
+    await expect.poll(async () => Math.abs((await feetY(page)) - 460), { timeout: 2500 }).toBeLessThan(3);
+  });
+
+  test('does not hop onto an element that scrolled away during the walk over', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, position: { side: 'left' }, scenes: { go: [{ walkTo: '#other' }] } } });
+    const done = page.evaluate(() => (window as any).Gary.do('go'));
+    await page.waitForFunction(() => (window as any).Gary._debug().state === 'walking');
+    await page.evaluate(() => window.scrollBy(0, 400));
+    await done;
+    await settledOn(page, null);
+    expect(Math.abs((await feetY(page)) - 720)).toBeLessThan(3);
+  });
+
+  test('a cancelled drag puts it back on the element it was picked up from', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, scenes: { go: [{ walkTo: '#target' }] } } });
+    await page.evaluate(() => (window as any).Gary.do('go'));
+    const before = (await debug(page)).feetX;
+    const b = await canvasBox(page);
+    const start = { x: b.x + b.w * 0.5, y: b.y + b.h * 0.55 };
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(start.x + 80, start.y + 60, { steps: 5 });
+    await waitState(page, 'dragging');
+    await page.keyboard.press('Escape');
+    await page.mouse.up();
+    await settledOn(page, '#target');
+    expect(Math.abs((await debug(page)).feetX - before)).toBeLessThan(2);
+  });
+
+  test('ambient wandering uses the configured surfaces', async ({ page }) => {
+    // Random timing: allow several ambient turns.
+    test.setTimeout(75_000);
+    await boot(page, { cfg: { triggers: [], surfaces: '#target, #other', pace: 'busy', restAfter: 0 } });
+    await page.waitForFunction(() => ['#target', '#other'].includes((window as any).Gary._debug()?.surface), null, { timeout: 60_000 });
+  });
+
+  test('reduced motion: scenes skip walking but still speak', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await boot(page, { cfg: { ...QUIET, scenes: { go: [{ walkTo: '#target' }, { say: 'Still here.' }] } } });
+    await page.evaluate(() => (window as any).Gary.do('go'));
+    expect((await debug(page)).surface).toBeNull();
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['Still here.']);
+  });
+});
+
+test.describe('visitor reactions', () => {
+  const lines = { a: ['first'], b: ['second'] };
+  const scenes = { stare: [{ play: 'judge' }, { say: '#a' }], annoyed: [{ say: '#b' }] };
+
+  test('clicks anywhere and scroll attempts escalate through one shared group', async ({ page }) => {
+    await boot(page, {
+      cfg: {
+        ...QUIET,
+        lines,
+        scenes,
+        limits: { minGapSeconds: 0, maxLinesPerMinute: 30 },
+        triggers: [
+          { on: 'click', scene: ['stare', 'annoyed'], group: 'v' },
+          { on: 'scrolling', scene: ['stare', 'annoyed'], group: 'v' },
+        ],
+      },
+    });
+    await page.mouse.click(40, 40);
+    await page.waitForFunction(() => (window as any).__spoke.length === 1);
+    await waitState(page, 'idle');
+    await page.waitForFunction(() => (window as any).Gary._debug().scene === null);
+    await page.mouse.move(640, 300);
+    await page.mouse.wheel(0, 200);
+    await page.waitForFunction(() => (window as any).__spoke.length === 2);
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['first', 'second']);
+  });
+
+  test('a scene started by the page does not cut into a running scene', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, lines, scenes: { long: [{ wait: 2 }, { say: '#a' }], other: [{ say: '#b' }] }, limits: { minGapSeconds: 0, maxLinesPerMinute: 30 }, triggers: [{ on: 'click', scene: 'other' }] } });
+    await page.evaluate(() => {
+      void (window as any).Gary.do('long');
+    });
+    await page.waitForFunction(() => (window as any).Gary._debug().scene === 'long');
+    await page.mouse.click(40, 40);
+    await page.waitForFunction(() => (window as any).__spoke.length === 1);
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['first']);
+  });
+
+  test('scenes started by triggers share the speech limits', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, lines, scenes: { talk: [{ say: '#a' }] }, limits: { minGapSeconds: 0, maxLinesPerMinute: 1 }, triggers: [{ on: 'click', scene: 'talk' }] } });
+    await page.mouse.click(40, 40);
+    await page.waitForFunction(() => (window as any).__spoke.length === 1);
+    await page.waitForFunction(() => (window as any).Gary._debug().scene === null, null, { timeout: 15_000 });
+    await page.mouse.click(40, 40);
+    await page.waitForTimeout(1500);
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['first']);
+    // The API isn't limited.
+    await page.evaluate(() => (window as any).Gary.do('talk'));
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['first', 'first']);
+  });
+
+  test('"scrolling" ignores scrolls the visitor did not cause', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, limits: { minGapSeconds: 0, maxLinesPerMinute: 30 }, triggers: [{ on: 'scrolling', say: 'Scrolled.' }] } });
+    await page.evaluate(() => window.scrollBy(0, 300));
+    await page.waitForTimeout(800);
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual([]);
+    await page.mouse.move(640, 300);
+    await page.mouse.wheel(0, 200);
+    await page.waitForFunction(() => (window as any).__spoke.length === 1);
+  });
+
+  test('the pointer coming near fires "near" once per approach', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, limits: { minGapSeconds: 0, maxLinesPerMinute: 30 }, triggers: [{ on: 'near', distance: 40, say: 'Personal space.' }] } });
+    const b = await canvasBox(page);
+    await page.mouse.move(20, 20);
+    await page.mouse.move(b.x - 20, b.y + b.h / 2, { steps: 5 });
+    await page.waitForFunction(() => (window as any).__spoke.length === 1);
+    await page.mouse.move(b.x - 10, b.y + b.h / 2);
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['Personal space.']);
+  });
+});
+
+test.describe('character presets', () => {
+  test('data-preset loads the character\'s 404 preset, which walks onto the 404 and speaks', async ({ page }) => {
+    const requests: string[] = [];
+    page.on('request', (r) => requests.push(r.url()));
+    await page.goto(surfacesUrl({ char: SAMPLE, preset: '404' }));
+    await page.waitForFunction(() => (window as any).__spoke.length >= 1, null, { timeout: 20_000 });
+    await settledOn(page, '#target');
+    expect(requests.some((u) => u.endsWith('/characters/sample/presets/404.json'))).toBe(true);
+    const sample = JSON.parse(await (await page.request.get('/characters/sample/presets/404.json')).text());
+    expect(sample.lines['404']).toContain((await page.evaluate(() => (window as any).__spoke))[0]);
+  });
+
+  test('switching presets with quick re-inits ends with the last one only', async ({ page }) => {
+    await boot(page, { preset: '404', cfg: QUIET });
+    const has = (n: string) => page.evaluate((name) => (window as any).Gary.do(name), n);
+    await page.evaluate(() => {
+      const G = (window as any).Gary;
+      void G.init({ preset: 'website', ambient: false, triggers: [] });
+      return G.init({ preset: 'staging', ambient: false, triggers: [] });
+    });
+    await page.waitForTimeout(500);
+    expect(await has('inspect')).toBe(true);
+    expect(await has('noticed')).toBe(false);
+    expect(await has('arrive')).toBe(false);
+  });
+
+  test('page options win over the preset; an unknown preset is ignored with a warning', async ({ page }) => {
+    const warnings: string[] = [];
+    page.on('console', (m) => m.type() === 'warning' && warnings.push(m.text()));
+    await boot(page, { preset: 'nope', cfg: QUIET });
+    expect(warnings.join()).toMatch(/has no preset "nope"/);
+    await boot(page, { preset: '404', cfg: { triggers: [], lines: { '404': ['mine'] } } });
+    await page.evaluate(() => (window as any).Gary.do('arrive'));
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['mine']);
+  });
+});

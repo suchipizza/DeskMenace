@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "lines": {
+    "hello": ["Oh. You're lost too?"],
+    "404": [
+      "Nothing here. I checked. Twice.",
+      "This page left. I'm still here. Draw your own conclusions.",
+      "Someone moved the page and didn't tell the mug."
+    ],
+    "404-again": [
+      "Clicking harder won't bring it back.",
+      "Still nothing. Like my cup.",
+      "Try the homepage. It's where pages live."
+    ]
+  },
+  "scenes": {
+    "arrive": [{ "walkTo": "[data-gary-404], h1", "at": "center" }, { "play": "judge" }, { "say": "#404" }],
+    "stare": [{ "play": "judge" }],
+    "annoyed": [{ "play": "judge" }, { "say": "#404-again" }]
+  },
+  "triggers": [
+    { "on": "load", "after": 1, "scene": "arrive", "once": true },
+    { "on": "click", "scene": ["stare", "annoyed"], "group": "visitor", "cooldown": 3 },
+    { "on": "scrolling", "scene": ["stare", "annoyed"], "group": "visitor", "cooldown": 3 },
+    { "on": "idle", "after": 40, "say": "#idle", "cooldown": 90 },
+    { "on": "exit", "say": "#exit", "maxPerSession": 1 }
+  ],
+  "limits": { "minGapSeconds": 6, "maxLinesPerMinute": 4 },
+  "pace": "calm"
+}

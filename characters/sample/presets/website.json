@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "surfaces": "h1, h2, img",
+  "lines": {
+    "scrolled": ["Scrolling. Bold choice.", "Wait for me."],
+    "noticed": ["Yes?", "I see you."]
+  },
+  "scenes": {
+    "scrolled": [{ "play": "judge" }, { "say": "#scrolled" }],
+    "glance": [{ "play": "judge.pointer" }],
+    "noticed": [{ "play": "judge" }, { "say": "#noticed" }]
+  },
+  "triggers": [
+    { "on": "load", "after": 1.5, "say": "#hello", "once": true },
+    { "on": "scrolling", "scene": "scrolled", "chance": 0.5, "cooldown": 45 },
+    { "on": "near", "distance": 60, "scene": "glance", "cooldown": 20 },
+    { "on": "gary-click", "count": 1, "scene": "noticed", "cooldown": 10 },
+    { "on": "idle", "after": 40, "say": "#idle", "cooldown": 90 },
+    { "on": "exit", "say": "#exit", "maxPerSession": 1 }
+  ]
+}

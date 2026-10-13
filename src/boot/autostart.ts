@@ -3,6 +3,7 @@
 //   <script defer src="gary.js"
 //           data-character="/characters/mine/character.json"   (optional manifest URL)
 //           data-config="/gary.json"                           (optional JSON config URL)
+//           data-preset="404"                                   (optional character preset)
 //           data-autostart="false"></script>                   (optional: wait for Gary.init())
 //   <script type="application/json" data-gary-config>{ ... }</script>   (optional inline JSON)
 
@@ -37,6 +38,7 @@ async function readLayers(script: HTMLScriptElement | null, opts: CreateOptions)
       apply(parseJsonConfig(await res.text(), 'data-config'), 'data-config');
     }
     if (script?.dataset.character) apply({ character: script.dataset.character }, 'data-character');
+    if (script?.dataset.preset) apply({ preset: script.dataset.preset }, 'data-preset');
   } catch (e) {
     console.warn(`[gary.js] ${(e as Error).message}`);
     cfg = { ...cfg, enabled: false };

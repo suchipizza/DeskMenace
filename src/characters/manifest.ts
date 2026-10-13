@@ -49,6 +49,8 @@ export interface Character {
   bubbleAnchor: [number, number];
   credit: CreditLink | null | undefined;
   lines: Map<string, LineEntry[]>;
+  /** Preset name -> absolute URL of its JSON file. */
+  presets: Map<string, string>;
   clips: Map<string, Clip>;
   /** role -> clip id, first clip in document order wins. */
   roles: Map<string, string>;
@@ -268,6 +270,19 @@ export function parseCharacter(input: unknown, manifestUrl: string): Character {
   // ---- lines
   const lines = parseLines(m.lines, 'lines', bad);
 
+  // ---- presets
+  const presets = new Map<string, string>();
+  if (m.presets !== undefined) {
+    if (!isObj(m.presets)) bad('presets', 'expected an object of preset name -> URL');
+    else
+      for (const [name, u] of Object.entries(m.presets).slice(0, 50)) {
+        // Presets carry selectors and triggers, so they must come from the manifest's own origin.
+        const url = /^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$/.test(name) && safeKey(name) ? safeHttpUrl(u, manifestUrl) : null;
+        if (url && new URL(url).origin === new URL(manifestUrl).origin) presets.set(name, url);
+        else bad(`presets.${name}`, 'expected a preset name and a URL on the same origin as the manifest');
+      }
+  }
+
   if (errs.length) throw new ManifestError(errs);
   return {
     id: m.id as string,
@@ -282,6 +297,7 @@ export function parseCharacter(input: unknown, manifestUrl: string): Character {
     bubbleAnchor,
     credit,
     lines,
+    presets,
     clips,
     roles,
     walk,
