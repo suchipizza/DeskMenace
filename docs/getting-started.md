@@ -18,7 +18,7 @@ Always pin a version (`@0.1.0`) in production so an update can't change your sit
 | `dist/gary.core.js` | Classic script, engine only. Starts when the page names a character (`data-character`) |
 | `dist/gary.mjs` | ES module (`import Gary from 'gary.js'`). Never starts on its own; call `init()` |
 
-All three are the same engine (about 24 KB gzipped). Character artwork is never bundled into the JavaScript; it is fetched from the character's folder.
+All three are the same engine (about 26 KB gzipped). Character artwork is never bundled into the JavaScript; it is fetched from the character's folder.
 
 ## 3. Optional: configure
 

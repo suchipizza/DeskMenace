@@ -98,7 +98,18 @@ describe('configuration', () => {
   });
 
   it('validates scenes step by step', () => {
-    expect(validateScene([{ walkTo: '#title', at: 'center' }, { play: 'judge' }, { say: '#404' }, { wait: 2 }, { walkTo: 'floor' }])).toHaveLength(5);
+    expect((validateScene([{ walkTo: '#title', at: 'center' }, { play: 'judge' }, { say: '#404' }, { wait: 2 }, { walkTo: 'floor' }]) as any).steps).toHaveLength(5);
+    expect(validateScene({ steps: [{ enter: 'left', y: 0.5 }, { walkTo: { x: 0.5 } }, { walkTo: { x: 0.3, y: 0.7 } }, { exit: 'right' }], interrupted: '#keep-going' })).toEqual({
+      steps: [{ enter: 'left', y: 0.5 }, { walkTo: { x: 0.5 } }, { walkTo: { x: 0.3, y: 0.7 } }, { exit: 'right' }],
+      interrupted: '#keep-going',
+    });
+    expect(validateScene([{ enter: 'up' }])).toMatch(/enter must be/);
+    expect(validateScene([{ enter: 'left', y: 2 }])).toMatch(/y must be/);
+    expect(validateScene([{ enter: 'left', on: '###' }])).toMatch(/on must be/);
+    expect(validateScene([{ walkTo: { x: 1.5 } }])).toMatch(/fractions/);
+    expect(validateScene([{ walkTo: {} }])).toMatch(/fractions/);
+    expect(validateScene({ steps: [{ say: 'x' }], extra: 1 })).toMatch(/unknown field/);
+    expect(validateScene({ steps: [{ say: 'x' }], interrupted: '' })).toMatch(/interrupted/);
     expect(validateScene([])).toMatch(/1 to 20 steps/);
     expect(validateScene([{ say: 'x', wait: 1 }])).toMatch(/exactly one/);
     expect(validateScene([{ walkTo: '###' }])).toMatch(/CSS selector/);
@@ -108,12 +119,26 @@ describe('configuration', () => {
     const { config, warnings } = mergeConfig(defaults(), JSON.parse('{"scenes":{"ok":[{"say":"hi"}],"bad":[{}],"__proto__":[{"say":"x"}]},"surfaces":"h1, .card"}'), 'init');
     expect(Object.keys(config.scenes)).toEqual(['ok']);
     expect(warnings.join()).toMatch(/scene "__proto__" has an invalid name/);
-    expect(config.scenes.ok).toEqual([{ say: 'hi' }]);
+    expect(config.scenes.ok).toEqual({ steps: [{ say: 'hi' }] });
     expect(warnings.join()).toMatch(/scene "bad"/);
     expect(config.surfaces).toBe('h1, .card');
     expect(mergeConfig(defaults(), { surfaces: '###' }, 'init').warnings.join()).toMatch(/surfaces/);
     expect(mergeConfig(defaults(), { preset: '404' }, 'init').config.preset).toBe('404');
     expect(mergeConfig(defaults(), { preset: '../x' }, 'init').warnings.join()).toMatch(/preset/);
+  });
+
+  it('validates entrance, dropTo, position and "during" rules', () => {
+    const { config, warnings } = mergeConfig(defaults(), { entrance: 'arrive', dropTo: 'here', position: { side: 'left', y: 0.5, x: [0.2, 0.8] } }, 'init');
+    expect(config.entrance).toBe('arrive');
+    expect(config.dropTo).toBe('here');
+    expect(config.position).toEqual({ side: 'left', y: 0.5, x: [0.2, 0.8] });
+    expect(warnings).toEqual([]);
+    const bad = mergeConfig(defaults(), { dropTo: 'up', position: { y: 3, x: [0.8, 0.2] } }, 'init').warnings.join();
+    expect(bad).toMatch(/dropTo/);
+    expect(bad).toMatch(/position.y/);
+    expect(bad).toMatch(/position.x/);
+    expect(validateRule({ on: 'click', say: '#keep-going', during: 'arrive' })).toEqual({ on: 'click', say: '#keep-going', during: 'arrive' });
+    expect(validateRule({ on: 'click', scene: 'x', during: 'arrive' })).toMatch(/can only "say"/);
   });
 
   it('layers a preset under the options the page set itself', () => {
@@ -131,7 +156,7 @@ describe('configuration', () => {
     const { config, warnings } = applyPreset(page, preset, 'preset "404"');
     expect(config.lines).toEqual({ hello: ['page hello'], '404': ['preset 404'] });
     expect(config.triggers).toEqual([{ on: 'click', scene: ['stare'] }]);
-    expect(config.scenes.stare).toEqual([{ play: 'judge' }]);
+    expect(config.scenes.stare).toEqual({ steps: [{ play: 'judge' }] });
     expect(config.surfaces).toBe('h1');
     expect(config.limits).toEqual({ minGapSeconds: 5, maxLinesPerMinute: 5 });
     expect(config.ambient).toBe(false);

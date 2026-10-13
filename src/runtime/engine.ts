@@ -10,7 +10,7 @@
 // The character stands on the floor or on a page element ("surface"). Scenes (named step lists
 // from the configuration or a character preset) walk it to elements, play clips and show lines.
 
-import type { BehaviorId, CreditLink, ResolvedConfig, SceneStep, TriggerRule } from '../types';
+import type { BehaviorId, CreditLink, ResolvedConfig, SceneDef, SceneStep, ScreenPoint, TriggerRule } from '../types';
 import { BEHAVIORS } from '../types';
 import { parseCharacter, type Character } from '../characters/manifest';
 import { ClipLoadError, ClipPlayer, type PlayResult } from '../render/clip-player';
@@ -35,6 +35,7 @@ export type State =
   | 'dragging'
   | 'falling'
   | 'leaving'
+  | 'away'
   | 'dismissed'
   | 'destroyed'
   | 'failed';
@@ -90,7 +91,12 @@ export class Engine {
   private clicks: number[] = [];
   private grab = { dx: 0, dy: 0 };
   /** Where a drag started, to put the character back if the drag is cancelled. */
-  private dragFrom: { surface: Element | null; feetX: number } = { surface: null, feetX: 0 };
+  private dragFrom: { surface: Element | null; line: number | null; feetX: number } = { surface: null, line: null, feetX: 0 };
+  /** A scene cut by a drag, to carry on with after the drop. */
+  private resume: { name: string; step: number; prio: Priority } | null = null;
+  /** Off screen after an `exit` step (not removed: a scene can bring it back). */
+  private away = false;
+  private lastSurfaceTop = NaN;
   private surfaceObserver: ResizeObserver | null = null;
   private observed: Element | null = null;
   private surfaceRaf = 0;
@@ -99,7 +105,7 @@ export class Engine {
   /** Escalation step per rule group (or per rule). */
   private readonly stages = new Map<unknown, number>();
   /** The scene running as the current activity, if any. */
-  private sceneRun: { name: string; token: Token } | null = null;
+  private sceneRun: { name: string; token: Token; step: number; prio: Priority } | null = null;
   /** Fetched preset files by name (null = unavailable). */
   private readonly presetCache = new Map<string, unknown>();
   private contentGen = 0;
@@ -232,7 +238,7 @@ export class Engine {
       remove: () => this.events.emit('_remove'),
     });
     this.input = new Input(overlay, this.player, {
-      interactive: () => this.alive && this.state !== 'leaving' && this.state !== 'loading',
+      interactive: () => this.alive && this.state !== 'leaving' && this.state !== 'loading' && !this.away,
       canDrag: () => this.enabled('drag') && !this.reduced,
       dragStart: (x, y) => this.dragStart(x, y),
       dragMove: (x, y) => this.dragMove(x, y),
@@ -360,6 +366,9 @@ export class Engine {
   private async run(prio: Priority, state: State, fn: (t: Token) => Promise<void | boolean>): Promise<boolean> {
     if (!this.alive || !this.overlay) return false;
     if (this.activity && this.activity.prio > prio) return false;
+    const cut = this.sceneRun;
+    if (prio === PRIORITY.drag && cut && this.activity?.token === cut.token && !cut.token.cancelled) this.resume = { name: cut.name, step: cut.step, prio: cut.prio };
+    else if (prio > PRIORITY.drop) this.resume = null;
     if (this.activity) cancel(this.activity.token);
     this.overlay.stopMove();
     window.clearTimeout(this.ambientTimer);
@@ -378,7 +387,11 @@ export class Engine {
     }
     if (this.activity === act) {
       this.activity = null;
-      if (this.alive) this.idle();
+      const r = this.resume;
+      if (r && prio === PRIORITY.drop && this.alive) {
+        this.resume = null;
+        void this.scene(r.name, r.prio, r.step, true);
+      } else if (this.alive) this.idle();
     }
     return ok !== false && !token.cancelled;
   }
@@ -402,6 +415,11 @@ export class Engine {
   /** Base state: idle loop (or still poster with reduced motion), ambient scheduler armed. */
   private idle(): void {
     if (!this.player || !this.character) return;
+    if (this.away) {
+      this.setState('away');
+      this.player.pause();
+      return;
+    }
     this.setState('idle');
     if (document.visibilityState === 'hidden') {
       this.scheduleAmbient();
@@ -442,6 +460,15 @@ export class Engine {
   private async enter(): Promise<void> {
     const ov = this.overlay!;
     const side = this.config.position.side;
+    const entrance = this.config.entrance ? this.sceneDef(this.config.entrance) : null;
+    if (entrance && entrance.steps[0].enter && this.enabled('enter')) {
+      // The entrance scene brings the character in itself (its first step is `enter`).
+      this.setState('idle');
+      this.entered();
+      void this.scene(this.config.entrance!, PRIORITY.api);
+      return;
+    }
+    if (this.config.position.y !== null) ov.line = this.lineFor(this.config.position.y);
     const [lo, hi] = ov.range();
     const inset = Math.min(48, Math.max(0, (hi - lo) / 4));
     const target = side === 'right' ? hi - inset : lo + inset;
@@ -468,6 +495,16 @@ export class Engine {
     });
     ov.show();
     this.entered();
+    // An entrance scene without its own `enter` step plays once the character is in.
+    if (entrance) void this.scene(this.config.entrance!, PRIORITY.api);
+  }
+
+  /** Feet line that puts the body's middle at `y` (fraction of the viewport height), on screen. */
+  private lineFor(y: number): number {
+    const ov = this.overlay!;
+    const h = this.standH();
+    const feet = Math.min(ov.floorY, Math.max(h + HEAD_ROOM, y * ov.viewportH + h / 2));
+    return ov.lineAt(feet);
   }
 
   private entered(): void {
@@ -487,7 +524,13 @@ export class Engine {
     const ch = this.character;
     const ov = this.overlay;
     if (!ch || !ov || this.reduced || (!ch.walk.left && !ch.walk.right)) return Promise.resolve(false);
-    const [lo, hi] = ov.range();
+    let [lo, hi] = ov.range();
+    if (x === undefined && !ov.surface) {
+      // Ambient walks stay inside position.x (fractions of the screen width).
+      const [a, b] = this.config.position.x;
+      lo = Math.max(lo, a * ov.viewportW);
+      hi = Math.min(hi, b * ov.viewportW);
+    }
     if (hi - lo < 40) return Promise.resolve(false);
     let target = x;
     if (target === undefined) {
@@ -504,18 +547,88 @@ export class Engine {
     return this.run(prio, 'walking', (t) => this.stroll(target!, t));
   }
 
-  /** Walks along the current ground to feet x (clamped). Resolves false when interrupted. */
-  private async stroll(x: number, t: Token): Promise<boolean> {
+  /**
+   * Walks to feet x (clamped to the ground's range). With `to`, it walks onto that ground: an
+   * element or a line at another height, diagonally. Resolves false when interrupted.
+   */
+  private async stroll(x: number, t: Token, to?: { surface: Element | null; line: number | null }): Promise<boolean> {
     const ch = this.character!;
     const ov = this.overlay!;
-    const [lo, hi] = ov.range();
+    const [lo, hi] = ov.range(to ? to.surface : ov.surface);
     const target = hi < lo ? ov.feetX : Math.min(hi, Math.max(lo, x));
-    const walk = ch.walk[target < ov.feetX ? 'left' : 'right'];
-    if (!walk || Math.abs(target - ov.feetX) < 4) return !t.cancelled;
+    const dy = to ? ov.groundY(to.surface, to.line) - (ov.groundY() - ov.lift) : 0;
+    if (Math.abs(target - ov.feetX) < 4 && Math.abs(dy) < 4) {
+      if (to && !t.cancelled) ov.jump(to.surface, ov.feetX, 0, 0, to.line);
+      return !t.cancelled;
+    }
+    const dir = target < ov.feetX - 1 ? 'left' : 'right';
+    const walk = ch.walk[dir] ?? ch.walk[dir === 'left' ? 'right' : 'left'];
+    if (!walk) return !t.cancelled;
     this.setState('walking');
     void this.player!.play(walk.clip, { loop: true, mirrored: walk.mirrored }).catch(() => {});
     if (t.cancelled) return false;
-    return (await ov.moveTo(target, this.speed())) === 'arrived' && !t.cancelled;
+    return (await ov.moveTo(target, this.speed(), to)) === 'arrived' && !t.cancelled;
+  }
+
+  /** Walks off one side of the screen and stays away. */
+  private async exitTo(side: 'left' | 'right', t: Token): Promise<void> {
+    const ch = this.character!;
+    const ov = this.overlay!;
+    if (ov.surface) {
+      // Leave the element at its height; walking past its edges is fine off the page's grid.
+      ov.line = ov.lineAt(ov.groundY());
+      ov.surface = null;
+    }
+    const walk = ch.walk[side] ?? ch.walk[side === 'left' ? 'right' : 'left'];
+    if (walk && !this.reduced) {
+      this.setState('walking');
+      void this.player!.play(walk.clip, { loop: true, mirrored: walk.mirrored }).catch(() => {});
+      if ((await ov.moveTo(ov.offscreenX(side), this.speed())) !== 'arrived' || t.cancelled) return;
+    }
+    this.bubble?.hide();
+    ov.hide();
+    this.away = true;
+    this.setState('away');
+  }
+
+  /** Puts the character just outside one side of the screen at the start of a scene. */
+  private enterFrom(step: SceneStep): void {
+    const ov = this.overlay!;
+    ov.stopMove();
+    let line = this.lineFor(step.y ?? 0.5);
+    if (step.on) {
+      const el = this.firstFitting(step.on);
+      if (el && this.fits(el)) line = ov.lineAt(surfaceRect(el).top);
+    }
+    ov.surface = null;
+    ov.line = line;
+    ov.lift = 0;
+    this.away = false;
+    if (this.reduced) {
+      ov.feetX = ov.viewportW * (step.enter === 'left' ? 0.25 : 0.75);
+      ov.clampX();
+      void this.player?.showFrame(this.character!.poster.clip, this.character!.poster.frame);
+    } else ov.feetX = ov.offscreenX(step.enter!);
+    ov.place();
+    ov.show();
+  }
+
+  private firstFitting(selector: string): Element | null {
+    let all: Element[] = [];
+    try {
+      all = [...document.querySelectorAll(selector)].slice(0, MAX_SURFACES);
+    } catch {
+      /* validated already */
+    }
+    return all.find((e) => this.fits(e)) ?? all[0] ?? null;
+  }
+
+  /** Walks to a point on the screen ({ x, y } fractions; a missing one stays as it is). */
+  private walkToPoint(p: ScreenPoint, t: Token): Promise<boolean> {
+    const ov = this.overlay!;
+    const x = p.x !== undefined ? p.x * ov.viewportW : ov.feetX;
+    if (p.y === undefined) return this.stroll(x, t);
+    return this.stroll(x, t, { surface: null, line: this.lineFor(p.y) });
   }
 
   // ------------------------------------------------------------------ surfaces
@@ -534,7 +647,7 @@ export class Engine {
     if (box.width < 24 || box.height <= 0) return false;
     const r = surfaceRect(el);
     if (r.right - r.left < 24) return false;
-    if (r.top < this.standH() + HEAD_ROOM || r.top > ov.groundY(null) - this.standH() / 3) return false;
+    if (r.top < this.standH() + HEAD_ROOM || r.top > ov.floorY - this.standH() / 3) return false;
     const [lo, hi] = ov.range(el);
     return hi >= lo;
   }
@@ -560,26 +673,20 @@ export class Engine {
   }
 
   /**
-   * Goes to `el` (null = the floor) and stops at `at`. From the floor the character walks below
-   * the spot, then is lifted up (held pose); getting down is a fall. If the element can't hold
-   * the character, it walks to the spot below it on the floor instead.
+   * Walks to `el` (null = the floor) and stops at `at`, diagonally if it is at another height.
+   * If the element can't hold the character, it walks to the spot level with it instead.
    */
   private async goTo(el: Element | null, at: SceneStep['at'], t: Token): Promise<boolean> {
     const ov = this.overlay!;
     if (el && !this.fits(el)) {
-      // Too high, too low or off screen: stand below it on the floor.
       const r = surfaceRect(el);
       const w = r.right - r.left;
       const x = at === 'left' ? r.left + w * 0.1 : at === 'right' ? r.right - w * 0.1 : at === 'random' ? r.left + Math.random() * w : r.left + w / 2;
-      if (ov.surface && !(await this.hopTo(null, ov.feetX, t))) return false;
       return this.stroll(x, t);
     }
-    if (el === ov.surface) return this.stroll(this.pickX(el, at), t);
     const x = this.pickX(el, at);
-    if (!el && !ov.surface) return this.stroll(x, t);
-    if (!el) return (await this.hopTo(null, Math.min(Math.max(ov.feetX, ov.range(null)[0]), ov.range(null)[1]), t)) && this.stroll(x, t);
-    if (!ov.surface && !(await this.stroll(x, t))) return false;
-    return this.hopTo(el, x, t);
+    if (el === ov.surface && (el || ov.line === null)) return this.stroll(x, t);
+    return this.stroll(x, t, { surface: el, line: null });
   }
 
   /** Lifts the character onto `el`, or drops it onto the floor (el = null). */
@@ -633,15 +740,16 @@ export class Engine {
       this.observed = el;
     }
     if (this.fits(el)) {
-      if (ov.moving && this.activity) {
-        // A walk along the element can't follow the scroll: stop where it is.
-        ov.stopMove();
-      }
+      const top = surfaceRect(el).top;
+      if (Math.abs(top - this.lastSurfaceTop) < 0.5) return;
+      this.lastSurfaceTop = top;
+      // A walk in progress finishes first; it settles onto the element's new position at the end.
+      if (ov.moving) return;
       ov.place();
       this.bubble?.position();
       return;
     }
-    const below = !usable(el) || surfaceRect(el).top >= ov.groundY(null) - this.standH() / 3;
+    const below = !usable(el) || surfaceRect(el).top >= ov.floorY - this.standH() / 3;
     if (below || this.reduced) {
       ov.stopMove();
       ov.surface = null;
@@ -668,16 +776,33 @@ export class Engine {
 
   // ------------------------------------------------------------------ scenes
 
-  /** Plays a named scene from the configuration. */
-  scene(name: string, prio: Priority): Promise<boolean> {
-    const steps = Object.prototype.hasOwnProperty.call(this.config.scenes, name) ? this.config.scenes[name] : null;
-    if (!steps || !this.alive || !this.character || this.state === 'loading' || this.state === 'entering') return Promise.resolve(false);
+  private sceneDef(name: string): SceneDef | null {
+    return Object.prototype.hasOwnProperty.call(this.config.scenes, name) ? this.config.scenes[name] : null;
+  }
+
+  /**
+   * Plays a named scene from the configuration. `resumed`: carrying on after a drag from step
+   * `from` (an `enter` step there is skipped), after the scene's `interrupted` line.
+   */
+  scene(name: string, prio: Priority, from = 0, resumed = false): Promise<boolean> {
+    const def = this.sceneDef(name);
+    if (!def || !this.alive || !this.character || this.state === 'loading' || this.state === 'entering') return Promise.resolve(false);
     if (document.visibilityState === 'hidden') return Promise.resolve(false);
     return this.run(prio, 'idle', async (t) => {
-      const mine = (this.sceneRun = { name, token: t });
+      const mine = (this.sceneRun = { name, token: t, step: from, prio });
       try {
-        for (const step of steps) {
+        if (resumed && def.interrupted) {
+          const text = this.book.resolve(def.interrupted);
+          if (text) {
+            this.standStill();
+            await this.showLine(text, false);
+          }
+        }
+        for (let i = from; i < def.steps.length; i++) {
           if (t.cancelled || !this.alive) return;
+          const step = def.steps[i];
+          if (resumed && step.enter) continue;
+          mine.step = i;
           await this.sceneStep(step, t, prio);
         }
       } finally {
@@ -693,30 +818,35 @@ export class Engine {
   }
 
   private async sceneStep(step: SceneStep, t: Token, prio: Priority): Promise<void> {
-    if (step.walkTo !== undefined) {
+    if (step.enter !== undefined) {
+      this.enterFrom(step);
+    } else if (step.exit !== undefined) {
+      await this.exitTo(step.exit, t);
+    } else if (step.walkTo !== undefined) {
+      if (this.away) return;
       if (this.reduced || !this.enabled('walk')) return;
+      if (typeof step.walkTo === 'object') {
+        await this.walkToPoint(step.walkTo, t);
+        if (!t.cancelled) this.standStill();
+        return;
+      }
       let el: Element | null = null;
       if (step.walkTo !== 'floor') {
-        // The first match that can hold the character, else the first match (reached from below).
-        let all: Element[] = [];
-        try {
-          all = [...document.querySelectorAll(step.walkTo)].slice(0, MAX_SURFACES);
-        } catch {
-          /* validated already */
-        }
-        el = all.find((e) => this.fits(e)) ?? all[0] ?? null;
+        // The first match that can hold the character, else the first match (walks level with it).
+        el = this.firstFitting(step.walkTo);
         if (!el) return;
       }
       await this.goTo(el, step.at, t);
       if (!t.cancelled) this.standStill();
     } else if (step.say !== undefined) {
+      if (this.away) return;
       const text = this.book.resolve(step.say);
       if (!text) return;
       this.standStill();
       // Scenes started by the page share the speech limits; API scenes don't.
       await this.showLine(text, prio < PRIORITY.api);
     } else if (step.play !== undefined) {
-      if (!this.has(step.play) || this.reduced) return;
+      if (!this.has(step.play) || this.reduced || this.away) return;
       this.setState('judging');
       await this.playRole(step.play, { loop: false });
       if (!t.cancelled) this.standStill();
@@ -735,6 +865,7 @@ export class Engine {
 
   /** Idle loop inside an activity (without ending it). */
   private standStill(): void {
+    if (this.away) return;
     this.setState('idle');
     if (this.reduced) void this.player?.showFrame(this.character!.poster.clip, this.character!.poster.frame);
     else if (this.player?.getCurrentFrame().clip !== this.character!.roles.get('idle')) void this.playRole('idle', { loop: true });
@@ -809,8 +940,9 @@ export class Engine {
       const goodbye = this.book.pick('leave');
       if (goodbye && !prefs.isMuted() && this.enabled('say')) void this.bubble?.show(interpolate(goodbye, this.vars()), 1800);
       if (ov.surface) {
-        await ov.jump(null, Math.min(Math.max(ov.feetX, ov.range(null)[0]), ov.range(null)[1]), 300, 0);
-        this.setState('leaving');
+        // Walks off at the height of the element it stood on.
+        ov.line = ov.lineAt(ov.groundY());
+        ov.surface = null;
       }
       void this.player!.play(walk.clip, { loop: true, mirrored: walk.mirrored }).catch(() => {});
       if (t.cancelled) return;
@@ -848,7 +980,8 @@ export class Engine {
 
   /** Runs a behaviour by id. Resolves false for unknown, disabled or unavailable behaviours. */
   async do(id: string, prio: Priority = PRIORITY.api): Promise<boolean> {
-    if (!(BEHAVIORS as readonly string[]).includes(id) && Object.prototype.hasOwnProperty.call(this.config.scenes, id)) return this.scene(id, prio);
+    if (!(BEHAVIORS as readonly string[]).includes(id) && this.sceneDef(id)) return this.scene(id, prio);
+    if (this.away) return false; // only a scene (with an `enter` step) brings it back
     if (UNSUPPORTED.has(id) || !(BEHAVIORS as readonly string[]).includes(id)) return false;
     const b = id as BehaviorId;
     if (!this.enabled(b) || !this.alive || !this.character || this.state === 'loading' || this.state === 'entering') return false;
@@ -890,7 +1023,15 @@ export class Engine {
   // ------------------------------------------------------------------ triggers & ambient
 
   private onRule(rule: TriggerRule, target: Element | null): boolean {
-    if (!this.alive || this.state === 'leaving') return false;
+    if (!this.alive || this.state === 'leaving' || this.away) return false;
+    if (rule.during) {
+      // A remark while the scene goes on, unless a line is already showing.
+      if (this.scenePlaying !== rule.during || this.bubble?.visible || !rule.say) return false;
+      const text = this.book.resolve(rule.say);
+      if (!text || prefs.isMuted() || !this.limiter.canSpeak()) return false;
+      void this.showLine(text, true);
+      return true;
+    }
     // A page trigger never cuts into a running scene.
     if (this.scenePlaying) return false;
     if (rule.scene) {
@@ -966,17 +1107,18 @@ export class Engine {
   }
 
   private groundY(): number {
-    return this.overlay!.groundY(null);
+    return this.overlay!.floorY;
   }
 
   private dragStart(x: number, y: number): void {
     const ov = this.overlay!;
     ov.stopMove();
-    this.dragFrom = { surface: ov.surface, feetX: ov.feetX };
-    if (ov.surface) {
-      // Picked up from an element: from now on the height counts from the floor.
+    this.dragFrom = { surface: ov.surface, line: ov.line, feetX: ov.feetX };
+    if (ov.surface || ov.line !== null) {
+      // Picked up from an element or a line: from now on the height counts from the floor.
       ov.lift += this.groundY() - ov.groundY();
       ov.surface = null;
+      ov.line = null;
     }
     this.grab = { dx: x - ov.feetX, dy: this.groundY() - ov.lift - y };
     void this.run(PRIORITY.drag, 'dragging', async () => {
@@ -1020,14 +1162,22 @@ export class Engine {
       } else if (cancelled || height < 4) {
         // A cancelled drag puts the character back where it was picked up.
         const from = this.dragFrom;
-        if (cancelled && from.surface && this.fits(from.surface)) {
-          ov.surface = from.surface;
-          ov.feetX = from.feetX;
-          ov.clampX();
+        if (cancelled) {
+          if (from.surface && this.fits(from.surface)) ov.surface = from.surface;
+          else if (from.line !== null) ov.line = from.line;
+          if (ov.surface || ov.line !== null) {
+            ov.feetX = from.feetX;
+            ov.clampX();
+          }
         }
         ov.lift = 0;
         ov.place();
         if (cancelled) return;
+      } else if (this.config.dropTo === 'here') {
+        // Lands where it was let go: the fall clip plays in place.
+        ov.line = ov.lineAt(Math.max(this.standH(), feetY));
+        ov.lift = 0;
+        ov.place();
       } else {
         const ms = Math.round(Math.min(600, 120 + Math.sqrt(height) * 22));
         void ov.wrap.getBoundingClientRect();
@@ -1067,10 +1217,13 @@ export class Engine {
     const ov = this.overlay;
     if (!ov || !this.alive) return;
     if (this.state === 'walking' && this.activity) {
-      cancel(this.activity.token);
-      this.activity = null;
-      ov.stopMove();
-      this.idle();
+      if (this.scenePlaying) ov.stopMove(); // the scene goes on with its next step
+      else {
+        cancel(this.activity.token);
+        this.activity = null;
+        ov.stopMove();
+        this.idle();
+      }
     }
     if (ov.surface && !this.fits(ov.surface)) {
       ov.stopMove();

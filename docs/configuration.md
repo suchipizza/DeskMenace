@@ -46,10 +46,14 @@ A **preset** offered by the character (`data-preset="404"` on the script tag, or
 | `vars` | `{ "site": location.hostname }` | Values for `{name}` placeholders in lines |
 | `triggers` | see below | Page triggers. Replaces the defaults |
 | `scenes` | — | Named step lists that triggers and `Gary.do(name)` can play. See [Scenes](#scenes) |
+| `entrance` | — | A scene played instead of the usual entrance, e.g. walking in from the left at mid-height. Start it with an `enter` step |
+| `dropTo` | `"floor"` | After a drag: `"floor"` falls to the bottom of the screen, `"here"` lands where the visitor let go |
 | `surfaces` | — | CSS selector of page elements the character may wander onto and stand on, e.g. `"h1, h2, img"`. Elements with a `data-gary-surface` attribute always qualify. See [Standing on page elements](#standing-on-page-elements) |
 | `limits.minGapSeconds` | `20` | Minimum time between automatic lines |
 | `limits.maxLinesPerMinute` | `2` | Cap on automatic lines per minute |
 | `position.side` | `"right"` | Side he enters from and starts on |
+| `position.y` | bottom | Height of the usual entrance: the body's middle as a fraction of the screen height (`0.5` = middle) |
+| `position.x` | `[0, 1]` | Ambient walks stay between these fractions of the screen width, e.g. `[0.2, 0.8]` |
 | `height` | character default | Rendered height in CSS px. He scales down on small screens |
 | `ambient` | `true` | Random walks, stares, glances and chatter while idle |
 | `pace` | `"normal"` | How often ambient behaviour happens: `"calm"`, `"normal"` or `"busy"` (wanders a lot) |
@@ -98,34 +102,48 @@ Default triggers:
 
 Clicking the character three times runs `react-clicks` whenever that behaviour is enabled; you don't need a trigger for it.
 
+**Remarks during a scene.** A rule with `"during": "arrive"` only fires while the `arrive` scene plays, and shows its `say` line without stopping the scene (skipped while another line is showing). Use it for "the visitor keeps clicking while he walks in".
+
 **Escalation.** With a list, `"scene": ["stare", "annoyed"]` plays `stare` the first time the rule fires, `annoyed` the second time, and `annoyed` again after that. Rules with the same `group` share one step, so a click and then a scroll count as the second annoyance. A scene started by a trigger never cuts into another scene that is already playing; it's simply skipped (and the step doesn't advance).
 
 ## Scenes
 
-A scene is a short script: a list of steps, each with exactly one action.
+A scene is a short script: a list of steps, each with exactly one action. The character always walks, diagonally when it changes height; only a visitor's drag lifts it.
 
 ```json
+"entrance": "arrive",
 "scenes": {
-  "arrive": [{ "walkTo": "[data-gary-404], h1", "at": "center" }, { "play": "judge" }, { "say": "#404" }],
-  "annoyed": [{ "play": "judge" }, { "wait": 1 }, { "say": "#404-again" }]
+  "arrive": {
+    "steps": [
+      { "enter": "left", "on": "[data-gary-404], h1" },
+      { "walkTo": "[data-gary-404], h1", "at": "center" },
+      { "wait": 1 },
+      { "say": "#404" },
+      { "exit": "right" }
+    ],
+    "interrupted": "#keep-going"
+  },
+  "tour": [{ "walkTo": { "x": 0.5 } }, { "say": "#bio" }, { "walkTo": { "x": 0.33, "y": 0.68 } }]
 }
 ```
 
 | Step | Does |
 |---|---|
-| `walkTo` | Walks to an element and stands on it (see below), or `"floor"` to get back down. With a selector list, the first match that has room wins. `at`: `"center"` (default), `"left"`, `"right"` or `"random"` |
+| `enter` | `"left"` or `"right"`: appears just outside that edge, with the body's middle at `y` (fraction of the screen height, default `0.5`), or level with the first element matching `on` that has room. Use it to start a scene, e.g. as the `entrance` |
+| `walkTo` | A point on the screen, `{ "x": 0.5, "y": 0.7 }` (fractions; `y` is the body's middle; a missing one stays as it is). Or an element: walks to it and stands on it (see below); with a selector list, the first match that has room wins; `at`: `"center"` (default), `"left"`, `"right"` or `"random"`. Or `"floor"` |
+| `exit` | `"left"` or `"right"`: walks off that edge and stays away (not removed; triggers and ambient behaviour pause until a scene with `enter` brings it back) |
 | `play` | Plays a clip by role once: `judge`, `judge.pointer`, `idle.variant`, … Skipped if the character has no such clip |
 | `say` | Shows a line or `#pool` and waits until the bubble is gone. Respects mute; not counted against `limits` (use the rule's `cooldown`) |
 | `wait` | Stands still for that many seconds (0–60) |
 
-Play a scene from a trigger (`"scene": "arrive"`) or from code (`Gary.do('arrive')`). Scenes run at trigger priority: dragging or removing the character interrupts them. With reduced motion, `walkTo` steps are skipped and the rest still runs.
+Play a scene from a trigger (`"scene": "arrive"`), from code (`Gary.do('arrive')`) or as the `entrance`. A scene can be a plain list of steps or `{ "steps": [...], "interrupted": "#pool" }`: if the visitor drags the character during it, it says the `interrupted` line after the drop and carries on from the step it was in (from wherever it was dropped). Removing the character ends the scene. With reduced motion, walks are skipped and the rest still runs.
 
 ## Standing on page elements
 
-The character can stand on the top edge of page elements: headings, images, cards. From the floor it walks below the spot and is lifted up in its "held" pose; getting down is a fall. While it stands on an element it moves with it as the page scrolls; if the element leaves the screen, or there is no longer room above it for the character's head, it falls back to the floor.
+The character can stand on the top edge of page elements: headings, images, cards. It walks there, diagonally if the element is higher or lower. While it stands on an element it moves with it as the page scrolls; if the element leaves the screen, or there is no longer room above it for the character's head, it falls back to the floor.
 
 - A plain text element (a heading, a paragraph) counts only as wide as its text. An image, or an element with a background or border, counts with its whole box.
-- An element qualifies when there is room above it for the whole character plus a speech bubble, and it isn't right at the bottom of the screen. Otherwise `walkTo` walks to the spot below it on the floor instead.
+- An element qualifies when there is room above it for the whole character plus a speech bubble, and it isn't right at the bottom of the screen. Otherwise `walkTo` walks to the spot level with it instead.
 - Ambient wandering uses `surfaces` and elements marked `data-gary-surface`. Dropping the character above one of these (after a drag) lands it there.
 - Nothing about the page changes: the character is still drawn in its own overlay, and clicks still pass through its transparent pixels.
 
@@ -139,10 +157,12 @@ A preset is a ready-made package for a kind of page, shipped with the character:
 
 | Preset | For | What happens |
 |---|---|---|
-| `404` | error pages | Walks onto the element marked `data-gary-404` (or the first `h1`), stares, comments. Each click or scroll attempt makes him stare, then say something new |
-| `personal` | personal sites, portfolios | Wanders busily over headings and pictures. When the visitor scrolls he stops, stares and comments. Reacts to `#projects` / `[data-gary-projects]` coming into view and to email links |
-| `website` | any site | Wanders over headings and images, glances at the mouse when it comes close, comments on scrolling and now and then on clicks |
-| `staging` | test servers | Inspects `[data-gary-staging]` (or the first `h1`), reminds everyone this isn't production |
+| `404` | error pages | Walks in from the left at the level of the element marked `data-gary-404` (or the first `h1`), stops on it, pauses, says his line and walks off to the right. Clicks or scroll attempts while he's there get a remark |
+| `personal` | personal sites, portfolios | Walks in from the left at mid-height, stops in the middle to comment on the bio, walks down to the left for a second remark, then a bit further for a third. Clicks or scrolls during that get a remark; later, scrolling makes him stare and comment. Reacts to `#projects` / `[data-gary-projects]` coming into view |
+| `website` | any site | Walks in from the left to the middle and says hello, then strolls in the middle band of the screen, glances at the mouse when it comes close, comments on scrolling |
+| `staging` | test servers | Walks in from the left to the middle, stares, reminds everyone this isn't production, and repeats it now and then |
+
+In all four he lands where he's dropped after a drag (`"dropTo": "here"`) and never goes to the far left or right edge while idling (`"position": { "x": [0.2, 0.8] }`).
 
 Gary and Mugsy both offer these four. Anything you set yourself wins over the preset: your `triggers` replace the preset's, your `lines`, `vars` and `scenes` replace pools and scenes of the same name, and options such as `pace` or `limits.minGapSeconds` override the preset's value. To change one line pool of the `404` preset:
 
@@ -153,4 +173,4 @@ Gary and Mugsy both offer these four. Anything you set yourself wins over the pr
 <script defer src="…/gary.js" data-preset="404"></script>
 ```
 
-Presets can set `lines`, `vars`, `packs`, `behaviours`, `triggers`, `scenes`, `surfaces`, `limits`, `ambient`, `pace`, `restAfter` and `position`. Character authors: see [presets in the character format](character-format.md#presets).
+Presets can set `lines`, `vars`, `packs`, `behaviours`, `triggers`, `scenes`, `entrance`, `dropTo`, `surfaces`, `limits`, `ambient`, `pace`, `restAfter` and `position`. Character authors: see [presets in the character format](character-format.md#presets).

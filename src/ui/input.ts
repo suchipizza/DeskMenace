@@ -108,7 +108,8 @@ export class Input {
         g.dragging = true;
         this.overlay.wrap.classList.add('dragging');
         window.addEventListener('keydown', this.onKey, true);
-        this.target.dragStart(e.clientX, e.clientY);
+        // Grab at the press point, so the character doesn't jump by the drag threshold.
+        this.target.dragStart(g.x0, g.y0);
       }
       this.target.dragMove(e.clientX, e.clientY);
       return;

@@ -75,8 +75,13 @@ export class Overlay {
   feetX = 0;
   /** Height of the feet above the ground line, in CSS px (dragging). */
   lift = 0;
-  /** Page element the character stands on, or null for the floor. */
+  /** Page element the character stands on, or null for the floor or a line. */
   surface: Element | null = null;
+  /**
+   * Without a surface: height of the line the feet walk on, as a fraction of the floor's
+   * viewport y (null = the floor itself). Lets the character walk across the middle of the screen.
+   */
+  line: number | null = null;
   /** Bottom inset of the floor (safe area), in CSS px. */
   private floorInset = 0;
   private hop: Animation | null = null;
@@ -196,20 +201,38 @@ export class Overlay {
   }
 
   /** Viewport y of the line the feet stand on. */
-  groundY(surface = this.surface): number {
-    const floor = this.viewportH - this.floorInset;
+  groundY(surface = this.surface, line = this.line): number {
+    const floor = this.floorY;
     // An element that vanished (removed, display: none) counts as the floor.
-    return surface && usable(surface) ? surfaceRect(surface).top : floor;
+    if (surface && usable(surface)) return surfaceRect(surface).top;
+    if (surface || line === null) return floor;
+    return Math.min(floor, Math.max(this.boxH, line * floor));
   }
 
-  private transformFor(feetX: number, surface: Element | null, lift: number): string {
+  get floorY(): number {
+    return this.viewportH - this.floorInset;
+  }
+
+  private transformFor(feetX: number, surface: Element | null, lift: number, line = this.line): string {
     const x = this.leftFor(feetX);
-    const y = this.dropFor() - lift + this.groundY(surface) - this.groundY(null);
+    const y = this.dropFor() - lift + this.groundY(surface, line) - this.floorY;
     return `translate3d(${Math.round(x * 10) / 10}px, ${Math.round(y * 10) / 10}px, 0)`;
   }
 
   place(): void {
     this.wrap.style.transform = this.transformFor(this.feetX, this.surface, this.lift);
+  }
+
+  /** Feet line `y` (viewport px) as a `line` value. */
+  lineAt(y: number): number {
+    return y / this.floorY;
+  }
+
+  /** Current feet position on screen, read from the (possibly animating) transform. */
+  private feetNow(): [number, number] | null {
+    const m = parseMatrix(getComputedStyle(this.wrap).transform);
+    if (!m) return null;
+    return [m[0] + this.anchorX(), m[1] - this.dropFor() + this.floorY];
   }
 
   show(): void {
@@ -252,9 +275,16 @@ export class Overlay {
    * Moves the feet horizontally to `x` at `speed` CSS px/s using a compositor transition
    * (no per-frame JavaScript). Resolves when it arrives or is interrupted.
    */
-  moveTo(x: number, speed: number): Promise<MoveResult> {
+  moveTo(x: number, speed: number, to?: { surface: Element | null; line: number | null }): Promise<MoveResult> {
     this.stopMove();
-    const dist = Math.abs(x - this.feetX);
+    const y0 = this.groundY() - this.lift;
+    if (to) {
+      // Walking onto another ground (a different height): the walk goes diagonally.
+      this.surface = to.surface;
+      this.line = to.surface ? null : to.line;
+      this.lift = 0;
+    }
+    const dist = Math.hypot(x - this.feetX, this.groundY() - y0);
     if (dist < 1) {
       this.feetX = x;
       this.place();
@@ -277,12 +307,13 @@ export class Overlay {
    * Moves the character from where it is now onto `surface` (null = floor) at feet `x`, along an
    * arc that rises `rise` CSS px above the higher end (0 = a plain fall). Compositor-driven.
    */
-  jump(surface: Element | null, x: number, ms: number, rise: number): Promise<MoveResult> {
+  jump(surface: Element | null, x: number, ms: number, rise: number, line: number | null = null): Promise<MoveResult> {
     this.stopMove();
     const from = this.transformFor(this.feetX, this.surface, this.lift);
     const fromY = this.groundY() - this.lift;
     const x0 = this.feetX;
     this.surface = surface;
+    this.line = surface ? null : line;
     this.feetX = x;
     this.lift = 0;
     const to = this.transformFor(x, surface, 0);
@@ -290,7 +321,7 @@ export class Overlay {
     if (typeof this.wrap.animate !== 'function' || ms <= 0) return Promise.resolve('arrived');
     const top = Math.min(fromY, this.groundY()) - rise;
     const midX = this.leftFor((x + x0) / 2);
-    const mid = `translate3d(${Math.round(midX)}px, ${Math.round(this.dropFor() + top - this.groundY(null))}px, 0)`;
+    const mid = `translate3d(${Math.round(midX)}px, ${Math.round(this.dropFor() + top - this.floorY)}px, 0)`;
     const frames: Keyframe[] = rise > 0
       ? [{ transform: from, easing: 'cubic-bezier(.2,.6,.4,1)' }, { transform: mid, easing: 'cubic-bezier(.6,0,.8,.4)' }, { transform: to }]
       : [{ transform: from, easing: 'cubic-bezier(.55,0,1,.45)' }, { transform: to }];
@@ -316,17 +347,31 @@ export class Overlay {
     return !!this.moveDone || !!this.hop;
   }
 
-  /** Freezes a running move at its current on-screen position. A jump is completed instead. */
-  stopMove(): void {
+  /**
+   * Freezes a running walk or jump where it is on screen. If that is between two grounds, the
+   * character stays on a line at that height. `keepGround` only freezes x (used while following
+   * a scrolling element).
+   */
+  stopMove(keepGround = false): void {
+    if (!this.moving) return;
+    const now = this.feetNow();
     if (this.hop) {
       const h = this.hop;
       this.hop = null;
       h.cancel();
     }
-    if (!this.moveDone) return;
-    const m = getComputedStyle(this.wrap).transform;
-    const left = parseMatrixX(m);
-    if (left !== null) this.feetX = left + this.anchorX();
+    if (now) {
+      this.feetX = now[0];
+      if (!keepGround && Math.abs(now[1] - (this.groundY() - this.lift)) > 1) {
+        this.surface = null;
+        this.line = this.lineAt(now[1]);
+        this.lift = 0;
+      }
+    }
+    if (!this.moveDone) {
+      this.place();
+      return;
+    }
     this.endMove('interrupted');
   }
 
@@ -360,11 +405,12 @@ export class Overlay {
   }
 }
 
-function parseMatrixX(m: string): number | null {
-  if (!m || m === 'none') return 0;
+function parseMatrix(m: string): [number, number] | null {
+  if (!m || m === 'none') return [0, 0];
   const v = m.match(/matrix(3d)?\(([^)]+)\)/);
   if (!v) return null;
   const parts = v[2].split(',').map(Number);
   const x = v[1] ? parts[12] : parts[4];
-  return Number.isFinite(x) ? x : null;
+  const y = v[1] ? parts[13] : parts[5];
+  return Number.isFinite(x) && Number.isFinite(y) ? [x, y] : null;
 }

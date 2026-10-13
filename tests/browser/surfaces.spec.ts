@@ -71,14 +71,16 @@ test.describe('standing on page elements', () => {
     expect(Math.abs((await feetY(page)) - 720)).toBeLessThan(3);
   });
 
-  test('goes from one element to another and back to the floor', async ({ page }) => {
+  test('walks (never flies) from one element to another and back to the floor', async ({ page }) => {
+    test.setTimeout(60_000);
     await boot(page, { cfg: { ...QUIET, scenes: { go: [{ walkTo: '#target', at: 'left' }, { walkTo: '#other' }, { walkTo: 'floor' }] } } });
     const states: string[] = [];
     await page.exposeFunction('__state', (s: string) => states.push(s));
     await page.evaluate(() => (window as any).Gary.on('state', (s: string) => (window as any).__state(s)));
     expect(await page.evaluate(() => (window as any).Gary.do('go'))).toBe(true);
     expect((await debug(page)).surface).toBeNull();
-    expect(states).toContain('falling');
+    expect(states).toContain('walking');
+    expect(states).not.toContain('falling');
     expect(Math.abs((await feetY(page)) - 720)).toBeLessThan(3);
   });
 
@@ -234,13 +236,104 @@ test.describe('visitor reactions', () => {
   });
 });
 
+test.describe('scripted walks', () => {
+  const lines = { hi: ['Hi.'], sorry: ['Hey, I was walking there.'], aside: ['Busy.'] };
+  const limits = { minGapSeconds: 0, maxLinesPerMinute: 30 };
+
+  test('an entrance scene walks in from the left at mid-height and across', async ({ page }) => {
+    await page.goto(surfacesUrl({ char: SAMPLE, cfg: { triggers: [], ambient: false, lines, limits, entrance: 'in', scenes: { in: [{ enter: 'left', y: 0.5 }, { walkTo: { x: 0.5 } }, { say: '#hi' }, { walkTo: { x: 0.3, y: 0.7 } }] } } }));
+    await page.waitForFunction(() => (window as any).Gary?._debug?.()?.state === 'walking', null, { timeout: 15_000 });
+    const b0 = await canvasBox(page);
+    expect(b0.x).toBeLessThan(150);
+    expect(Math.abs(b0.y + b0.h / 2 - 360)).toBeLessThan(4); // the body's middle at 50 %
+    await page.waitForFunction(() => (window as any).__spoke.length === 1, null, { timeout: 20_000 });
+    const b1 = await canvasBox(page);
+    expect(Math.abs(b1.x + b1.w / 2 - 640)).toBeLessThan(8);
+    await page.waitForFunction(() => (window as any).Gary._debug().scene === null, null, { timeout: 20_000 });
+    const b2 = await canvasBox(page);
+    expect(Math.abs(b2.y + b2.h / 2 - 504)).toBeLessThan(4); // 70 %
+    expect(Math.abs(b2.x + b2.w / 2 - 384)).toBeLessThan(8); // 30 %
+  });
+
+  test('an exit step walks off and stays away: not clickable, triggers ignored', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, lines, limits, scenes: { out: [{ exit: 'right' }] }, triggers: [{ on: 'click', say: '#hi' }] } });
+    await page.evaluate(() => (window as any).Gary.do('out'));
+    expect((await debug(page)).state).toBe('away');
+    expect((await canvasBox(page)).x).toBeGreaterThan(1280);
+    await page.mouse.click(40, 40);
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual([]);
+    expect(await page.evaluate(() => (window as any).Gary.do('walk'))).toBe(false);
+  });
+
+  test('"during" rules comment without stopping the scene', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, lines, limits, scenes: { stroll: [{ walkTo: { x: 0.2 } }, { say: '#hi' }] }, triggers: [{ on: 'click', during: 'stroll', say: '#aside' }, { on: 'click', say: '#sorry' }] } });
+    await page.evaluate(() => {
+      void (window as any).Gary.do('stroll');
+    });
+    await page.waitForFunction(() => (window as any).Gary._debug().state === 'walking');
+    await page.mouse.click(40, 40);
+    await page.waitForFunction(() => (window as any).__spoke.length === 1);
+    expect((await debug(page)).scene).toBe('stroll');
+    await page.waitForFunction(() => (window as any).__spoke.length === 2, null, { timeout: 30_000 });
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['Busy.', 'Hi.']);
+  });
+
+  test('dropTo "here": dropped where it is let go; a cut scene says its line and carries on', async ({ page }) => {
+    test.setTimeout(60_000);
+    await boot(page, { cfg: { ...QUIET, lines, limits, dropTo: 'here', scenes: { stroll: { steps: [{ walkTo: { x: 0.15 } }, { say: '#hi' }], interrupted: '#sorry' } } } });
+    await page.evaluate(() => {
+      void (window as any).Gary.do('stroll');
+    });
+    await page.waitForFunction(() => (window as any).Gary._debug().state === 'walking');
+    await page.waitForTimeout(400);
+    const b = await canvasBox(page);
+    const start = { x: b.x + b.w * 0.5, y: b.y + b.h * 0.55 };
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(start.x, start.y - 250, { steps: 8 });
+    await waitState(page, 'dragging');
+    await page.mouse.up();
+    // Lands about 250 px up, not on the floor.
+    await page.waitForFunction(() => (window as any).__spoke.length === 1, null, { timeout: 15_000 });
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['Hey, I was walking there.']);
+    expect(Math.abs((await feetY(page)) - (720 - 250))).toBeLessThan(12);
+    await page.waitForFunction(() => (window as any).__spoke.length === 2, null, { timeout: 40_000 });
+    expect((await page.evaluate(() => (window as any).__spoke))[1]).toBe('Hi.');
+    expect(Math.abs((await feetY(page)) - (720 - 250))).toBeLessThan(12);
+  });
+
+  test('ambient walks stay inside position.x', async ({ page }) => {
+    test.setTimeout(60_000);
+    await boot(page, { cfg: { triggers: [], pace: 'busy', restAfter: 0, position: { side: 'left', x: [0.4, 0.6] } } });
+    let walks = 0;
+    for (let i = 0; i < 80 && walks < 3; i++) {
+      await page.waitForTimeout(500);
+      const d = await debug(page);
+      if (d.state === 'walking') walks++;
+      if (d.state === 'idle' && walks) {
+        expect(d.feetX).toBeGreaterThanOrEqual(0.4 * 1280 - 1);
+        expect(d.feetX).toBeLessThanOrEqual(0.6 * 1280 + 1);
+      }
+    }
+    expect(walks).toBeGreaterThan(0);
+  });
+});
+
 test.describe('character presets', () => {
-  test('data-preset loads the character\'s 404 preset, which walks onto the 404 and speaks', async ({ page }) => {
+  test('data-preset loads the character\'s 404 preset: in from the left, onto the 404, a line, off to the right', async ({ page }) => {
+    test.setTimeout(60_000);
     const requests: string[] = [];
     page.on('request', (r) => requests.push(r.url()));
     await page.goto(surfacesUrl({ char: SAMPLE, preset: '404' }));
-    await page.waitForFunction(() => (window as any).__spoke.length >= 1, null, { timeout: 20_000 });
-    await settledOn(page, '#target');
+    await page.waitForFunction(() => (window as any).Gary?._debug?.()?.state === 'walking', null, { timeout: 15_000 });
+    // Walks in from the left edge, level with the 404 (no flying).
+    expect((await canvasBox(page)).x).toBeLessThan(200);
+    expect(Math.abs((await feetY(page)) - (await rect(page, '#target')).top)).toBeLessThan(3);
+    await page.waitForFunction(() => (window as any).__spoke.length >= 1, null, { timeout: 30_000 });
+    expect((await debug(page)).surface).toBe('#target');
+    await waitState(page, 'away', 30_000);
+    expect((await canvasBox(page)).x).toBeGreaterThan(1280);
     expect(requests.some((u) => u.endsWith('/characters/sample/presets/404.json'))).toBe(true);
     const sample = JSON.parse(await (await page.request.get('/characters/sample/presets/404.json')).text());
     expect(sample.lines['404']).toContain((await page.evaluate(() => (window as any).__spoke))[0]);
@@ -255,9 +348,9 @@ test.describe('character presets', () => {
       return G.init({ preset: 'staging', ambient: false, triggers: [] });
     });
     await page.waitForTimeout(500);
-    expect(await has('inspect')).toBe(true);
-    expect(await has('noticed')).toBe(false);
+    expect(await has('scrolled')).toBe(false);
     expect(await has('arrive')).toBe(false);
+    expect(await has('inspect')).toBe(true);
   });
 
   test('page options win over the preset; an unknown preset is ignored with a warning', async ({ page }) => {
@@ -265,7 +358,8 @@ test.describe('character presets', () => {
     page.on('console', (m) => m.type() === 'warning' && warnings.push(m.text()));
     await boot(page, { preset: 'nope', cfg: QUIET });
     expect(warnings.join()).toMatch(/has no preset "nope"/);
-    await boot(page, { preset: '404', cfg: { triggers: [], lines: { '404': ['mine'] } } });
+    test.setTimeout(60_000);
+    await boot(page, { preset: '404', cfg: { triggers: [], entrance: null, lines: { '404': ['mine'] } } });
     await page.evaluate(() => (window as any).Gary.do('arrive'));
     expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['mine']);
   });

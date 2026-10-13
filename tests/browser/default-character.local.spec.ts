@@ -111,26 +111,52 @@ test('all behaviours run on the default character', async ({ page }) => {
   expect(d.frame.mirrored).toBe(false);
 });
 
-test('the 404 example: Gary walks onto the 404, speaks, and escalates on clicks', async ({ page }) => {
-  await page.goto('/examples/404/');
-  await page.evaluate(() => {
+test('the 404 example: in from the left, onto the 404, the line, a remark if clicked, off to the right', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.addInitScript(() => {
     (window as any).__spoke = [];
+    const iv = setInterval(() => {
+      const G = (window as any).Gary;
+      if (G?.on) {
+        clearInterval(iv);
+        G.on('spoke', (l: string) => (window as any).__spoke.push(l));
+      }
+    }, 20);
   });
-  await page.waitForFunction(() => (window as any).Gary?.on, null, { timeout: 10_000 });
-  await page.evaluate(() => (window as any).Gary.on('spoke', (l: string) => (window as any).__spoke.push(l)));
-  await page.waitForFunction(() => (window as any).__spoke.length === 1, null, { timeout: 30_000 });
-  const d = await debug(page);
-  expect(d.surface).toBe('h1');
+  await page.goto('/examples/404/');
+  await page.waitForFunction(() => (window as any).Gary?._debug?.()?.state === 'walking', null, { timeout: 20_000 });
+  const b = await canvasBox(page);
+  expect(b.x).toBeLessThan(200);
+  // A click while he walks in: a remark, and the walk goes on.
+  await page.mouse.click(1200, 60);
+  await page.waitForFunction(() => (window as any).__spoke.length === 1, null, { timeout: 10_000 });
   const preset = await (await page.request.get('/characters/gary/presets/404.json')).json();
-  expect(preset.lines['404']).toContain((await page.evaluate(() => (window as any).__spoke))[0]);
-  // First click: a stare. Second click (after the cooldown): a stare and a new line.
-  // Clicks during the arrival scene are ignored, so wait for it to end.
-  await page.waitForFunction(() => (window as any).Gary._debug().scene === null, null, { timeout: 15_000 });
-  await page.mouse.click(40, 40);
-  await page.waitForFunction(() => (window as any).Gary._debug().scene === 'stare');
-  await page.waitForFunction(() => (window as any).Gary._debug().scene === null, null, { timeout: 15_000 });
-  await page.waitForTimeout(3100);
-  await page.mouse.click(40, 40);
-  await page.waitForFunction(() => (window as any).__spoke.length === 2, null, { timeout: 20_000 });
-  expect(preset.lines['404-again']).toContain((await page.evaluate(() => (window as any).__spoke))[1]);
+  expect(preset.lines['keep-going']).toContain((await page.evaluate(() => (window as any).__spoke))[0]);
+  await page.waitForFunction(() => (window as any).__spoke.includes('They should have leveraged AI.'), null, { timeout: 40_000 });
+  expect((await debug(page)).surface).toBe('h1');
+  await waitState(page, 'away', 40_000);
+  expect((await canvasBox(page)).x).toBeGreaterThan(1280);
+});
+
+test('the personal example: the inspection script in order', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.addInitScript(() => {
+    (window as any).__spoke = [];
+    const iv = setInterval(() => {
+      const G = (window as any).Gary;
+      if (G?.on) {
+        clearInterval(iv);
+        G.on('spoke', (l: string) => (window as any).__spoke.push(l));
+      }
+    }, 20);
+  });
+  await page.goto('/examples/personal/');
+  await page.waitForFunction(() => (window as any).__spoke.length >= 3, null, { timeout: 60_000 });
+  const spoke: string[] = await page.evaluate(() => (window as any).__spoke);
+  const preset = await (await page.request.get('/characters/gary/presets/personal.json')).json();
+  expect(preset.lines.bio).toContain(spoke[0]);
+  expect(spoke[1]).toBe('They should have leveraged AI on this.');
+  expect(spoke[2]).toMatch(/^Check out my profile/);
+  const d = await debug(page);
+  expect(d.feetX / 1280).toBeGreaterThan(0.15);
 });

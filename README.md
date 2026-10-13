@@ -19,7 +19,7 @@
 Gary walks onto your page, stands around unproductively, judges your visitors and offers unsolicited corporate feedback. Visitors can drag him around, mute him or send him home. You decide what he says and when he says it, or swap him for a completely different character on the same engine.
 
 - **One script tag.** No build step, no framework, no backend, no account.
-- **Small and polite.** About 24 KB gzipped. Artwork loads only after your page has painted, causes no layout shift, stops entirely in background tabs, and rests when nobody's around.
+- **Small and polite.** About 26 KB gzipped. Artwork loads only after your page has painted, causes no layout shift, stops entirely in background tabs, and rests when nobody's around.
 - **Never in the way.** Clicks pass straight through every transparent pixel. Forms, links and buttons behind him keep working.
 - **Visitor-friendly.** Mute or remove him from a menu (mouse, keyboard or touch). Removal sticks. No tracking, no cookies.
 - **Yours to script.** Your own lines, page triggers and a small JavaScript API.
@@ -73,7 +73,7 @@ One attribute turns him into a 404 page, a personal-site sidekick, a general nui
 <script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js" data-preset="404"></script>
 ```
 
-On a 404 page he walks onto the "404", stares at it and tells your visitor what went wrong. Keep clicking or scrolling and he gets more irritated. Presets: `404`, `personal`, `website`, `staging`; anything you configure yourself wins. See [presets](docs/configuration.md#presets).
+On a 404 page he walks in from the left, stops on the "404", tells your visitor what went wrong and walks off. Click or scroll while he's there and he has something to say about that too. Presets: `404`, `personal`, `website`, `staging`; anything you configure yourself wins. See [presets](docs/configuration.md#presets).
 
 ## Make him say your things
 

@@ -149,6 +149,11 @@ export interface TriggerRule {
   scene?: string[];
   /** Rules with the same group share one escalation step. */
   group?: string;
+  /**
+   * Only while this scene plays: the line (`say`) is shown without stopping the scene. Without
+   * `during`, rules wait until no scene is playing.
+   */
+  during?: string;
   /** 0..1 probability that the rule fires when triggered. */
   chance?: number;
   /** Seconds before the rule may fire again. */
@@ -157,18 +162,45 @@ export interface TriggerRule {
   maxPerSession?: number;
 }
 
+/** A point on the screen: fractions of the viewport width (x) and height (y, the body's middle). */
+export interface ScreenPoint {
+  x?: number;
+  y?: number;
+}
+
 /** One step of a scene. Each step has exactly one action. */
 export interface SceneStep {
-  /** CSS selector of an element to walk to and stand on, or "floor". */
-  walkTo?: string;
+  /**
+   * Walks to: a CSS selector (stands on the element), "floor", or a point on the screen
+   * ({ x, y } fractions; an omitted coordinate stays as it is).
+   */
+  walkTo?: string | ScreenPoint;
   /** Where on the element to stop (default "center"). */
   at?: 'center' | 'left' | 'right' | 'random';
+  /** Appears just outside this edge of the screen, at height `y` or on the element `on`. */
+  enter?: 'left' | 'right';
+  /** With `enter`: the body's middle as a fraction of the viewport height (default 0.5). */
+  y?: number;
+  /** With `enter`: a CSS selector; walks in at the level of the first element that has room. */
+  on?: string;
+  /** Walks off this edge of the screen and stays away until a scene brings it back. */
+  exit?: 'left' | 'right';
   /** Line text or `#pool`. */
   say?: string;
   /** Clip role to play once, e.g. "judge", "judge.pointer", "idle.variant". */
   play?: string;
   /** Seconds to stand still. */
   wait?: number;
+}
+
+/** A scene with options. */
+export interface SceneDef {
+  steps: SceneStep[];
+  /**
+   * Line (`#pool`) said when a drag interrupts the scene; the scene then carries on from the
+   * step it was in.
+   */
+  interrupted?: string;
 }
 
 export interface GaryConfig {
@@ -187,11 +219,21 @@ export interface GaryConfig {
   vars?: Record<string, string>;
   triggers?: TriggerRule[];
   /** Named sequences of steps that triggers and `Gary.do()` can play. */
-  scenes?: Record<string, SceneStep[]>;
+  scenes?: Record<string, SceneStep[] | SceneDef>;
+  /** Scene played instead of the usual entrance; it should start with an `enter` step. */
+  entrance?: string;
+  /** After a drag: "floor" (falls to the bottom of the screen) or "here" (lands where dropped). */
+  dropTo?: 'floor' | 'here';
   /** CSS selector of page elements the character may wander onto and stand on. */
   surfaces?: string;
   limits?: { minGapSeconds?: number; maxLinesPerMinute?: number };
-  position?: { side?: 'left' | 'right' };
+  position?: {
+    side?: 'left' | 'right';
+    /** Height of the usual entrance: the body's middle as a fraction of the viewport height. */
+    y?: number;
+    /** Ambient walks stay between these fractions of the viewport width. */
+    x?: [number, number];
+  };
   /** Override the character's display height in CSS pixels. */
   height?: number;
   /** Let screen readers announce speech bubbles (off by default). */
@@ -221,10 +263,12 @@ export interface ResolvedConfig {
   lines: Record<string, LineEntry[]>;
   vars: Record<string, string>;
   triggers: TriggerRule[];
-  scenes: Record<string, SceneStep[]>;
+  scenes: Record<string, SceneDef>;
+  entrance: string | null;
+  dropTo: 'floor' | 'here';
   surfaces: string | null;
   limits: { minGapSeconds: number; maxLinesPerMinute: number };
-  position: { side: 'left' | 'right' };
+  position: { side: 'left' | 'right'; y: number | null; x: [number, number] };
   height: number | null;
   announce: boolean;
   ambient: boolean;

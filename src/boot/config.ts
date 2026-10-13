@@ -4,7 +4,7 @@
 // Arrays replace the previous value. Objects (lines, vars, limits, position, menu) merge by key.
 // Invalid fields are reported as warnings and ignored, so one typo never takes a page down.
 
-import type { BehaviorId, GaryConfig, LineEntry, ResolvedConfig, SceneStep, TriggerKind, TriggerRule } from '../types';
+import type { BehaviorId, GaryConfig, LineEntry, ResolvedConfig, SceneDef, SceneStep, TriggerKind, TriggerRule } from '../types';
 import { BEHAVIORS } from '../types';
 import { parseCredit, parseLines } from '../characters/manifest';
 import { pageBase, safeHttpUrl } from '../util/url';
@@ -39,9 +39,11 @@ export function defaults(): ResolvedConfig {
     vars: {},
     triggers: DEFAULT_TRIGGERS.map((t) => ({ ...t })),
     scenes: {},
+    entrance: null,
+    dropTo: 'floor',
     surfaces: null,
     limits: { minGapSeconds: 20, maxLinesPerMinute: 2 },
-    position: { side: 'right' },
+    position: { side: 'right', y: null, x: [0, 1] },
     height: null,
     announce: false,
     ambient: true,
@@ -124,6 +126,14 @@ export function mergeConfig(base: ResolvedConfig, layer: unknown, source: string
         if (names.length > MAX_SCENES) warnings.push(`${source}: only the first ${MAX_SCENES} scenes are used`);
         break;
       }
+      case 'entrance':
+        if (v === null || (typeof v === 'string' && NAME_RE.test(v))) out.entrance = v as string | null;
+        else warn(key, 'must be a scene name');
+        break;
+      case 'dropTo':
+        if (v === 'floor' || v === 'here') out.dropTo = v;
+        else warn(key, 'must be "floor" or "here"');
+        break;
       case 'surfaces':
         if (v === null || (typeof v === 'string' && v.trim() && v.length <= 500 && isValidSelector(v))) out.surfaces = v as string | null;
         else warn(key, 'must be a CSS selector');
@@ -171,9 +181,19 @@ export function mergeConfig(base: ResolvedConfig, layer: unknown, source: string
         }
         break;
       case 'position':
-        if (isObj(v) && (v.side === 'left' || v.side === 'right')) out.position.side = v.side;
-        else if (isObj(v) && v.side === undefined) break;
-        else warn(key, 'side must be "left" or "right"');
+        if (!isObj(v)) { warn(key, 'must be an object'); break; }
+        if (v.side !== undefined) {
+          if (v.side === 'left' || v.side === 'right') out.position.side = v.side;
+          else warn('position.side', 'must be "left" or "right"');
+        }
+        if (v.y !== undefined) {
+          if (v.y === null || (isNum(v.y) && v.y >= 0 && v.y <= 1)) out.position.y = v.y as number | null;
+          else warn('position.y', 'must be a fraction of the screen height (0-1)');
+        }
+        if (v.x !== undefined) {
+          if (Array.isArray(v.x) && v.x.length === 2 && v.x.every((n) => isNum(n) && n >= 0 && n <= 1) && v.x[0] < v.x[1]) out.position.x = [v.x[0], v.x[1]];
+          else warn('position.x', 'must be [from, to] fractions of the screen width (0-1)');
+        }
         break;
       case 'height':
         if (v === null || (isNum(v) && v >= 40 && v <= 1000)) out.height = v as number | null;
@@ -235,6 +255,11 @@ export function validateRule(r: unknown): TriggerRule | string {
     if (typeof r.group !== 'string' || !NAME_RE.test(r.group)) return 'group must be a name';
     rule.group = r.group;
   }
+  if (r.during !== undefined) {
+    if (typeof r.during !== 'string' || !NAME_RE.test(r.during)) return 'during must be a scene name';
+    if (!rule.say || rule.do || rule.scene) return '"during" rules can only "say"';
+    rule.during = r.during;
+  }
   if (r.selector !== undefined) {
     if (typeof r.selector !== 'string' || !r.selector.trim() || r.selector.length > 500 || !isValidSelector(r.selector)) return 'has an invalid selector';
     rule.selector = r.selector;
@@ -268,17 +293,54 @@ export function validateRule(r: unknown): TriggerRule | string {
   return rule;
 }
 
-/** Validates one scene: a list of steps with exactly one action each. */
-export function validateScene(v: unknown): SceneStep[] | string {
+/** Validates one scene: a list of steps, or { steps, interrupted }. */
+export function validateScene(v: unknown): SceneDef | string {
+  if (isObj(v)) {
+    for (const k of Object.keys(v)) if (k !== 'steps' && k !== 'interrupted') return `has an unknown field "${k}"`;
+    const steps = validateSteps(v.steps);
+    if (typeof steps === 'string') return steps;
+    const def: SceneDef = { steps };
+    if (v.interrupted !== undefined) {
+      if (typeof v.interrupted !== 'string' || !v.interrupted.trim() || v.interrupted.length > 500) return 'interrupted must be a line or #pool';
+      def.interrupted = v.interrupted;
+    }
+    return def;
+  }
+  const steps = validateSteps(v);
+  return typeof steps === 'string' ? steps : { steps };
+}
+
+const frac = (n: unknown) => isNum(n) && n >= 0 && n <= 1;
+
+function validateSteps(v: unknown): SceneStep[] | string {
   if (!Array.isArray(v) || !v.length || v.length > MAX_STEPS) return `must be a list of 1 to ${MAX_STEPS} steps`;
   const steps: SceneStep[] = [];
   for (const [i, s] of v.entries()) {
     if (!isObj(s)) return `step ${i + 1} must be an object`;
-    const actions = ['walkTo', 'say', 'play', 'wait'].filter((k) => s[k] !== undefined);
-    if (actions.length !== 1) return `step ${i + 1} needs exactly one of walkTo, say, play or wait`;
+    const actions = ['walkTo', 'say', 'play', 'wait', 'enter', 'exit'].filter((k) => s[k] !== undefined);
+    if (actions.length !== 1) return `step ${i + 1} needs exactly one of walkTo, say, play, wait, enter or exit`;
     const step: SceneStep = {};
-    if (s.walkTo !== undefined) {
-      if (typeof s.walkTo !== 'string' || !s.walkTo.trim() || s.walkTo.length > 500 || (s.walkTo !== 'floor' && !isValidSelector(s.walkTo))) return `step ${i + 1}: walkTo must be a CSS selector or "floor"`;
+    if (s.enter !== undefined || s.exit !== undefined) {
+      const side = s.enter ?? s.exit;
+      if (side !== 'left' && side !== 'right') return `step ${i + 1}: ${s.enter !== undefined ? 'enter' : 'exit'} must be "left" or "right"`;
+      if (s.exit !== undefined) step.exit = side;
+      else {
+        step.enter = side;
+        if (s.y !== undefined) {
+          if (!frac(s.y)) return `step ${i + 1}: y must be a fraction of the screen height (0-1)`;
+          step.y = s.y as number;
+        }
+        if (s.on !== undefined) {
+          if (typeof s.on !== 'string' || !s.on.trim() || s.on.length > 500 || !isValidSelector(s.on)) return `step ${i + 1}: on must be a CSS selector`;
+          step.on = s.on;
+        }
+      }
+    } else if (isObj(s.walkTo)) {
+      const p = s.walkTo;
+      if (Object.keys(p).some((k) => k !== 'x' && k !== 'y') || (p.x === undefined && p.y === undefined) || (p.x !== undefined && !frac(p.x)) || (p.y !== undefined && !frac(p.y))) return `step ${i + 1}: walkTo { x, y } takes fractions of the screen (0-1)`;
+      step.walkTo = { ...(p.x !== undefined ? { x: p.x as number } : {}), ...(p.y !== undefined ? { y: p.y as number } : {}) };
+    } else if (s.walkTo !== undefined) {
+      if (typeof s.walkTo !== 'string' || !s.walkTo.trim() || s.walkTo.length > 500 || (s.walkTo !== 'floor' && !isValidSelector(s.walkTo))) return `step ${i + 1}: walkTo must be a CSS selector, "floor" or { x, y }`;
       step.walkTo = s.walkTo;
       if (s.at !== undefined) {
         if (!['center', 'left', 'right', 'random'].includes(s.at as string)) return `step ${i + 1}: at must be "center", "left", "right" or "random"`;
@@ -300,7 +362,7 @@ export function validateScene(v: unknown): SceneStep[] | string {
 }
 
 /** Keys a preset may set. Where the page sets the same option, the page wins. */
-const PRESET_KEYS = new Set(['behaviours', 'behaviors', 'packs', 'lines', 'vars', 'triggers', 'scenes', 'surfaces', 'limits', 'ambient', 'pace', 'restAfter', 'position']);
+const PRESET_KEYS = new Set(['behaviours', 'behaviors', 'packs', 'lines', 'vars', 'triggers', 'scenes', 'entrance', 'dropTo', 'surfaces', 'limits', 'ambient', 'pace', 'restAfter', 'position']);
 
 /**
  * Layers a character preset under the page's own configuration: options the page set itself
@@ -320,7 +382,7 @@ export function applyPreset(config: ResolvedConfig, preset: unknown, source: str
   const p = r.config;
   const ex = new Set(config.explicit);
   const out: ResolvedConfig = { ...config };
-  for (const k of ['behaviours', 'packs', 'triggers', 'surfaces', 'ambient', 'pace', 'restAfter', 'position'] as const) {
+  for (const k of ['behaviours', 'packs', 'triggers', 'entrance', 'dropTo', 'surfaces', 'ambient', 'pace', 'restAfter', 'position'] as const) {
     if (!ex.has(k)) (out as unknown as Record<string, unknown>)[k] = p[k];
   }
   out.lines = { ...p.lines, ...config.lines };
