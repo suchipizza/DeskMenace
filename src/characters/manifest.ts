@@ -19,7 +19,21 @@ export interface Clip {
   ends: number[];
   durationMs: number;
   mirror: boolean;
-  atlas: { url: string; columns: number; rows: number; frames: number };
+  /** Lowest-density atlas (`tiers[0]`). */
+  atlas: AtlasTier;
+  /** Every usable atlas of the clip, by increasing pixel density. */
+  tiers: AtlasTier[];
+}
+
+/** One sprite atlas of a clip. Cells are `w` x `h` image pixels = `density` x the clip size. */
+export interface AtlasTier {
+  url: string;
+  columns: number;
+  rows: number;
+  frames: number;
+  w: number;
+  h: number;
+  density: number;
 }
 
 export interface Character {
@@ -137,25 +151,38 @@ export function parseCharacter(input: unknown, manifestUrl: string): Character {
         bad(`${p}.durationMs`, `does not match the sum of frameMs (${acc})`);
       }
 
-      let atlas: Clip['atlas'] | null = null;
+      const tiers: AtlasTier[] = [];
       if (!Array.isArray(c.sources) || c.sources.length === 0) bad(`${p}.sources`, 'expected at least one source');
       else {
         c.sources.forEach((s, i) => {
           const sp = `${p}.sources[${i}]`;
           if (!isObj(s) || typeof s.type !== 'string') return bad(sp, 'expected { type, url }');
           if (s.type !== 'atlas') return; // unknown source types are ignored for forward compatibility
-          if (atlas) return;
+          let tw = w;
+          let th = h;
+          if (s.size !== undefined) {
+            const z = s.size;
+            if (!Array.isArray(z) || z.length !== 2 || !isPosInt(z[0]) || !isPosInt(z[1])) return bad(`${sp}.size`, 'expected [width, height] in whole pixels');
+            [tw, th] = z as [number, number];
+            const d = th / h;
+            if (d < 1 || d > 4) return bad(`${sp}.size`, 'must be 1 to 4 times the clip size');
+            if (Math.abs(tw - w * d) > Math.max(1, d)) return bad(`${sp}.size`, `must keep the clip's ${w}:${h} proportions`);
+          }
+          const density = th / h;
+          if (tiers.some((t) => Math.abs(t.density - density) < 0.01)) return; // first source of a size wins
           const g = s.grid;
           if (!isObj(g) || !isPosInt(g.columns) || !isPosInt(g.rows) || !isPosInt(g.frames)) return bad(`${sp}.grid`, 'expected positive whole columns, rows and frames');
           if ((g.columns as number) * (g.rows as number) < (g.frames as number)) return bad(`${sp}.grid`, 'frames do not fit in columns x rows');
-          if ((g.columns as number) * w > 16384 || (g.rows as number) * h > 16384) return bad(`${sp}.grid`, 'atlas larger than 16384 px');
+          if ((g.columns as number) * tw > 16384 || (g.rows as number) * th > 16384) return bad(`${sp}.grid`, 'atlas larger than 16384 px');
           if (g.frames !== frameMs.length) return bad(`${sp}.grid.frames`, `is ${g.frames} but frameMs has ${frameMs.length} entries`);
           const url = safeHttpUrl(s.url, manifestUrl);
           if (!url) return bad(`${sp}.url`, 'expected a relative or http(s) URL');
-          atlas = { url, columns: g.columns as number, rows: g.rows as number, frames: g.frames as number };
+          tiers.push({ url, columns: g.columns as number, rows: g.rows as number, frames: g.frames as number, w: tw, h: th, density });
         });
-        if (!atlas && errs.length === n0) bad(`${p}.sources`, 'no supported source (type "atlas")');
+        if (!tiers.length && errs.length === n0) bad(`${p}.sources`, 'no supported source (type "atlas")');
       }
+      tiers.sort((a, b) => a.density - b.density);
+      const atlas = tiers[0];
 
       if (errs.length > n0 || !atlas) continue;
       const clip: Clip = {
@@ -172,6 +199,7 @@ export function parseCharacter(input: unknown, manifestUrl: string): Character {
         durationMs: acc,
         mirror: c.mirror === true,
         atlas,
+        tiers,
       };
       clips.set(id, clip);
       if (clip.role) {

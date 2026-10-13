@@ -5,11 +5,10 @@ import { expect, test } from '@playwright/test';
 import { canvasBox, debug, pageUrl, probePoints, QUIET, waitState } from './helpers';
 
 test.skip(!process.env.GARY_ASSET_DIR, 'GARY_ASSET_DIR not set');
-test.use({ viewport: { width: 1280, height: 900 } });
+test.use({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1 });
 
 const EXPECTED_ROLES: Record<string, string> = {
   stand: 'idle',
-  walk_left: 'walk.left',
   walk_right: 'walk.right',
   stare: 'judge',
   look_cursor: 'judge.pointer',
@@ -31,14 +30,45 @@ test('zero-config: one script tag, default character enters and idles at 320 px'
   expect(Math.round(box.h)).toBe(320);
   // Only the initial clips were fetched up front.
   await page.waitForTimeout(500);
-  expect(Object.keys(bytes).sort()).toEqual(['stand.webp', 'walk_left.webp', 'walk_right.webp']);
+  expect(Object.keys(bytes).sort()).toEqual(['stand.webp', 'walk_right.webp']);
 });
 
-test('manifest contains exactly the eight approved clips and roles', async ({ request }) => {
+test.describe('on a 2x screen', () => {
+  test.use({ deviceScaleFactor: 2 });
+  test('loads the HD atlases and draws them 1:1', async ({ page }) => {
+    const files: string[] = [];
+    page.on('response', (r) => {
+      if (r.url().endsWith('.webp')) files.push(new URL(r.url()).pathname.split('/').pop()!);
+    });
+    await page.goto(pageUrl({ bundle: 'classic' }));
+    await waitState(page, 'idle', 20_000);
+    await page.waitForTimeout(500);
+    expect(files.sort()).toEqual(['stand@hd.webp', 'walk_right@hd.webp']);
+    const backing = await page.evaluate(() => {
+      const c = (document.querySelector('[data-garyjs]') as any)?.shadowRoot?.querySelector('canvas') as HTMLCanvasElement;
+      return [c.width, c.height, c.getBoundingClientRect().height];
+    });
+    expect(backing).toEqual([389, 640, 320]);
+  });
+
+  test('quality "standard" keeps the small atlases', async ({ page }) => {
+    const files: string[] = [];
+    page.on('response', (r) => {
+      if (r.url().endsWith('.webp')) files.push(new URL(r.url()).pathname.split('/').pop()!);
+    });
+    await page.goto(pageUrl({ bundle: 'classic', cfg: { schemaVersion: 1, quality: 'standard' } }));
+    await waitState(page, 'idle', 20_000);
+    await page.waitForTimeout(500);
+    expect(files.sort()).toEqual(['stand.webp', 'walk_right.webp']);
+  });
+});
+
+test('manifest contains the approved clips; the left walk mirrors the right walk', async ({ request }) => {
   const m = await (await request.get('/characters/gary/character.json')).json();
   const roles = Object.fromEntries(Object.entries(m.clips).map(([k, v]: [string, any]) => [k, v.role]));
   expect(roles).toEqual(EXPECTED_ROLES);
-  for (const c of Object.values<any>(m.clips)) expect(c.mirror ?? false).toBe(false);
+  for (const [k, c] of Object.entries<any>(m.clips)) expect(c.mirror ?? false).toBe(k === 'walk_right');
+  for (const c of Object.values<any>(m.clips)) expect(c.sources.map((s: any) => s.size?.[1] ?? c.size[1])).toEqual([360, 640]);
   expect(m.display.height).toBe(320);
 });
 
@@ -74,8 +104,9 @@ test('all behaviours run on the default character', async ({ page }) => {
   await page.waitForTimeout(200);
   const clips = await seen();
   for (const c of ['stand', 'stare', 'look_cursor', 'phone_check', 'dragged', 'fall']) expect(clips).toContain(c);
-  expect(clips.some((c) => c === 'walk_left' || c === 'walk_right')).toBe(true);
+  expect(clips).toContain('walk_right');
   const d = await debug(page);
-  expect(d.player.rgbaBytes).toBeLessThanOrEqual(30 * 1024 * 1024);
+  const density = Math.max(1, ...Object.values<number>(d.player.density));
+  expect(d.player.rgbaBytes).toBeLessThanOrEqual(30 * 1024 * 1024 * density * density);
   expect(d.frame.mirrored).toBe(false);
 });

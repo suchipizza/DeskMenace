@@ -40,6 +40,7 @@ export function defaults(): ResolvedConfig {
     announce: false,
     ambient: true,
     restAfter: 30,
+    quality: 'auto',
     menu: { credit: null },
     zIndex: 2147483000,
   };
@@ -156,6 +157,10 @@ export function mergeConfig(base: ResolvedConfig, layer: unknown, source: string
       case 'restAfter':
         if (isNum(v) && v >= 0 && v <= 86400) out.restAfter = v;
         else warn(key, 'must be a number of seconds (0 disables resting)');
+        break;
+      case 'quality':
+        if (v === 'auto' || v === 'standard' || v === 'high') out.quality = v;
+        else warn(key, 'must be "auto", "standard" or "high"');
         break;
       case 'zIndex':
         if (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 2147483647) out.zIndex = v as number;

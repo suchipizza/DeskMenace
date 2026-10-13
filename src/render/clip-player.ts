@@ -1,12 +1,14 @@
 // Explicit-frame atlas player.
 //
 // Each clip is one sprite atlas image, fetched and decoded once with createImageBitmap() and
-// drawn frame by frame onto a single canvas. Playback is time based (per-frame durations from
+// drawn frame by frame onto a single canvas. A clip may offer sharper atlases of the same frames;
+// the player loads the smallest one that is sharp enough for the screen (falling back to less
+// sharp ones if it fails) and sizes the canvas to its cells. Playback is time based (per-frame durations from
 // the manifest). The scheduler sleeps on a timer until shortly before the next frame boundary
 // and then paints in one requestAnimationFrame, so an idle character costs a few wake-ups per
 // second instead of a 60-120 Hz loop. Nothing runs or paints while the document is hidden.
 
-import type { Clip } from '../characters/manifest';
+import type { AtlasTier, Clip } from '../characters/manifest';
 
 export type PlayResult = 'ended' | 'interrupted' | 'stopped';
 
@@ -61,6 +63,7 @@ export function browserEnv(): PlayerEnv {
 
 interface Resident {
   clip: Clip;
+  tier: AtlasTier;
   bmp: ImageBitmap;
 }
 
@@ -71,8 +74,16 @@ export interface ClipPlayerOptions {
   pinned?: string[];
   /** Maximum number of decoded clips kept in memory. */
   maxResident?: number;
-  /** Decoded-memory budget (RGBA bytes) for resident clips; pinned and current clips always stay. */
+  /**
+   * Decoded-memory budget (RGBA bytes) for resident clips at 1x; it grows with the square of the
+   * density of the sharpest resident atlas. Pinned and current clips always stay.
+   */
   maxResidentBytes?: number;
+  /**
+   * Image pixels needed per clip pixel on this screen (display scale x devicePixelRatio). The
+   * smallest atlas at least this sharp is loaded, else the sharpest one. Default 1.
+   */
+  density?(): number;
   env?: PlayerEnv;
 }
 
@@ -144,34 +155,59 @@ export class ClipPlayer {
 
     const abort = new AbortController();
     const promise = (async () => {
-      let res: Response;
-      try {
-        res = await this.env.fetch(clip.atlas.url, { mode: 'cors', credentials: 'omit', signal: abort.signal });
-      } catch (e) {
-        throw new ClipLoadError(id, abort.signal.aborted ? 'load cancelled' : `network error (${(e as Error).message || e})`);
+      // Preferred atlas first, then any less sharp ones as fallbacks.
+      const tiers = this.tierOrder(clip);
+      let failure: ClipLoadError | null = null;
+      for (const tier of tiers) {
+        try {
+          const bmp = await this.fetchTier(id, tier, abort.signal);
+          const r = { clip, tier, bmp };
+          this.resident.set(id, r);
+          this.evict(r);
+          return r;
+        } catch (e) {
+          failure = e as ClipLoadError;
+          if (this.disposed || abort.signal.aborted) break;
+        }
       }
-      if (!res.ok) throw new ClipLoadError(id, `HTTP ${res.status}`);
-      const bmp = await this.env.decode(await res.blob()).catch((e) => {
-        throw new ClipLoadError(id, `could not decode image (${(e as Error).message || e})`);
-      });
-      if (this.disposed || abort.signal.aborted) {
-        bmp.close();
-        throw new ClipLoadError(id, 'load cancelled');
-      }
-      const { columns, rows } = clip.atlas;
-      if (bmp.width < columns * clip.w || bmp.height < rows * clip.h) {
-        bmp.close();
-        throw new ClipLoadError(id, `atlas is ${bmp.width}x${bmp.height}, smaller than its ${columns}x${rows} grid of ${clip.w}x${clip.h} frames`);
-      }
-      const r = { clip, bmp };
-      this.resident.set(id, r);
-      this.evict(r);
-      return r;
+      throw failure ?? new ClipLoadError(id, 'no atlas');
     })();
     this.pending.set(id, { promise, abort });
     const done = () => this.pending.delete(id);
     promise.then(done, done);
     return promise;
+  }
+
+  /** The atlas this screen needs first, then less sharp fallbacks. */
+  private tierOrder(clip: Clip): AtlasTier[] {
+    const need = Math.max(1, this.opts.density?.() ?? 1);
+    const t = clip.tiers;
+    let k = t.findIndex((x) => x.density >= need - 0.05);
+    if (k < 0) k = t.length - 1;
+    return t.slice(0, k + 1).reverse();
+  }
+
+  private async fetchTier(id: string, tier: AtlasTier, signal: AbortSignal): Promise<ImageBitmap> {
+    let res: Response;
+    try {
+      res = await this.env.fetch(tier.url, { mode: 'cors', credentials: 'omit', signal });
+    } catch (e) {
+      throw new ClipLoadError(id, signal.aborted ? 'load cancelled' : `network error (${(e as Error).message || e})`);
+    }
+    if (!res.ok) throw new ClipLoadError(id, `HTTP ${res.status}`);
+    const bmp = await this.env.decode(await res.blob()).catch((e) => {
+      throw new ClipLoadError(id, `could not decode image (${(e as Error).message || e})`);
+    });
+    if (this.disposed || signal.aborted) {
+      bmp.close();
+      throw new ClipLoadError(id, 'load cancelled');
+    }
+    const { columns, rows, w, h } = tier;
+    if (bmp.width < columns * w || bmp.height < rows * h) {
+      bmp.close();
+      throw new ClipLoadError(id, `atlas is ${bmp.width}x${bmp.height}, smaller than its ${columns}x${rows} grid of ${w}x${h} frames`);
+    }
+    return bmp;
   }
 
   /** Evicts least recently used clips until both the count and the byte budget are met. */
@@ -181,8 +217,11 @@ export class ClipPlayer {
       for (const r of this.resident.values()) n += r.bmp.width * r.bmp.height * 4;
       return n;
     };
+    let d = 1;
+    for (const r of this.resident.values()) d = Math.max(d, r.tier.density);
+    const budget = this.maxBytes * d * d;
     for (const [id, r] of this.resident) {
-      if (this.resident.size <= this.maxResident && bytes() <= this.maxBytes) break;
+      if (this.resident.size <= this.maxResident && bytes() <= budget) break;
       if (r === this.current || r === keep || this.pinned.has(id)) continue;
       r.bmp.close();
       this.resident.delete(id);
@@ -209,7 +248,7 @@ export class ClipPlayer {
     this.elapsed = 0;
     this.last = this.env.now();
     this.frame = -1;
-    this.resize(r.clip);
+    this.resize(r);
     const result = new Promise<PlayResult>((resolve) => (this.settle = resolve));
     if (this.env.isHidden()) this.needsPaint = true;
     else this.draw(this.last);
@@ -228,7 +267,7 @@ export class ClipPlayer {
     this.mirrored = mirrored;
     this.loop = false;
     this.paused = true;
-    this.resize(r.clip);
+    this.resize(r);
     const i = Math.min(Math.max(0, frame), r.clip.atlas.frames - 1);
     if (this.env.isHidden()) {
       this.frame = i;
@@ -272,6 +311,7 @@ export class ClipPlayer {
     const { w, h } = r.clip;
     if (this.mirrored) fx = w - fx;
     if (fx < 0 || fy < 0 || fx >= w || fy >= h) return 0;
+    const t = r.tier;
     if (!this.probe) {
       const c = document.createElement('canvas');
       c.width = c.height = 1;
@@ -279,8 +319,8 @@ export class ClipPlayer {
     }
     const p = this.probe;
     if (!p) return 255;
-    const sx = (this.frame % r.clip.atlas.columns) * w + Math.floor(fx);
-    const sy = Math.floor(this.frame / r.clip.atlas.columns) * h + Math.floor(fy);
+    const sx = (this.frame % t.columns) * t.w + Math.min(t.w - 1, Math.floor((fx * t.w) / w));
+    const sy = Math.floor(this.frame / t.columns) * t.h + Math.min(t.h - 1, Math.floor((fy * t.h) / h));
     try {
       p.clearRect(0, 0, 1, 1);
       p.drawImage(r.bmp, sx, sy, 1, 1, 0, 0, 1, 1);
@@ -290,10 +330,14 @@ export class ClipPlayer {
     }
   }
 
-  stats(): { resident: string[]; pending: number; scheduled: boolean; rgbaBytes: number } {
+  stats(): { resident: string[]; pending: number; scheduled: boolean; rgbaBytes: number; density: Record<string, number> } {
     let rgba = 0;
-    for (const r of this.resident.values()) rgba += r.bmp.width * r.bmp.height * 4;
-    return { resident: [...this.resident.keys()], pending: this.pending.size, scheduled: !!(this.timer || this.raf), rgbaBytes: rgba };
+    const density: Record<string, number> = {};
+    for (const [id, r] of this.resident) {
+      rgba += r.bmp.width * r.bmp.height * 4;
+      density[id] = r.tier.density;
+    }
+    return { resident: [...this.resident.keys()], pending: this.pending.size, scheduled: !!(this.timer || this.raf), rgbaBytes: rgba, density };
   }
 
   dispose(): void {
@@ -315,12 +359,13 @@ export class ClipPlayer {
     s?.(result);
   }
 
-  private resize(clip: Clip): void {
-    if (this.canvas.width !== clip.w || this.canvas.height !== clip.h) {
-      this.canvas.width = clip.w;
-      this.canvas.height = clip.h;
+  private resize(r: Resident): void {
+    const { w, h } = r.tier;
+    if (this.canvas.width !== w || this.canvas.height !== h) {
+      this.canvas.width = w;
+      this.canvas.height = h;
     }
-    this.opts.onClipChange?.(clip, this.mirrored);
+    this.opts.onClipChange?.(r.clip, this.mirrored);
   }
 
   private schedule(): void {
@@ -374,8 +419,7 @@ export class ClipPlayer {
     this.frame = i;
     const ctx = this.ctx;
     if (!ctx) return;
-    const { w, h } = r.clip;
-    const cols = r.clip.atlas.columns;
+    const { w, h, columns: cols } = r.tier;
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(r.bmp, (i % cols) * w, Math.floor(i / cols) * h, w, h, 0, 0, w, h);
   }

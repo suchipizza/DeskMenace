@@ -36,6 +36,15 @@ describe('configuration', () => {
     expect(warnings.join('\n')).toMatch(/unknown option "nope"/);
   });
 
+  it('accepts quality auto, standard or high', () => {
+    expect(defaults().quality).toBe('auto');
+    expect(mergeConfig(defaults(), { quality: 'standard' }, 'init').config.quality).toBe('standard');
+    expect(mergeConfig(defaults(), { quality: 'high' }, 'init').config.quality).toBe('high');
+    const bad = mergeConfig(defaults(), { quality: 'ultra' }, 'init');
+    expect(bad.config.quality).toBe('auto');
+    expect(bad.warnings.join()).toMatch(/"quality"/);
+  });
+
   it('drops unsupported behaviours', () => {
     const { config, warnings } = mergeConfig(defaults(), { behaviours: ['walk', 'phone', 'card', 'steal-cursor', 'say'] }, 'init');
     expect(config.behaviours).toEqual(['walk', 'say']);

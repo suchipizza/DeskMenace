@@ -52,6 +52,11 @@ export interface AtlasSource {
   url: string;
   mime?: string;
   bytes?: number;
+  /**
+   * Cell size of this atlas in image pixels, when it differs from the clip `size`: a sharper
+   * version of the same frames for high-density screens (1-4x the clip size, same proportions).
+   */
+  size?: [number, number];
   grid: { columns: number; rows: number; frames: number };
 }
 
@@ -162,6 +167,12 @@ export interface GaryConfig {
   ambient?: boolean;
   /** Seconds without visitor input after which the idle animation pauses to save CPU (0 = never). */
   restAfter?: number;
+  /**
+   * Artwork sharpness when the character provides several image sizes: "auto" picks the size
+   * that matches the screen (sharper on high-density displays), "standard" always loads the
+   * smallest images, "high" always the sharpest.
+   */
+  quality?: 'auto' | 'standard' | 'high';
   menu?: { credit?: CreditLink | false };
   zIndex?: number;
 }
@@ -180,6 +191,7 @@ export interface ResolvedConfig {
   announce: boolean;
   ambient: boolean;
   restAfter: number;
+  quality: 'auto' | 'standard' | 'high';
   menu: { credit: CreditLink | false | null };
   zIndex: number;
 }

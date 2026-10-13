@@ -70,7 +70,7 @@ function fakeBitmap(width: number, height: number) {
   return { width, height, close: vi.fn() } as unknown as ImageBitmap & { close: ReturnType<typeof vi.fn> };
 }
 
-function setup(clips?: Record<string, unknown>, envOver: Partial<PlayerEnv> = {}, opts: { maxResident?: number; maxResidentBytes?: number } = {}) {
+function setup(clips?: Record<string, unknown>, envOver: Partial<PlayerEnv> = {}, opts: { maxResident?: number; maxResidentBytes?: number; density?: () => number } = {}) {
   const clock = new FakeClock();
   const ch = parseCharacter(
     manifest({}, clips ?? {
@@ -329,5 +329,77 @@ describe('ClipPlayer', () => {
     await flush();
     expect(player.getCurrentFrame().mirrored).toBe(true);
     expect(player.alphaAt(-5, 10)).toBe(0); // outside the frame
+  });
+
+  describe('sharper atlases', () => {
+    const tiered = (extra: Record<string, unknown> = {}) =>
+      clip({
+        sources: [
+          { type: 'atlas', url: 'atlas/idle@2x.webp', size: [200, 400], grid: { columns: 2, rows: 2, frames: 4 } },
+          { type: 'atlas', url: 'atlas/idle.webp', grid: { columns: 2, rows: 2, frames: 4 } },
+          { type: 'atlas', url: 'atlas/idle@1.5x.webp', size: [150, 300], grid: { columns: 2, rows: 2, frames: 4 } },
+        ],
+        ...extra,
+      });
+    const sizes: Record<string, number> = { 'idle.webp': 1, 'idle@1.5x.webp': 1.5, 'idle@2x.webp': 2 };
+    const env = (urls: string[], fail: string[] = []) => ({
+      fetch: async (u: string) => {
+        urls.push(u.split('/').pop()!);
+        return (fail.some((f) => u.endsWith(f)) ? { ok: false, status: 404 } : { ok: true, status: 200, blob: async () => new Blob([u]) }) as unknown as Response;
+      },
+      decode: async (b: Blob) => {
+        const d = sizes[(await b.text()).split('/').pop()!];
+        return fakeBitmap(200 * d, 400 * d);
+      },
+    });
+
+    for (const [need, file, canvas] of [
+      [1, 'idle.webp', [100, 200]],
+      [1.4, 'idle@1.5x.webp', [150, 300]],
+      [1.5, 'idle@1.5x.webp', [150, 300]],
+      [1.78, 'idle@2x.webp', [200, 400]],
+      [3, 'idle@2x.webp', [200, 400]],
+      [0.5, 'idle.webp', [100, 200]],
+    ] as const) {
+      it(`loads the smallest atlas sharp enough for density ${need}`, async () => {
+        const urls: string[] = [];
+        const { player, canvas: cv } = setup({ idle: tiered() }, env(urls), { density: () => need });
+        void player.play('idle');
+        await flush();
+        expect(urls).toEqual([file]);
+        expect([cv.width, cv.height]).toEqual(canvas);
+        expect(player.stats().density.idle).toBe(sizes[file]);
+      });
+    }
+
+    it('falls back to a less sharp atlas when the preferred one fails', async () => {
+      const urls: string[] = [];
+      const { player, canvas } = setup({ idle: tiered() }, env(urls, ['idle@2x.webp']), { density: () => 2 });
+      await player.load('idle');
+      expect(urls).toEqual(['idle@2x.webp', 'idle@1.5x.webp']);
+      void player.play('idle');
+      await flush();
+      expect([canvas.width, canvas.height]).toEqual([150, 300]);
+    });
+
+    it('fails only when every atlas fails', async () => {
+      const urls: string[] = [];
+      const { player } = setup({ idle: tiered() }, env(urls, ['.webp']), { density: () => 2 });
+      await expect(player.play('idle')).rejects.toThrow(/HTTP 404/);
+      expect(urls).toEqual(['idle@2x.webp', 'idle@1.5x.webp', 'idle.webp']);
+    });
+
+    it('scales the memory budget with the square of the density', async () => {
+      const urls: string[] = [];
+      const clips = { idle: tiered(), a: tiered({ role: 'a' }), b: tiered({ role: 'b' }) };
+      // each 2x clip decodes to 400 x 800 x 4 = 1.28 MB; budget 0.7 MB at 1x -> 2.8 MB at 2x
+      const { player } = setup(clips, env(urls), { maxResident: 5, maxResidentBytes: 700_000, density: () => 2 });
+      for (const id of ['idle', 'a', 'b']) {
+        void player.play(id);
+        await flush();
+      }
+      expect(player.stats().resident).toEqual(['idle', 'b']);
+      expect(player.stats().rgbaBytes).toBeLessThanOrEqual(2_800_000);
+    });
   });
 });

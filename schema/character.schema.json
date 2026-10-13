@@ -120,6 +120,13 @@
                   "url": { "type": "string", "minLength": 1 },
                   "mime": { "type": "string" },
                   "bytes": { "type": "integer", "minimum": 0 },
+                  "size": {
+                    "description": "Cell size in image pixels when it differs from the clip size: a sharper copy of the same frames for high-density screens, 1-4 times the clip size with the same proportions.",
+                    "type": "array",
+                    "items": { "type": "integer", "minimum": 1 },
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
                   "grid": {
                     "type": "object",
                     "required": ["columns", "rows", "frames"],

@@ -129,6 +129,17 @@ export class Engine {
     }
   }
 
+  /** Image pixels per clip pixel this screen can show, per the `quality` option. */
+  private density(overlay: Overlay): number {
+    const q = this.config.quality;
+    if (q === 'standard') return 1;
+    if (q === 'high') return Infinity;
+    // Sharper atlases need ~3x the decoded memory: keep the small ones on low-memory devices.
+    const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+    if (mem !== undefined && mem < 4) return 1;
+    return overlay.scale * (window.devicePixelRatio || 1);
+  }
+
   private fail(e: unknown): void {
     const err = e instanceof Error ? e : new Error(String(e));
     console.warn(`[gary.js] ${err.message}`);
@@ -144,6 +155,7 @@ export class Engine {
     this.player = new ClipPlayer(overlay.canvas, ch.clips, {
       pinned: [ch.roles.get('idle')!],
       onClipChange: (clip, mirrored) => overlay.applyClip(clip, mirrored),
+      density: () => this.density(overlay),
     });
     this.bubble = new Bubble(overlay, ch.bubbleAnchor, this.config.announce);
     this.menu = new Menu(overlay, ch.name, this.creditFor(ch), {

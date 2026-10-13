@@ -135,4 +135,40 @@ describe('character manifest', () => {
     expect(errorsOf(null).join()).toMatch(/JSON object/);
     expect(errorsOf([]).join()).toMatch(/JSON object/);
   });
+
+  describe('sharper atlases', () => {
+    const src = (url: string, size?: unknown) => ({ type: 'atlas', url, ...(size ? { size } : {}), grid: { columns: 2, rows: 2, frames: 4 } });
+    const parse = (sources: unknown[]) => parseCharacter(manifest({}, { idle: clip({ sources }) }), BASE);
+
+    it('orders atlases by density, lowest first', () => {
+      const c = parse([src('hd.webp', [200, 400]), src('sd.webp')]).clips.get('idle')!;
+      expect(c.tiers.map((t) => [t.url.split('/').pop(), t.w, t.h, t.density])).toEqual([
+        ['sd.webp', 100, 200, 1],
+        ['hd.webp', 200, 400, 2],
+      ]);
+      expect(c.atlas.url).toMatch(/sd\.webp$/);
+    });
+
+    it('allows a character with only a sharp atlas', () => {
+      const c = parse([src('hd.webp', [178, 356])]).clips.get('idle')!;
+      expect(c.tiers).toHaveLength(1);
+      expect(c.atlas.density).toBe(1.78);
+    });
+
+    it('keeps the first of two atlases with the same size', () => {
+      const c = parse([src('a.webp'), src('b.webp', [100, 200])]).clips.get('idle')!;
+      expect(c.tiers.map((t) => t.url.split('/').pop())).toEqual(['a.webp']);
+    });
+
+    it('rejects sizes that are smaller, too large, distorted or malformed', () => {
+      for (const size of [[50, 100], [500, 1000], [300, 400], [200.5, 400], [200], 'big']) {
+        expect(() => parse([src('a.webp'), src('x.webp', size)]), JSON.stringify(size)).toThrow(/size/);
+      }
+    });
+
+    it('checks the 16384 px limit on the sharp atlas', () => {
+      const big = { type: 'atlas', url: 'x.webp', size: [400, 800], grid: { columns: 41, rows: 1, frames: 4 } };
+      expect(() => parse([big])).toThrow(/16384/);
+    });
+  });
 });

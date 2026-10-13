@@ -11,3 +11,4 @@ First version.
 - Triggers: load, idle, hover, click, visible, scroll, exit, gary-click, time, event.
 - Accessible menu (mute, remove, credit), persistent removal, reduced-motion support.
 - Character manifest `schemaVersion: 1` with JSON Schemas; Mugsy, a CC0 sample character.
+- Sharper artwork on high-density screens: clips may offer several atlas sizes; the `quality` option picks automatically or forces the smallest or sharpest.

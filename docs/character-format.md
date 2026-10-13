@@ -39,7 +39,20 @@ Each clip is one image containing all its frames in a grid, left to right and to
 | `hit` | — | Coarse clickable rectangle in frame pixels `[x, y, w, h]`. x/y may be negative. Inside it, a pixel is "the character" if its alpha is at least 64 |
 | `frameMs` | ✓ | Duration of each frame in milliseconds; its length must equal `grid.frames` |
 | `durationMs` | — | Optional check: must equal the sum of `frameMs` |
-| `sources` | ✓ | `[{ "type": "atlas", "url", "grid": { "columns", "rows", "frames" } }]`. URLs resolve against the manifest's own URL |
+| `sources` | ✓ | `[{ "type": "atlas", "url", "grid": { "columns", "rows", "frames" } }]`. URLs resolve against the manifest's own URL. Add sharper copies with `size` (below) |
+
+### Sharper images for high-density screens
+
+A clip can list the same frames at more than one resolution. Give each extra atlas its cell `size` in image pixels (1–4 times the clip `size`, same proportions). Everything else in the clip (`size`, `anchor`, `hit`) stays in the base frame pixels.
+
+```json
+"sources": [
+  { "type": "atlas", "url": "atlas/walk.webp", "grid": { "columns": 8, "rows": 1, "frames": 8 } },
+  { "type": "atlas", "url": "atlas/walk@2x.webp", "size": [300, 400], "grid": { "columns": 8, "rows": 1, "frames": 8 } }
+]
+```
+
+The engine loads only one atlas per clip: the smallest one that is sharp enough for the visitor's screen (display size × `devicePixelRatio`), or the sharpest available. If it fails to load, it falls back to a less sharp one. Site owners can force `"quality": "standard"` or `"high"` ([configuration](configuration.md)). Sharper atlases cost more bytes and decoded memory; the memory budget grows with them (about 30 MB × density²).
 
 ## Roles
 
@@ -90,8 +103,8 @@ Without walk clips, the character appears in place and never walks. Missing opti
 
 - Draw or render each animation as frames on a transparent background, all the same size, with the feet on the same row.
 - Pack them into a grid (any tool that makes sprite sheets works; Mugsy's [build script](../scripts/sample-character/build.py) shows one way with Pillow).
-- Keep it light: the engine decodes each atlas into memory (`width × height × 4` bytes) and keeps at most three clips, within about 30 MB, at a time. 8–12 frames per second is plenty for this kind of character.
-- Export the images at roughly 1–1.2× the displayed size for crisp results on high-DPI screens.
+- Keep it light: the engine decodes each atlas into memory (`width × height × 4` bytes) and keeps at most three clips, within about 30 MB (more for sharper atlases), at a time. 8–12 frames per second is plenty for this kind of character.
+- For a light character, export the images at roughly the displayed size. For crisp results on high-DPI screens, add a second atlas at 2× the displayed size (see above).
 
 ## Hosting
 

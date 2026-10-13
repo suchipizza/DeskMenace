@@ -16,9 +16,13 @@ Measured idle cost in headless Chromium 145 (60 s, Apple M-series laptop, proces
 
 Even a sleeping scheduler costs a few percent of a core while it animates. When the visitor hasn't used the mouse, keyboard, touch or scroll for 30 seconds (`restAfter`), the character holds its current frame and stops ambient behaviour; the first input resumes it from the same frame. Nobody is looking at an idle character on a page left open in the background, so this saves CPU and battery without a visible difference. It was preferred over moving rendering to an `OffscreenCanvas` worker, which saves about one point while the character is watched but needs a second copy of every decoded frame for pixel-accurate click-through.
 
+### Sharper atlases only where they show
+
+A character may offer the same frames at several resolutions. The player loads one per clip: the smallest whose density covers display size × `devicePixelRatio`, falling back to less sharp ones if a request fails. The canvas backing store takes the atlas cell size, so a 2× atlas is drawn 1:1 on a 2× screen instead of being stretched. Hit testing maps frame coordinates into the chosen atlas. Measured in headless Chromium 145 on a 2× screen with a 219 × 360 character displayed 320 px tall: the 360 px atlases cost 2.7 % renderer + 2.75 % GPU and 20.5 MB decoded (idle + walk); 640 px atlases 3.3 % + 2.7 % and 64.6 MB. Because of the memory, the decoded budget scales with density², and `auto` stays on the smallest atlases when `navigator.deviceMemory` reports under 4 GB.
+
 ### Bounded decoded memory
 
-Decoded atlases are RGBA bitmaps (`width × height × 4` bytes). The player keeps at most three clips and at most 30 MB resident, always keeping the idle clip and the clip on screen, and calls `ImageBitmap.close()` on eviction and disposal. Concurrent loads of a clip share one request; stale loads are discarded with a generation counter and aborted on disposal.
+Decoded atlases are RGBA bitmaps (`width × height × 4` bytes). The player keeps at most three clips and at most 30 MB resident (times density² when sharper atlases are loaded), always keeping the idle clip and the clip on screen, and calls `ImageBitmap.close()` on eviction and disposal. Concurrent loads of a clip share one request; stale loads are discarded with a generation counter and aborted on disposal.
 
 ### Click-through by pixel alpha
 

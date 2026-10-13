@@ -47,6 +47,7 @@
     "announce": { "description": "Announce speech bubbles to screen readers.", "type": "boolean", "default": false },
     "ambient": { "description": "Random walks, glances and chatter while idle.", "type": "boolean", "default": true },
     "restAfter": { "description": "Seconds without visitor input after which the idle animation pauses to save CPU. 0 never rests.", "type": "number", "minimum": 0, "maximum": 86400, "default": 30 },
+    "quality": { "description": "Artwork sharpness when the character offers several image sizes: auto matches the screen, standard always loads the smallest images, high always the sharpest.", "enum": ["auto", "standard", "high"], "default": "auto" },
     "menu": {
       "type": "object",
       "additionalProperties": false,
