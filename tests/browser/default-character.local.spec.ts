@@ -131,9 +131,15 @@ test('the 404 example: in from the left, onto the 404, the line, a remark if cli
   await page.mouse.click(1200, 60);
   await page.waitForFunction(() => (window as any).__spoke.length === 1, null, { timeout: 10_000 });
   const preset = await (await page.request.get('/characters/gary/presets/404.json')).json();
-  expect(preset.lines['keep-going']).toContain((await page.evaluate(() => (window as any).__spoke))[0]);
+  // The remarks come in the order written.
+  expect((await page.evaluate(() => (window as any).__spoke))[0]).toBe(preset.lines['keep-going'][0]);
   await page.waitForFunction(() => (window as any).__spoke.includes('They should have leveraged AI.'), null, { timeout: 40_000 });
   expect((await debug(page)).surface).toBe('h1');
+  // Another click while he walks off: the next remark in the list.
+  await page.waitForFunction(() => (window as any).Gary._debug().state === 'walking', null, { timeout: 20_000 });
+  await page.mouse.click(1200, 60);
+  await page.waitForFunction(() => (window as any).__spoke.length === 3, null, { timeout: 10_000 });
+  expect((await page.evaluate(() => (window as any).__spoke))[2]).toBe(preset.lines['keep-going'][1]);
   await waitState(page, 'away', 40_000);
   expect((await canvasBox(page)).x).toBeGreaterThan(1280);
 });
@@ -159,4 +165,23 @@ test('the personal example: the inspection script in order', async ({ page }) =>
   expect(spoke[2]).toMatch(/^Check out my profile/);
   const d = await debug(page);
   expect(d.feetX / 1280).toBeGreaterThan(0.15);
+});
+
+test('the website example: walks in to the middle and has notes', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.addInitScript(() => {
+    (window as any).__spoke = [];
+    const iv = setInterval(() => {
+      const G = (window as any).Gary;
+      if (G?.on) {
+        clearInterval(iv);
+        G.on('spoke', (l: string) => (window as any).__spoke.push(l));
+      }
+    }, 20);
+  });
+  await page.goto('/examples/website/');
+  await page.waitForFunction(() => (window as any).__spoke.length >= 1, null, { timeout: 40_000 });
+  expect((await page.evaluate(() => (window as any).__spoke))[0]).toBe('They should have leveraged AI on this.');
+  const b = await canvasBox(page);
+  expect(Math.abs(b.x + b.w / 2 - 640)).toBeLessThan(40);
 });

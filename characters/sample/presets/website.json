@@ -10,6 +10,7 @@
     "glance": [{ "play": "judge.pointer" }]
   },
   "triggers": [
+    { "on": "drag", "say": "#dragged", "cooldown": 2 },
     { "on": "scrolling", "scene": "scrolled", "chance": 0.5, "cooldown": 45 },
     { "on": "near", "distance": 60, "scene": "glance", "cooldown": 20 },
     { "on": "gary-click", "count": 1, "scene": "glance", "cooldown": 5 },

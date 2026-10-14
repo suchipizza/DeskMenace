@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ES module · gary.js</title>
-<link rel="stylesheet" href="../examples.css">
+<link rel="stylesheet" href="../../../examples/examples.css">
 </head>
 <body>
 <main>
@@ -18,14 +18,14 @@
   <p>Events: <code id="log">—</code></p>
 </main>
 <script type="module" id="src">
-import Gary from '../../dist/gary.mjs';
+import Gary from '../../../dist/gary.mjs';
 
 Gary.on('entered', () => log('entered'));
 Gary.on('spoke', (line) => log(`spoke: ${line}`));
 Gary.on('error', (e) => log(`error: ${e.message}`));
 
 await Gary.init({
-  character: '../../characters/sample/character.json',
+  character: '../../../characters/sample/character.json',
   triggers: [{ on: 'event', event: 'deploy', say: 'A Friday deploy? Brave. I\'ll be in the cupboard.' }],
 });
 

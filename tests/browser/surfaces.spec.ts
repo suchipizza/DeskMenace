@@ -303,6 +303,35 @@ test.describe('scripted walks', () => {
     expect(Math.abs((await feetY(page)) - (720 - 250))).toBeLessThan(12);
   });
 
+  test('a "drag" rule speaks on pick-up; an ordered pool goes on in order, then repeats its last line', async ({ page }) => {
+    test.setTimeout(60_000);
+    const cfg = { ...QUIET, lines: { kg: ['one', 'two', 'three'] }, inOrder: ['kg'], limits: { minGapSeconds: 30, maxLinesPerMinute: 1 }, dropTo: 'here', scenes: { stroll: { steps: [{ walkTo: { x: 0.15 } }], interrupted: '#kg' } }, triggers: [{ on: 'drag', say: 'Very mature.' }] };
+    await boot(page, { cfg });
+    await page.evaluate(() => {
+      void (window as any).Gary.do('stroll');
+    });
+    await page.waitForFunction(() => (window as any).Gary._debug().state === 'walking');
+    await page.waitForTimeout(300);
+    const b = await canvasBox(page);
+    const start = { x: b.x + b.w * 0.5, y: b.y + b.h * 0.55 };
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(start.x, start.y - 200, { steps: 8 });
+    await waitState(page, 'dragging');
+    // Shown while held, despite the speech limits.
+    await page.waitForFunction(() => (window as any).__spoke.length === 1);
+    expect((await debug(page)).state).toBe('dragging');
+    await page.mouse.up();
+    await page.waitForFunction(() => (window as any).__spoke.length === 2, null, { timeout: 15_000 });
+    for (let i = 3; i <= 5; i++) {
+      await page.evaluate(() => {
+        void (window as any).Gary.say('#kg');
+      });
+      await page.waitForFunction((n) => (window as any).__spoke.length === n, i);
+    }
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['Very mature.', 'one', 'two', 'three', 'three']);
+  });
+
   test('ambient walks stay inside position.x', async ({ page }) => {
     test.setTimeout(60_000);
     await boot(page, { cfg: { triggers: [], pace: 'busy', restAfter: 0, position: { side: 'left', x: [0.4, 0.6] } } });

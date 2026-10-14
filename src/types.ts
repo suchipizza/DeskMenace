@@ -122,7 +122,8 @@ export type TriggerKind =
   | 'time'
   | 'event'
   | 'scrolling'
-  | 'near';
+  | 'near'
+  | 'drag';
 
 export interface TriggerRule {
   on: TriggerKind;
@@ -214,6 +215,8 @@ export interface GaryConfig {
   behaviours?: BehaviorId[];
   /** Line pools used for ambient chatter. */
   packs?: string[];
+  /** Pools whose lines are said in order, one per use; the last line then repeats. */
+  inOrder?: string[];
   /** Extra or replacement line pools, merged by pool name. */
   lines?: Record<string, LineEntry[]>;
   vars?: Record<string, string>;
@@ -260,6 +263,7 @@ export interface ResolvedConfig {
   preset: string | null;
   behaviours: BehaviorId[];
   packs: string[];
+  inOrder: string[];
   lines: Record<string, LineEntry[]>;
   vars: Record<string, string>;
   triggers: TriggerRule[];

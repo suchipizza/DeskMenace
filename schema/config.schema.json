@@ -14,6 +14,7 @@
     "behaviours": { "type": "array", "items": { "$ref": "#/$defs/behaviour" } },
     "behaviors": { "type": "array", "items": { "$ref": "#/$defs/behaviour" } },
     "packs": { "description": "Line pools used for ambient chatter.", "type": "array", "items": { "$ref": "#/$defs/poolName" }, "default": ["core"] },
+    "inOrder": { "description": "Line pools whose lines are said in the order written, one per use; after the last line, the last line repeats.", "type": "array", "items": { "$ref": "#/$defs/poolName" }, "default": [] },
     "lines": {
       "description": "Line pools merged by name with the character's own pools (a pool given here replaces the character's pool of the same name).",
       "type": "object",
@@ -124,7 +125,7 @@
       "anyOf": [{ "required": ["say"] }, { "required": ["do"] }, { "required": ["scene"] }],
       "additionalProperties": false,
       "properties": {
-        "on": { "enum": ["load", "idle", "hover", "click", "visible", "scroll", "exit", "gary-click", "time", "event", "scrolling", "near"] },
+        "on": { "enum": ["load", "idle", "hover", "click", "visible", "scroll", "exit", "gary-click", "time", "event", "scrolling", "near", "drag"] },
         "selector": { "type": "string", "minLength": 1, "maxLength": 500 },
         "after": { "type": "number", "minimum": 0, "maximum": 86400 },
         "every": { "type": "number", "minimum": 1, "maximum": 86400 },

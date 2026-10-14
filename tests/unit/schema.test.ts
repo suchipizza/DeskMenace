@@ -24,7 +24,7 @@ describe('published JSON schemas', () => {
   it('accept every example configuration', () => {
     const inline = (f: string) => JSON.parse(readFileSync(f, 'utf8').match(/<script type="application\/json" data-gary-config>([\s\S]*?)<\/script>/)![1]);
     const presets = ['404', 'personal', 'website', 'staging'].map((n) => read(`characters/sample/presets/${n}.json`));
-    for (const cfg of [inline('examples/portfolio/index.html'), ...presets]) {
+    for (const cfg of [inline('tests/pages/portfolio/index.html'), ...presets]) {
       expect(config(cfg), JSON.stringify(config.errors)).toBe(true);
     }
   });

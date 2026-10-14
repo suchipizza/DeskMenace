@@ -42,6 +42,7 @@ A **preset** offered by the character (`data-preset="404"` on the script tag, or
 | `preset` | — | Name of a ready-made package offered by the character, e.g. `"404"`. Also `data-preset` on the script tag. See [Presets](#presets) |
 | `behaviours` | all eight | Which behaviours may run (`behaviors` also works) |
 | `packs` | `["core"]` | Line pools used for ambient chatter and `Gary.do('say')` |
+| `inOrder` | — | Pools whose lines are said in the order written, one per use; after the last line, the last one repeats. E.g. `["keep-going"]` for remarks that escalate |
 | `lines` | — | Your own line pools. A pool here replaces the character's pool of the same name |
 | `vars` | `{ "site": location.hostname }` | Values for `{name}` placeholders in lines |
 | `triggers` | see below | Page triggers. Replaces the defaults |
@@ -67,9 +68,9 @@ Lines from `Gary.say()` bypass the rate limits (you asked for them). Lines from 
 
 ## Lines
 
-A pool is an array of strings or `{ "text": "…", "weight": 2 }` objects. Picks are weighted, the previous line of a pool is never repeated immediately, and a pool with one line always works. `{owner}`-style placeholders are replaced from `vars`; unknown placeholders are removed. Lines are always shown as plain text. HTML is never interpreted.
+A pool is an array of strings or `{ "text": "…", "weight": 2 }` objects. Picks are weighted, the previous line of a pool is never repeated immediately, and a pool with one line always works. A pool named in `inOrder` is read in order instead: each use says the next line, and once the end is reached the last line repeats. Every rule and scene that uses the pool shares the same position. `{owner}`-style placeholders are replaced from `vars`; unknown placeholders are removed. Lines are always shown as plain text. HTML is never interpreted.
 
-Gary's pools: `hello`, `core`, `idle`, `boast`, `roast`, `404`, `staging`, `status`, `hover`, `clicked`, `exit`, `leave`. The engine uses `hello`, `idle` and `exit` in the default triggers, `clicked` for `react-clicks` and `leave` when a visitor removes the character. A pool that doesn't exist is silently skipped.
+Gary's pools: `hello`, `core`, `idle`, `boast`, `roast`, `404`, `staging`, `status`, `hover`, `clicked`, `dragged`, `exit`, `leave`. The engine uses `hello`, `idle` and `exit` in the default triggers, `clicked` for `react-clicks` and `leave` when a visitor removes the character. A pool that doesn't exist is silently skipped.
 
 ## Triggers
 
@@ -87,6 +88,7 @@ Gary's pools: `hello`, `core`, `idle`, `boast`, `roast`, `404`, `staging`, `stat
 | `event` | you call `Gary.emit(name)` | `event` |
 | `scrolling` | the visitor starts scrolling: wheel, touch, scroll keys or any scroller moving. Fires once per gesture (a gesture ends after 0.6 s of quiet), also on pages too short to scroll | — |
 | `near` | the mouse comes within `distance` CSS px of the character. Fires once per approach | `distance` (default 80) |
+| `drag` | the visitor picks the character up. Its line is shown at once, outside the rate limits (the visitor asked for it) | — |
 
 Every rule needs `say` (a line or `#pool`), `do` (a behaviour id) or `scene` (a scene name, or a list of them), and may use `chance` (0–1), `cooldown` (seconds), `once` and `maxPerSession`. Hover and click listeners are delegated to the document, so elements added later still work. `visible` observes at most 100 elements present at start. A malformed selector is ignored with a warning.
 
@@ -157,12 +159,12 @@ A preset is a ready-made package for a kind of page, shipped with the character:
 
 | Preset | For | What happens |
 |---|---|---|
-| `404` | error pages | Walks in from the left at the level of the element marked `data-gary-404` (or the first `h1`), stops on it, pauses, says his line and walks off to the right. Clicks or scroll attempts while he's there get a remark |
-| `personal` | personal sites, portfolios | Walks in from the left at mid-height, stops in the middle to comment on the bio, walks down to the left for a second remark, then a bit further for a third. Clicks or scrolls during that get a remark; later, scrolling makes him stare and comment. Reacts to `#projects` / `[data-gary-projects]` coming into view |
-| `website` | any site | Walks in from the left to the middle and says hello, then strolls in the middle band of the screen, glances at the mouse when it comes close, comments on scrolling |
+| `404` | error pages | Walks in from the left at the level of the element marked `data-gary-404` (or the first `h1`), stops on it, pauses, says his line and walks off to the right. Clicks or scroll attempts while he's there get a remark, each one the next in the list |
+| `personal` | personal sites, portfolios | Walks in from the left at mid-height, stops in the middle to comment on the bio, walks down to the left for a second remark, then a bit further for a third. Clicks or scrolls during that get a remark; later, scrolling makes him stare and comment. Reacts to `#projects` / `[data-gary-projects]` coming into view, and to `[data-gary-stealth]` and `[data-gary-visionary]` on the demo profile |
+| `website` | any site | Walks in from the left to the middle and says his line, then strolls in the middle band of the screen, glances at the mouse when it comes close, comments on scrolling |
 | `staging` | test servers | Walks in from the left to the middle, stares, reminds everyone this isn't production, and repeats it now and then |
 
-In all four he lands where he's dropped after a drag (`"dropTo": "here"`) and never goes to the far left or right edge while idling (`"position": { "x": [0.2, 0.8] }`).
+In all four he complains when he's picked up and lands where he's dropped (`"dropTo": "here"`) and never goes to the far left or right edge while idling (`"position": { "x": [0.2, 0.8] }`).
 
 Gary and Mugsy both offer these four. Anything you set yourself wins over the preset: your `triggers` replace the preset's, your `lines`, `vars` and `scenes` replace pools and scenes of the same name, and options such as `pace` or `limits.minGapSeconds` override the preset's value. To change one line pool of the `404` preset:
 

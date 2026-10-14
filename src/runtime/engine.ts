@@ -318,7 +318,7 @@ export class Engine {
       }
     }
     if (!ch) return;
-    this.book = new LineBook([ch.lines, new Map(Object.entries(this.config.lines))]);
+    this.book = new LineBook([ch.lines, new Map(Object.entries(this.config.lines))], Math.random, this.config.inOrder);
     this.limiter.setLimits(this.config.limits);
     this.menu?.setCredit(this.creditFor(ch));
     this.stages.clear();
@@ -1027,9 +1027,19 @@ export class Engine {
     if (rule.during) {
       // A remark while the scene goes on, unless a line is already showing.
       if (this.scenePlaying !== rule.during || this.bubble?.visible || !rule.say) return false;
+      // Checked before picking, so a line in an ordered pool is never skipped.
+      if (prefs.isMuted() || !this.limiter.canSpeak()) return false;
       const text = this.book.resolve(rule.say);
-      if (!text || prefs.isMuted() || !this.limiter.canSpeak()) return false;
+      if (!text) return false;
       void this.showLine(text, true);
+      return true;
+    }
+    if (rule.on === 'drag') {
+      // Being picked up is the visitor's doing: answered right away, outside the speech limits.
+      if (this.state !== 'dragging' || !rule.say || prefs.isMuted()) return false;
+      const text = this.book.resolve(rule.say);
+      if (!text) return false;
+      void this.speak(text, PRIORITY.dom, false);
       return true;
     }
     // A page trigger never cuts into a running scene.
@@ -1047,9 +1057,9 @@ export class Engine {
       return true;
     }
     if (rule.say) {
+      if (!this.limiter.canSpeak() || prefs.isMuted()) return false;
       const text = this.book.resolve(rule.say);
       if (!text) return false;
-      if (!this.limiter.canSpeak() || prefs.isMuted()) return false;
       const pose = rule.do === 'judge' || (target && Math.random() < 0.35) ? 'judge' : 'stand';
       void this.speak(text, PRIORITY.dom, true, pose);
       return true;
@@ -1122,6 +1132,7 @@ export class Engine {
     }
     this.grab = { dx: x - ov.feetX, dy: this.groundY() - ov.lift - y };
     void this.run(PRIORITY.drag, 'dragging', async () => {
+      this.triggers?.dragged();
       if (this.has('held')) await this.playRole('held', { loop: true });
       else this.player?.pause();
       await new Promise<void>(() => {}); // held until dragEnd() replaces this activity

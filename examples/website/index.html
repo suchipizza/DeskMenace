@@ -3,38 +3,121 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Any website · gary.js</title>
+<title>Leveragely · gary.js</title>
 <link rel="stylesheet" href="../examples.css">
-<!-- The "website" preset, for any kind of page: the character wanders over headings and images,
-     glances at the pointer when it comes close, and comments on scrolling and clicking. -->
+<!-- The "website" preset, for any kind of page: the character walks in, comments, glances at the
+     pointer when it comes close, and comments on scrolling. -->
 <script defer src="../../dist/gary.js" data-preset="website"></script>
 <style>
-  article img { width: 100%; height: 220px; border-radius: 14px; margin: 8px 0 16px; }
-  h2 { margin: 48px 0 12px; }
+  :root { --brand: #5b4bff; --brand-soft: #eeebff; }
+  @media (prefers-color-scheme: dark) { :root { --brand: #8f84ff; --brand-soft: #24213d; } }
+  main { max-width: 1040px; }
+  nav { display: flex; align-items: center; gap: 22px; margin-bottom: 64px; flex-wrap: wrap; }
+  nav .logo { font-weight: 800; font-size: 20px; margin-right: auto; color: var(--fg); text-decoration: none; }
+  nav .logo i { color: var(--brand); font-style: normal; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 15px; }
+  .btn { display: inline-block; padding: 10px 18px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid var(--brand); }
+  .btn.primary { background: var(--brand); color: #fff; }
+  .btn.ghost { color: var(--brand); }
+  nav .btn { color: #fff; }
+  .hero { text-align: center; max-width: 720px; margin: 0 auto 72px; }
+  .pill { display: inline-block; font-size: 13px; padding: 4px 12px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); margin-bottom: 18px; }
+  .hero h1 { font-size: clamp(36px, 7vw, 64px); letter-spacing: -0.03em; }
+  .hero .lead { margin: 18px auto 28px; }
+  .hero .btn { margin: 4px 6px; }
+  .small { color: var(--muted); font-size: 13px; margin-top: 12px; }
+  .logos { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 32px; margin: 0 0 80px; color: var(--muted); font-weight: 700; letter-spacing: .02em; }
+  .logos p { width: 100%; text-align: center; font-weight: 400; font-size: 13px; margin: 0 0 6px; }
+  h2 { font-size: clamp(26px, 4vw, 36px); text-align: center; margin: 0 0 32px; letter-spacing: -0.02em; }
+  .features { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-bottom: 80px; }
+  .feature { padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+  .feature b { display: block; font-size: 18px; margin-bottom: 6px; }
+  .feature span { color: var(--muted); font-size: 15px; }
+  .demo-box { border: 1px solid var(--line); border-radius: 16px; background: var(--card); padding: 22px; margin: 0 auto 80px; max-width: 680px; font-size: 15px; }
+  .demo-box .row { display: grid; grid-template-columns: 90px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .demo-box .row:last-child { border: 0; }
+  .demo-box em { color: var(--muted); font-style: normal; font-size: 13px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; text-align: center; margin-bottom: 80px; }
+  .stats b { display: block; font-size: 40px; color: var(--brand); letter-spacing: -0.03em; }
+  .stats span { color: var(--muted); font-size: 14px; }
+  .pricing { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-bottom: 80px; }
+  .plan { padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+  .plan.hot { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  .plan .price { font-size: 34px; font-weight: 800; margin: 8px 0; }
+  .plan .price small { font-size: 14px; font-weight: 400; color: var(--muted); }
+  .plan ul { padding-left: 18px; color: var(--muted); font-size: 15px; }
+  .faq { max-width: 680px; margin: 0 auto 64px; }
+  .faq b { display: block; margin-top: 18px; }
+  .faq p { margin: 4px 0 0; color: var(--muted); }
+  footer { border-top: 1px solid var(--line); padding-top: 20px; color: var(--muted); font-size: 13px; text-align: center; }
+  @media (max-width: 600px) { nav { margin-bottom: 40px; } nav a:not(.btn):not(.logo) { display: none; } }
 </style>
 </head>
 <body>
 <main>
-  <article>
-    <h1>Seven productivity tips nobody asked for</h1>
-    <p class="lead">A short guide to getting more done, from people who wrote it during a meeting.</p>
-    <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f2d0a4'/%3E%3C/svg%3E">
-    <h2>1. Write things down</h2>
-    <p>Lists are great. Lists of lists are better. A list of the lists you've lost is a lifestyle.</p>
-    <h2>2. Block your calendar</h2>
-    <p>Put "focus time" in your calendar. Then accept the meeting someone schedules over it.</p>
-    <h2>3. Take breaks</h2>
-    <p>Studies show breaks improve focus. The studies were read during a break.</p>
-    <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23b8d8e8'/%3E%3C/svg%3E">
-    <h2>4. Say no</h2>
-    <p>Practise saying no to things. Start with this article.</p>
-    <h2>5. Single-task</h2>
-    <p>Do one thing at a time. Ideally the thing you were asked to do.</p>
-    <h2>6. Automate</h2>
-    <p>If you do something three times, automate it. If the automation breaks three times, do it by hand.</p>
-    <h2>7. Rest</h2>
-    <p>Sleep is the original productivity tool. It has no subscription.</p>
-  </article>
+  <nav>
+    <a class="logo" href="#">Leverage<i>ly</i></a>
+    <a href="#features">Product</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a>
+    <a class="btn primary" href="#">Book a demo</a>
+  </nav>
+
+  <section class="hero">
+    <span class="pill">New: Agentic Leverage™ 2.0, now with more agents</span>
+    <h1>The AI that leverages your AI.</h1>
+    <p class="lead">Leveragely sits on top of your AI tools and makes them use more AI. Fewer results, more synergy, at enterprise scale.</p>
+    <a class="btn primary" href="#">Start leveraging, free</a><a class="btn ghost" href="#">Watch a 45-minute 2-minute demo</a>
+    <p class="small">No credit card required. Card required on the next screen.</p>
+  </section>
+
+  <section class="logos">
+    <p>Trusted by companies that don't exist yet</p>
+    <span>Synergon</span><span>Paradigmo</span><span>CloudCloud</span><span>Pivotal-ish</span><span>Quarterly</span><span>Disruptr</span>
+  </section>
+
+  <section id="features">
+    <h2>Everything your team needs to look busy</h2>
+    <div class="features">
+      <div class="feature"><b>Expand</b><span>Turns "ok" into 400 words, three bullet points and a call to action.</span></div>
+      <div class="feature"><b>Tone control</b><span>Choose Professional, Friendly or Passive-aggressive. Everyone chooses Passive-aggressive.</span></div>
+      <div class="feature"><b>Per my last email</b><span>Auto-replies "per my last email" to everything, including your manager's birthday card.</span></div>
+      <div class="feature"><b>Meeting multiplier</b><span>Detects a decision and schedules a follow-up to revisit it.</span></div>
+      <div class="feature"><b>AI for your AI</b><span>Our model prompts your model, which prompts our model. We bill for both.</span></div>
+      <div class="feature"><b>Executive summary</b><span>Summarises any document into one word: "Aligned."</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>See it in action</h2>
+    <div class="demo-box">
+      <div class="row"><b>You wrote</b><span>ok</span></div>
+      <div class="row"><b>Leveragely</b><span>Thanks so much for looping me in! Just circling back to confirm that I'm fully aligned on this and excited to take it forward as a team. Per my last email, let's set up some time to unpack the next steps. <em>(+ 380 words)</em></span></div>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div><b>0 h</b><span>saved per week</span></div>
+    <div><b>12,000</b><span>meetings created</span></div>
+    <div><b>10×</b><span>more words per idea</span></div>
+    <div><b>100%</b><span>of customers mentioned AI on their earnings call</span></div>
+  </section>
+
+  <section id="pricing">
+    <h2>Simple, synergistic pricing</h2>
+    <div class="pricing">
+      <div class="plan"><b>Starter</b><div class="price">$49 <small>/ seat / month</small></div><ul><li>Expand up to 1,000 "ok"s</li><li>Two tones (both passive-aggressive)</li><li>Community support (a forum we don't read)</li></ul></div>
+      <div class="plan hot"><b>Growth</b><div class="price">$499 <small>/ seat / month</small></div><ul><li>Everything in Starter, but louder</li><li>Unlimited follow-ups on follow-ups</li><li>A dashboard with a line going up</li></ul></div>
+      <div class="plan"><b>Enterprise</b><div class="price">Let's talk</div><ul><li>Contact us to schedule a call about scheduling a call</li><li>A dedicated success manager who leverages AI</li><li>SOC 2 (we read about it)</li></ul></div>
+    </div>
+  </section>
+
+  <section class="faq" id="faq">
+    <h2>Questions</h2>
+    <b>Does Leveragely actually do anything?</b><p>It does more of everything you were already doing.</p>
+    <b>Is my data safe?</b><p>Your data is leveraged responsibly, in the cloud, by other AIs.</p>
+    <b>Can I cancel?</b><p>Yes. Leveragely will send you a 400-word email about it.</p>
+  </section>
+
+  <footer>© Leveragely, a made-up company for the gary.js examples. Any resemblance to a real product is a coincidence, or a market opportunity.</footer>
 </main>
 </body>
 </html>

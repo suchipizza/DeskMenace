@@ -16,7 +16,7 @@ export class ConfigError extends Error {
   }
 }
 
-const TRIGGERS: readonly TriggerKind[] = ['load', 'idle', 'hover', 'click', 'visible', 'scroll', 'exit', 'gary-click', 'time', 'event', 'scrolling', 'near'];
+const TRIGGERS: readonly TriggerKind[] = ['load', 'idle', 'hover', 'click', 'visible', 'scroll', 'exit', 'gary-click', 'time', 'event', 'scrolling', 'near', 'drag'];
 const NAME_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$/;
 const MAX_SCENES = 50;
 const MAX_STEPS = 20;
@@ -35,6 +35,7 @@ export function defaults(): ResolvedConfig {
     preset: null,
     behaviours: [...BEHAVIORS],
     packs: ['core'],
+    inOrder: [],
     lines: {},
     vars: {},
     triggers: DEFAULT_TRIGGERS.map((t) => ({ ...t })),
@@ -140,6 +141,10 @@ export function mergeConfig(base: ResolvedConfig, layer: unknown, source: string
         break;
       case 'packs':
         if (Array.isArray(v) && v.every((p) => typeof p === 'string' && NAME_RE.test(p))) out.packs = [...v];
+        else warn(key, 'must be an array of pool names');
+        break;
+      case 'inOrder':
+        if (Array.isArray(v) && v.every((p) => typeof p === 'string' && NAME_RE.test(p))) out.inOrder = [...v];
         else warn(key, 'must be an array of pool names');
         break;
       case 'lines': {
@@ -362,7 +367,7 @@ function validateSteps(v: unknown): SceneStep[] | string {
 }
 
 /** Keys a preset may set. Where the page sets the same option, the page wins. */
-const PRESET_KEYS = new Set(['behaviours', 'behaviors', 'packs', 'lines', 'vars', 'triggers', 'scenes', 'entrance', 'dropTo', 'surfaces', 'limits', 'ambient', 'pace', 'restAfter', 'position']);
+const PRESET_KEYS = new Set(['behaviours', 'behaviors', 'packs', 'inOrder', 'lines', 'vars', 'triggers', 'scenes', 'entrance', 'dropTo', 'surfaces', 'limits', 'ambient', 'pace', 'restAfter', 'position']);
 
 /**
  * Layers a character preset under the page's own configuration: options the page set itself
@@ -382,7 +387,7 @@ export function applyPreset(config: ResolvedConfig, preset: unknown, source: str
   const p = r.config;
   const ex = new Set(config.explicit);
   const out: ResolvedConfig = { ...config };
-  for (const k of ['behaviours', 'packs', 'triggers', 'entrance', 'dropTo', 'surfaces', 'ambient', 'pace', 'restAfter', 'position'] as const) {
+  for (const k of ['behaviours', 'packs', 'inOrder', 'triggers', 'entrance', 'dropTo', 'surfaces', 'ambient', 'pace', 'restAfter', 'position'] as const) {
     if (!ex.has(k)) (out as unknown as Record<string, unknown>)[k] = p[k];
   }
   out.lines = { ...p.lines, ...config.lines };

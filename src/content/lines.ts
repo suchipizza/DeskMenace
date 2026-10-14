@@ -11,8 +11,12 @@ interface Entry {
 export class LineBook {
   private readonly pools = new Map<string, Entry[]>();
   private readonly lastPick = new Map<string, string>();
+  private readonly next = new Map<string, number>();
+  private readonly ordered: Set<string>;
 
-  constructor(sources: Map<string, LineEntry[]>[], private readonly random: () => number = Math.random) {
+  /** `ordered`: pools said in the order written, one line per pick; the last line then repeats. */
+  constructor(sources: Map<string, LineEntry[]>[], private readonly random: () => number = Math.random, ordered: string[] = []) {
+    this.ordered = new Set(ordered);
     // Later sources replace whole pools of the same name.
     for (const src of sources) for (const [name, list] of src) this.pools.set(name, list.map(toEntry).filter((e) => e.weight > 0));
   }
@@ -27,11 +31,17 @@ export class LineBook {
 
   /**
    * Picks a weighted line from a pool, avoiding the previous pick when there is any other
-   * choice. A pool with a single line always returns that line.
+   * choice. A pool with a single line always returns that line. An ordered pool returns its
+   * next line instead.
    */
   pick(pool: string): string | null {
     const all = this.pools.get(pool);
     if (!all || all.length === 0) return null;
+    if (this.ordered.has(pool)) {
+      const i = this.next.get(pool) ?? 0;
+      this.next.set(pool, i + 1);
+      return all[Math.min(i, all.length - 1)].text;
+    }
     const prev = this.lastPick.get(pool);
     const choices = all.length > 1 ? all.filter((e) => e.text !== prev) : all;
     const pickFrom = choices.length ? choices : all;

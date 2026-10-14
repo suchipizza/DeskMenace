@@ -3,50 +3,91 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Personal website · gary.js</title>
+<title>Brad Kensington-Vale · gary.js</title>
 <link rel="stylesheet" href="../examples.css">
-<!-- The "personal" preset: the character wanders over headings and pictures, stops and comments
-     when the visitor scrolls, and reacts to the projects and the contact link. -->
+<!-- The "personal" preset: the character walks in, reads the bio, comments, and reacts to the
+     projects and to scrolling. Elements marked data-gary-* give it something to point at. -->
 <script defer src="../../dist/gary.js" data-preset="personal"></script>
 <style>
-  .hero { display: grid; grid-template-columns: 1fr 180px; gap: 24px; align-items: center; margin-bottom: 48px; }
-  .hero img { width: 180px; height: 180px; border-radius: 50%; }
-  h2 { margin: 56px 0 16px; }
+  .hero { display: grid; grid-template-columns: 1fr 168px; gap: 28px; align-items: center; margin-bottom: 40px; }
+  .hero img { width: 168px; height: 168px; border-radius: 50%; border: 4px solid var(--card); box-shadow: 0 0 0 1px var(--line); }
+  .hero .lead { margin-bottom: 18px; }
+  .tag { display: inline-block; font-size: 13px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--muted); margin: 0 6px 6px 0; }
+  .links a { display: inline-block; margin-right: 16px; font-weight: 600; }
+  h2 { margin: 56px 0 14px; }
+  .stealth { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  .stealth li { padding: 10px 14px; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); font-size: 14px; }
+  .stealth b { color: var(--fg); letter-spacing: .1em; }
   #projects .cards img { width: 100%; height: 120px; border-radius: 10px; margin-bottom: 10px; }
-  @media (max-width: 600px) { .hero { grid-template-columns: 1fr; } }
+  .posts { list-style: none; padding: 0; margin: 0; }
+  .posts li { padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .posts a { font-weight: 600; text-decoration: none; }
+  .posts span { display: block; color: var(--muted); font-size: 14px; }
+  blockquote { margin: 0; padding: 14px 18px; border-left: 3px solid var(--accent); background: var(--card); border-radius: 0 12px 12px 0; }
+  blockquote cite { display: block; color: var(--muted); font-size: 14px; font-style: normal; margin-top: 6px; }
+  footer { margin-top: 56px; color: var(--muted); font-size: 14px; }
+  @media (max-width: 600px) { .hero { grid-template-columns: 1fr; } .hero img { width: 120px; height: 120px; } }
 </style>
 </head>
 <body>
 <main>
   <section class="hero">
     <div>
-      <h1>Sam Example</h1>
-      <p class="lead">Designer and occasional developer. I make websites that are mostly on time.</p>
+      <h1>Brad Kensington-Vale</h1>
+      <p class="lead">Chief Vision Officer &amp; Serial Ideator. Ex-founder of 3 exits (from meetings).</p>
+      <p>
+        <span class="tag">Thought leader</span><span class="tag">Angel investor (pending)</span><span class="tag">Top 1% voice in my group chat</span>
+      </p>
+      <p class="links"><a href="#">LinkedIn</a><a href="#">GitHub</a><a href="#">Book a 15-min synergy call</a></p>
     </div>
-    <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cdefs%3E%3ClinearGradient id='g' x2='1' y2='1'%3E%3Cstop stop-color='%23f6c177'/%3E%3Cstop offset='1' stop-color='%23e4572e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='10' height='10' fill='url(%23g)'/%3E%3C/svg%3E">
+    <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cdefs%3E%3ClinearGradient id='g' x2='1' y2='1'%3E%3Cstop stop-color='%2390c2e7'/%3E%3Cstop offset='1' stop-color='%23345995'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='10' height='10' fill='url(%23g)'/%3E%3Ccircle cx='5' cy='4' r='2' fill='%23fbfaf7' opacity='.85'/%3E%3Cpath d='M1.5 10a3.5 3.5 0 0 1 7 0' fill='%23fbfaf7' opacity='.85'/%3E%3C/svg%3E">
   </section>
 
   <h2>About</h2>
-  <p>I've spent ten years turning vague briefs into slightly less vague websites. I like grids, good coffee and clients who reply to email.</p>
-  <p>Before that I sold printers, which taught me patience and how to say "have you tried turning it off and on again" with a straight face.</p>
+  <p>I'm a visionary operator who sees around corners, mostly the corners of other people's ideas. I started my first company at 19 (a lemonade stand with a seed round from my parents) and I've been disrupting ever since.</p>
+  <p>Today I help founders unlock their inner unicorn through a proprietary framework I call <i>The Kensington Method™</i>: wake up at 4:30, cold plunge, and tell everyone about it. I don't have weaknesses, only growth opportunities I'm choosing not to pursue.</p>
+
+  <section>
+    <h2>Ventures</h2>
+    <p data-gary-stealth>14 startups. All of them in stealth, which is how I like my cap tables.</p>
+    <ul class="stealth">
+      <li><b>██████</b> · AI for ████, Series ███</li>
+      <li><b>████</b> · Web3, but for brunch</li>
+      <li><b>███████</b> · Pre-product, post-hype</li>
+      <li><b>██</b> · Can't say. Can't spell it either.</li>
+    </ul>
+  </section>
 
   <section id="projects">
     <h2>Projects</h2>
     <div class="cards">
-      <a class="card" href="#"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%2390c2e7'/%3E%3C/svg%3E"><b>Bakery rebrand</b><span>Logo, menu boards, a very serious croissant.</span></a>
-      <a class="card" href="#"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23a3d9a5'/%3E%3C/svg%3E"><b>Banking app</b><span>Made moving money slightly less frightening.</span></a>
-      <a class="card" href="#"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23d7b8f3'/%3E%3C/svg%3E"><b>Museum website</b><span>Opening hours you can actually find.</span></a>
+      <a class="card" href="#"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f6c177'/%3E%3C/svg%3E"><b>Uber for Meetings</b><span>On-demand meetings, delivered to your calendar in under 5 minutes.</span></a>
+      <a class="card" href="#"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23a3d9a5'/%3E%3C/svg%3E"><b>FantasyDAO</b><span>A decentralised governance layer for my fantasy football league. I have 51% of the votes.</span></a>
+      <a class="card" href="#"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23d7b8f3'/%3E%3C/svg%3E"><b>Meta-Letter</b><span>A weekly newsletter about my newsletter. 3 subscribers, all me.</span></a>
     </div>
   </section>
 
-  <h2>Writing</h2>
-  <p>Notes on design systems, naming things, and why every project needs one person who says "no".</p>
-  <p>Most recent: "The button should probably be a link", a 4,000-word essay.</p>
-
-  <section id="contact">
-    <h2>Contact</h2>
-    <p>Available for projects from next month. <a href="mailto:sam@example.com">sam@example.com</a></p>
+  <section>
+    <h2>Writing</h2>
+    <ul class="posts">
+      <li><a href="#">Why I fired myself to scale</a><span>12 min read · 41 claps (I clapped 40 times)</span></li>
+      <li><a href="#">What my cold plunge taught me about B2B sales</a><span>9 min read · It was cold</span></li>
+      <li><a href="#">I asked AI to write my wedding vows. My wife asked AI for a lawyer.</a><span>6 min read · A thread</span></li>
+      <li><a href="#">Hustle is a mindset. So is napping, if you reframe it.</a><span>4 min read · Sponsored by my own mattress brand</span></li>
+    </ul>
   </section>
+
+  <section>
+    <h2>What people say</h2>
+    <blockquote>"Brad is a true visionary. He told me so himself, twice, during my wedding."<cite>Former co-founder (we no longer speak)</cite></blockquote>
+  </section>
+
+  <section>
+    <h2>Speaking</h2>
+    <p>Available for keynotes, panels and podcasts about being a <span data-gary-visionary>visionary</span>. Fee: equity.</p>
+  </section>
+
+  <footer>© Brad Kensington-Vale. All opinions are my own, and better than yours. This person, these companies and these links are made up for the gary.js examples.</footer>
 </main>
 </body>
 </html>

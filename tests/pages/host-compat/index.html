@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Host compatibility · gary.js</title>
-<link rel="stylesheet" href="../examples.css">
+<link rel="stylesheet" href="../../../examples/examples.css">
 <style>
   /* Deliberately unfriendly host CSS. */
   * { z-index: 10; }
@@ -26,10 +26,10 @@
     var p = new URLSearchParams(location.search);
     var s = document.createElement('script');
     s.defer = true;
-    if (p.get('char') === 'gary') s.src = '../../dist/gary.js';
+    if (p.get('char') === 'gary') s.src = '../../../dist/gary.js';
     else {
-      s.src = '../../dist/gary.core.js';
-      s.dataset.character = '../../characters/sample/character.json';
+      s.src = '../../../dist/gary.core.js';
+      s.dataset.character = '../../../characters/sample/character.json';
     }
     document.head.appendChild(s);
   })();

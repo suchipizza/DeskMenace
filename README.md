@@ -149,7 +149,9 @@ An idle clip is all you need; add walks, a stare, a held pose and a fall when yo
 
 `npm install && npm run build && npm run serve`, then open <http://127.0.0.1:8700/examples/>:
 
-[zero config](examples/zero-config/) · [portfolio](examples/portfolio/) · [404 page](examples/404/) · [personal website](examples/personal/) · [any website](examples/website/) · [staging banner](examples/staging/) · [custom character](examples/custom-character/) · [ES module](examples/esm/) · [host compatibility](examples/host-compat/)
+[404 page](examples/404/) · [personal website](examples/personal/) · [bring your own character](examples/custom-character/) · [any website](examples/website/)
+
+Pages for checking the engine by hand (ES module, host compatibility, page-defined lines) are in [tests/pages/](tests/pages/).
 
 ## Browser support, privacy and accessibility
 

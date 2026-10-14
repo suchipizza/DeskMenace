@@ -53,6 +53,11 @@
     ],
     "leave": [
       "Fine. I'll be in the cupboard."
+    ],
+    "dragged": [
+      "Careful. I spill.",
+      "Handle, not hostage.",
+      "Put me down. I'm full."
     ]
   },
   "presets": {

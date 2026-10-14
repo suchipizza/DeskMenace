@@ -229,7 +229,8 @@ export class Triggers {
         break;
       case 'gary-click':
       case 'event':
-        break; // driven by garyClicked() and emit()
+      case 'drag':
+        break; // driven by garyClicked(), emit() and dragged()
     }
   }
 
@@ -237,6 +238,13 @@ export class Triggers {
   garyClicked(sequence: number): void {
     this.rules.forEach((r, i) => {
       if (r.on === 'gary-click' && (r.count ?? 1) === sequence) this.fire(i);
+    });
+  }
+
+  /** Called by the engine when the visitor picks the character up. */
+  dragged(): void {
+    this.rules.forEach((r, i) => {
+      if (r.on === 'drag') this.fire(i);
     });
   }
 

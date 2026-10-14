@@ -40,6 +40,12 @@ describe('line pools', () => {
     expect(book.pickAny(['nope', 'core'])).toBe('x');
   });
 
+  it('says ordered pools in order, then repeats the last line', () => {
+    const book = new LineBook([pools({ seq: ['one', 'two', 'three'], core: ['a', 'b'] })], Math.random, ['seq']);
+    expect([1, 2, 3, 4, 5].map(() => book.resolve('#seq'))).toEqual(['one', 'two', 'three', 'three', 'three']);
+    expect(['a', 'b']).toContain(book.pick('core'));
+  });
+
   it('later sources replace whole pools', () => {
     const book = new LineBook([pools({ core: ['a', 'b'] }), pools({ core: ['c'] })]);
     expect(book.pick('core')).toBe('c');

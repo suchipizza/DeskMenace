@@ -2,8 +2,15 @@
   "schemaVersion": 1,
   "lines": {
     "404": ["Nothing here. I checked. Twice."],
-    "keep-going": ["Clicking harder won't bring it back.", "Still nothing. Like my cup.", "Try the homepage. It's where pages live."]
+    "keep-going": [
+      "Clicking harder won't bring it back.",
+      "Still nothing. Like my cup.",
+      "Try the homepage. It's where pages live.",
+      "I'm a mug. I can't fix links.",
+      "Empty. Like me at 4 pm."
+    ]
   },
+  "inOrder": ["keep-going"],
   "entrance": "arrive",
   "scenes": {
     "arrive": {
@@ -19,6 +26,7 @@
     }
   },
   "triggers": [
+    { "on": "drag", "say": "#dragged", "cooldown": 2 },
     { "on": "click", "during": "arrive", "say": "#keep-going", "cooldown": 3 },
     { "on": "scrolling", "during": "arrive", "say": "#keep-going", "cooldown": 3 }
   ],

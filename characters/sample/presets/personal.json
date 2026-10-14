@@ -5,8 +5,10 @@
     "verdict": ["Needs more coffee. Most things do."],
     "outro": ["I'll be over here. Steeping."],
     "keep-going": ["Hey. I'm reading.", "Patience. I'm a mug, not a browser."],
-    "scrolled": ["Oh, so we're scrolling now.", "Slow down. I'm not done reading the bio."]
+    "scrolled": ["Oh, so we're scrolling now.", "Slow down. I'm not done reading the bio.", "Still scrolling? It's coffee all the way down."],
+    "remarks": ["Thirty-one parts about pour-over. I've been poured over. Nobody wrote about it.", "I'd leave a comment, but I don't have hands."]
   },
+  "packs": ["remarks"],
   "entrance": "inspect",
   "scenes": {
     "inspect": {
@@ -26,10 +28,11 @@
     "scrolled": [{ "play": "judge" }, { "say": "#scrolled" }]
   },
   "triggers": [
+    { "on": "drag", "say": "#dragged", "cooldown": 2 },
     { "on": "click", "during": "inspect", "say": "#keep-going", "cooldown": 3 },
     { "on": "scrolling", "during": "inspect", "say": "#keep-going", "cooldown": 3 },
     { "on": "scrolling", "scene": "scrolled", "cooldown": 25 },
-    { "on": "idle", "after": 40, "say": "#idle", "cooldown": 90 },
+    { "on": "idle", "after": 40, "say": "#remarks", "cooldown": 90 },
     { "on": "exit", "say": "#exit", "maxPerSession": 1 }
   ],
   "position": { "side": "left", "x": [0.2, 0.8] },

@@ -139,6 +139,15 @@ describe('configuration', () => {
     expect(bad).toMatch(/position.x/);
     expect(validateRule({ on: 'click', say: '#keep-going', during: 'arrive' })).toEqual({ on: 'click', say: '#keep-going', during: 'arrive' });
     expect(validateRule({ on: 'click', scene: 'x', during: 'arrive' })).toMatch(/can only "say"/);
+    expect(validateRule({ on: 'drag', say: '#dragged' })).toEqual({ on: 'drag', say: '#dragged' });
+  });
+
+  it('validates ordered pools and lets a preset set them', () => {
+    expect(mergeConfig(defaults(), { inOrder: ['keep-going'] }, 'init').config.inOrder).toEqual(['keep-going']);
+    expect(mergeConfig(defaults(), { inOrder: 'keep-going' }, 'init').warnings.join()).toMatch(/inOrder/);
+    expect(applyPreset(defaults(), { inOrder: ['keep-going'] }, 'p').config.inOrder).toEqual(['keep-going']);
+    const page = mergeConfig(defaults(), { inOrder: [] }, 'init').config;
+    expect(applyPreset(page, { inOrder: ['keep-going'] }, 'p').config.inOrder).toEqual([]);
   });
 
   it('layers a preset under the options the page set itself', () => {
