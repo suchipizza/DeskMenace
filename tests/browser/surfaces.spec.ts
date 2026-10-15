@@ -303,6 +303,23 @@ test.describe('scripted walks', () => {
     expect(Math.abs((await feetY(page)) - (720 - 250))).toBeLessThan(12);
   });
 
+  test('a scene dragged while it speaks does not repeat that line after the drop', async ({ page }) => {
+    test.setTimeout(60_000);
+    await boot(page, { cfg: { ...QUIET, lines, limits, dropTo: 'here', scenes: { chat: { steps: [{ say: '#hi' }, { wait: 0.5 }, { walkTo: { x: 0.6 } }] } } } });
+    void page.evaluate(() => (window as any).Gary.do('chat'));
+    await page.waitForFunction(() => (window as any).__spoke.length === 1, null, { timeout: 15_000 });
+    const b = await canvasBox(page);
+    const start = { x: b.x + b.w * 0.5, y: b.y + b.h * 0.55 };
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(start.x + 100, start.y - 150, { steps: 8 });
+    await waitState(page, 'dragging');
+    await page.mouse.up();
+    await waitState(page, 'walking', 15_000);
+    await waitState(page, 'idle', 15_000);
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['Hi.']);
+  });
+
   test('a "drag" rule speaks on pick-up; an ordered pool goes on in order, then repeats its last line', async ({ page }) => {
     test.setTimeout(60_000);
     const cfg = { ...QUIET, lines: { kg: ['one', 'two', 'three'] }, inOrder: ['kg'], limits: { minGapSeconds: 30, maxLinesPerMinute: 1 }, dropTo: 'here', scenes: { stroll: { steps: [{ walkTo: { x: 0.15 } }], interrupted: '#kg' } }, triggers: [{ on: 'drag', say: 'Very mature.' }] };

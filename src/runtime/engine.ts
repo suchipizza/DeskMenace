@@ -802,7 +802,8 @@ export class Engine {
           if (t.cancelled || !this.alive) return;
           const step = def.steps[i];
           if (resumed && step.enter) continue;
-          mine.step = i;
+          // A line shows as soon as its step starts, so a drag during it carries on after it.
+          mine.step = step.say !== undefined ? i + 1 : i;
           await this.sceneStep(step, t, prio);
         }
       } finally {
