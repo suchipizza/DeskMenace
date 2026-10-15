@@ -7,6 +7,7 @@
 </p>
 
 <p align="center">
+  <a href="https://suchipizza.github.io/DeskMenace/"><b>Live demo</b></a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="examples/">Examples</a> ·
   <a href="docs/configuration.md">Configuration</a> ·
@@ -147,9 +148,9 @@ An idle clip is all you need; add walks, a stare, a held pose and a fall when yo
 
 ## Examples
 
-`npm install && npm run build && npm run serve`, then open <http://127.0.0.1:8700/examples/>:
+Try them live: [404 page](https://suchipizza.github.io/DeskMenace/examples/404/) · [personal website](https://suchipizza.github.io/DeskMenace/examples/personal/) · [bring your own character](https://suchipizza.github.io/DeskMenace/examples/custom-character/) · [any website](https://suchipizza.github.io/DeskMenace/examples/website/)
 
-[404 page](examples/404/) · [personal website](examples/personal/) · [bring your own character](examples/custom-character/) · [any website](examples/website/)
+Their source is in [examples/](examples/). To run them locally: `npm install && npm run build && npm run serve`, then open <http://127.0.0.1:8700/examples/>.
 
 Pages for checking the engine by hand (ES module, host compatibility, page-defined lines) are in [tests/pages/](tests/pages/).
 
