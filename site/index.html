@@ -9,7 +9,22 @@
 <meta property="og:description" content="An animated character who walks around your website and has opinions about it. One script tag. Open source.">
 <meta property="og:image" content="media/gary-website.jpg">
 <link rel="stylesheet" href="site.css">
-<!-- Gary himself, on his own website. -->
+<!-- Gary himself, on his own website. "fired" is played by the Fire Gary button. -->
+<script type="application/json" data-gary-config>
+{
+  "schemaVersion": 1,
+  "scenes": {
+    "fired": [
+      { "play": "judge" },
+      { "say": "Replacing me with an average Deloitte consultant?" },
+      { "exit": "right" },
+      { "enter": "left", "y": 0.6 },
+      { "walkTo": { "x": 0.3 } },
+      { "say": "So cooked." }
+    ]
+  }
+}
+</script>
 <script defer src="dist/gary.js" data-preset="website"></script>
 </head>
 <body>
@@ -17,9 +32,10 @@
 <header class="top">
   <a class="brand" href="./">gary.js</a>
   <nav>
+    <a href="#hire">Hire</a>
     <a href="#demos">Demos</a>
     <a href="#customize">Customize</a>
-    <a href="#characters">Your character</a>
+    <a href="#characters">Replace him</a>
     <a href="https://github.com/suchipizza/DeskMenace#readme">Docs</a>
     <a class="gh" href="https://github.com/suchipizza/DeskMenace">GitHub</a>
   </nav>
@@ -27,19 +43,58 @@
 
 <main>
   <section class="hero">
-    <p class="eyebrow">Open-source JavaScript library</p>
-    <h1>A passive-aggressive coworker <span>for your website.</span></h1>
-    <p class="lead">Gary walks around your pages, judges your visitors and offers unsolicited corporate feedback. Add him with one script tag, make him say your things, or swap him for a character of your own.</p>
-    <div class="ctas">
-      <a class="btn primary" href="https://github.com/suchipizza/DeskMenace">★ Star on GitHub</a>
-      <a class="btn" href="https://github.com/suchipizza/DeskMenace/fork">Fork it</a>
-      <a class="btn ghost" href="#demos">See the demos</a>
+    <div class="pitch">
+      <p class="eyebrow">Open-source JavaScript library</p>
+      <h1>A passive-aggressive coworker <span>for your website.</span></h1>
+      <p class="lead">Meet Gary. He walks around your website, judges your visitors, and takes credit for things he didn't do.</p>
+      <div class="ctas">
+        <a class="btn primary" href="https://github.com/suchipizza/DeskMenace">★ Star on GitHub</a>
+        <a class="btn" href="https://github.com/suchipizza/DeskMenace/fork">Fork it</a>
+        <a class="btn ghost" href="#demos">Observe Gary at work*</a>
+      </div>
+      <p class="hint">He's on this page right now. Pick him up and drop him somewhere. Right-click him for his menu.</p>
+      <p class="footnote">* Actual work not guaranteed.</p>
     </div>
-    <div class="snippet">
-      <pre><code id="snippet">&lt;script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"&gt;&lt;/script&gt;</code></pre>
-      <button type="button" class="copy" data-copy="snippet">Copy</button>
-    </div>
-    <p class="hint">He's on this page right now. Pick him up and drop him somewhere. Right-click him for his menu.</p>
+
+    <aside class="profile-wrap">
+      <article class="profile" aria-label="Gary's professional profile">
+        <div class="banner"></div>
+        <img class="avatar" src="media/gary-head.webp" width="240" height="237" alt="Gary: a mullet, a moustache, large vintage glasses and a skeptical look.">
+        <h2 class="name">Gary <span class="badge" title="Verified by Gary">✓</span></h2>
+        <p class="headline">Head of Strategic Alignment &amp; Cross-Functional Synergy Enablement | Disruptive Synergist &amp; Trendsetter | Thought Leader (self-appointed)</p>
+        <p class="meta">Your website · Open plan, near the snacks<br><b>500+ connections</b> · 3 meetings in common</p>
+        <p class="open"><b>Open to:</b> taking credit, circling back, a corner office</p>
+        <div class="about">
+          <h3>About</h3>
+          <p>Results-adjacent leader with 15+ years of experience in meetings about meetings. I help teams unlock their potential by scheduling a sync to discuss it. Passionate about alignment, bandwidth and taking things offline. Opinions are my own. Achievements are usually someone else's.</p>
+        </div>
+        <ul class="skills">
+          <li><b>Visionary</b> · endorsed by 1 person (Gary)</li>
+          <li><b>Synergy</b> · 0 endorsements, pending alignment</li>
+        </ul>
+        <p class="activity">Gary reacted <i>Insightful</i> to his own post.</p>
+      </article>
+      <div class="hire-fire">
+        <a class="btn primary" href="#hire">Hire Gary</a>
+        <a class="btn" href="#characters" id="fire-gary">Fire Gary</a>
+      </div>
+    </aside>
+  </section>
+
+  <section id="hire" class="hire">
+    <p class="eyebrow">Hire Gary</p>
+    <h2>Onboarding takes one line.</h2>
+    <p class="sub">Add him with one script tag, make him say your things, or swap him for a character of your own.</p>
+    <ol class="steps">
+      <li><b>Copy the script tag.</b>
+        <div class="snippet">
+          <pre><code id="snippet">&lt;script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"&gt;&lt;/script&gt;</code></pre>
+          <button type="button" class="copy" data-copy="snippet">Copy</button>
+        </div>
+      </li>
+      <li><b>Paste it into your page</b>, in the <code>&lt;head&gt;</code> or just before <code>&lt;/body&gt;</code>. No build step, no account, no backend.</li>
+      <li><b>Reload.</b> Gary walks in once your page has loaded and starts having opinions. Pick a <a href="#demos">preset</a> with one more attribute, or <a href="#customize">write his lines</a>.</li>
+    </ol>
   </section>
 
   <section id="demos" class="demos">
@@ -50,7 +105,7 @@
       <video muted loop playsinline preload="none" poster="media/gary-404.jpg" data-src="media/gary-404.mp4" aria-label="Gary on a 404 page"></video>
       <div class="text">
         <h3>404 pages</h3>
-        <p>He walks onto your "404", explains what went wrong and leaves. Keep clicking and he keeps answering, a little less patiently each time.</p>
+        <p>He walks onto your 404, questions your routing architecture, and leaves. Keep clicking and he starts drafting an incident report.</p>
         <code>data-preset="404"</code>
         <a class="live" href="examples/404/">Open the live demo →</a>
       </div>
@@ -70,7 +125,7 @@
       <video muted loop playsinline preload="none" poster="media/gary-personal.jpg" data-src="media/gary-personal.mp4" aria-label="Gary on a personal website"></video>
       <div class="text">
         <h3>Personal websites</h3>
-        <p>He inspects your bio, introduces himself with his full job title and has thoughts about your side projects.</p>
+        <p>He inspects your bio, notes that you've listed "Rust" after writing one Hello World, and sighs.</p>
         <code>data-preset="personal"</code>
         <a class="live" href="examples/personal/">Open the live demo →</a>
       </div>
@@ -114,7 +169,7 @@
 
   <section id="characters" class="split flip">
     <div>
-      <h2>Bring your own character</h2>
+      <h2>Don't like Gary? Replace him.</h2>
       <p>The engine knows nothing about Gary. Describe any character in a JSON manifest with one image per animation, and it walks, talks and gets dragged around just the same. Mugsy, the public-domain mug, is a complete example to start from.</p>
       <p><a href="https://github.com/suchipizza/DeskMenace/blob/main/docs/character-format.md">Character format →</a> · <a href="examples/custom-character/">Live demo →</a></p>
     </div>
@@ -122,12 +177,11 @@
   </section>
 
   <section class="outro">
-    <h2>Give Gary a desk.</h2>
-    <p>Star the repo so other people find him. Fork it to make him yours, or build a new character and send it in.</p>
+    <h2>Gary would appreciate some visibility.</h2>
+    <p>Star the repo, fork the engine, or build a character that's slightly more useful than him. The bar is low.</p>
     <div class="ctas">
       <a class="btn primary" href="https://github.com/suchipizza/DeskMenace">★ Star on GitHub</a>
       <a class="btn" href="https://github.com/suchipizza/DeskMenace/fork">Fork it</a>
-      <a class="btn ghost" href="https://github.com/suchipizza/DeskMenace/blob/main/CONTRIBUTING.md">Contribute</a>
     </div>
   </section>
 </main>
@@ -150,6 +204,14 @@
       setTimeout(() => (b.textContent = 'Copy'), 1800);
     });
   }
+  // Fire Gary: scroll to the replacement section; Gary takes it about as well as expected.
+  document.getElementById('fire-gary').addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = document.getElementById('characters');
+    target.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    history.replaceState(null, '', '#characters');
+    if (window.Gary) setTimeout(() => window.Gary.do('fired'), 700);
+  });
   // Videos load and play only while on screen, and not at all with reduced motion.
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const io = 'IntersectionObserver' in window && new IntersectionObserver((entries) => {
