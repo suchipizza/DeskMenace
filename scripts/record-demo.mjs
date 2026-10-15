@@ -9,7 +9,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { startServer } from './server.mjs';
 
-const W = 1200, H = 750;
+// A smallish window keeps the character and its speech bubble readable once scaled down.
+const W = 960, H = 640;
 const BASE = 'http://127.0.0.1:8720/examples';
 
 /** Helpers handed to each scenario. */
@@ -150,7 +151,8 @@ export function encode(name, cut) {
   ff(...cut, '-an', '-vf', 'scale=960:-2:flags=lanczos', '-c:v', 'libx264', '-preset', 'slow', '-crf', '30', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', `site/media/${name}.mp4`);
   ff('-ss', String(POSTER_AT[name] ?? 5), '-i', `site/media/${name}.mp4`, '-frames:v', '1', '-q:v', '5', `site/media/${name}.jpg`);
   if (README_GIFS.has(name)) ff(...cut,
-    '-vf', 'fps=12,scale=640:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle',
+    '-vf', // Large enough to read the bubbles, small enough for a README (GitHub shows images up to 10 MB).
+    'fps=10,scale=800:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=64:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle',
     `docs/media/${name}.gif`);
 }
 

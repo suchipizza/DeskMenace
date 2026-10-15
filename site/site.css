@@ -83,7 +83,7 @@ section { padding: 56px 0; border-top: 1px solid var(--line); }
 .sub { color: var(--muted); margin: 0 0 36px; max-width: 640px; }
 
 video {
-  display: block; width: 100%; aspect-ratio: 1200 / 750; height: auto; object-fit: cover;
+  display: block; width: 100%; aspect-ratio: 960 / 640; height: auto; object-fit: cover;
   border-radius: var(--radius); border: 1px solid var(--line); background: var(--card);
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px rgb(0 0 0 / 0.08);
 }

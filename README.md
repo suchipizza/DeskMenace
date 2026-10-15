@@ -3,7 +3,7 @@
 <p align="center"><b>A passive-aggressive coworker for your website.</b></p>
 
 <p align="center">
-  <img src="docs/media/gary-404.gif" width="600" alt="On a 404 page, Gary walks in, stands on the 404, says &quot;They should have leveraged AI.&quot;, answers a visitor's click and walks off.">
+  <img src="docs/media/gary-404.gif" width="800" alt="On a 404 page, Gary walks in, stands on the 404, says &quot;They should have leveraged AI.&quot;, answers a visitor's click and walks off.">
 </p>
 
 <p align="center">More demos: <a href="#examples">any website</a> · <a href="#examples">personal website</a> · <a href="#examples">your own character</a></p>
@@ -152,12 +152,25 @@ An idle clip is all you need; add walks, a stare, a held pose and a fall when yo
 
 Each example is a plain HTML page with one script tag. Try them live, drag Gary around, right-click him:
 
-| | |
-|---|---|
-| **[404 page](https://suchipizza.github.io/DeskMenace/examples/404/)** `data-preset="404"`<br>Walks onto the 404, has a word about it, leaves. Keeps answering if you keep clicking. | <img src="docs/media/gary-404.gif" width="360" alt="Gary on a 404 page."> |
-| **[Any website](https://suchipizza.github.io/DeskMenace/examples/website/)** `data-preset="website"`<br>Reviews a SaaS landing page, objects to being dragged, comments on your scrolling. | <img src="docs/media/gary-website.gif" width="360" alt="Gary on a product page: comments, gets dragged and dropped, walks back to the centre, and complains when the visitor scrolls."> |
-| **[Personal website](https://suchipizza.github.io/DeskMenace/examples/personal/)** `data-preset="personal"`<br>Inspects a founder's bio, introduces himself, roasts the projects. | <img src="docs/media/gary-personal.gif" width="360" alt="Gary walks across a founder's personal site, commenting on the bio and introducing himself."> |
-| **[Bring your own character](https://suchipizza.github.io/DeskMenace/examples/custom-character/)**<br>Mugsy the mug, reading a coffee blog. Same engine, different character. | <img src="docs/media/mugsy-demo.gif" width="360" alt="Mugsy, a coffee mug with legs, on a coffee blog."> |
+### [404 page](https://suchipizza.github.io/DeskMenace/examples/404/) · `data-preset="404"`
+
+Walks onto the 404, has a word about it, leaves. Keeps answering if you keep clicking. (It's the demo at the top.)
+
+### [Any website](https://suchipizza.github.io/DeskMenace/examples/website/) · `data-preset="website"`
+
+Reviews a SaaS landing page, objects to being dragged, walks back to the centre and comments on your scrolling.
+
+<p align="center"><img src="docs/media/gary-website.gif" width="800" alt="Gary on a product page: comments, gets dragged and dropped, walks back to the centre, and complains when the visitor scrolls."></p>
+
+### [Personal website](https://suchipizza.github.io/DeskMenace/examples/personal/) · `data-preset="personal"`
+
+Inspects a founder's bio, introduces himself with his full job title, comments on your scrolling.
+
+<p align="center"><img src="docs/media/gary-personal.gif" width="800" alt="Gary walks across a founder's personal site, roasting the bio and introducing himself."></p>
+
+### [Bring your own character](https://suchipizza.github.io/DeskMenace/examples/custom-character/)
+
+Mugsy the mug, reading a coffee blog. Same engine, different character (shown [above](#bring-your-own-character)).
 
 Their source is in [examples/](examples/). To run them locally: `npm install && npm run build && npm run serve`, then open <http://127.0.0.1:8700/examples/>.
 
