@@ -170,10 +170,15 @@ export class Triggers {
         const distance = rule.distance ?? 80;
         let inside = false;
         let raf = 0;
+        let x = 0;
+        let y = 0;
         this.listen(window, 'pointermove', (e) => {
           const pe = e as PointerEvent;
-          if ((pe.pointerType && pe.pointerType !== 'mouse') || raf) return;
-          const { clientX: x, clientY: y } = pe;
+          if (pe.pointerType && pe.pointerType !== 'mouse') return;
+          // Checked once per frame, at the latest pointer position.
+          x = pe.clientX;
+          y = pe.clientY;
+          if (raf) return;
           raf = requestAnimationFrame(() => {
             raf = 0;
             const b = this.box();

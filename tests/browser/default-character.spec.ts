@@ -159,7 +159,7 @@ test('the personal example: the inspection script in order', async ({ page }) =>
   const spoke: string[] = await page.evaluate(() => (window as any).__spoke);
   const preset = await (await page.request.get('/characters/gary/presets/personal.json')).json();
   expect(preset.lines.bio).toContain(spoke[0]);
-  expect(spoke[1]).toBe('They should have leveraged AI on this.');
+  expect(preset.lines['bio-roast']).toContain(spoke[1]);
   expect(spoke[2]).toMatch(/^Btw, I'm Gary/);
   expect(spoke[3]).toMatch(/^Check out my profile/);
   const d = await debug(page);
