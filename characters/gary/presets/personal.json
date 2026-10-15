@@ -1,12 +1,11 @@
 {
   "schemaVersion": 1,
   "lines": {
-    "bio": [
-      "Wow, you're actually visiting this page.",
+    "bio": ["Wow, you're actually visiting this page."],
+    "bio-roast": [
       "This bio is missing key milestones.",
       "This backstory is almost as impressive as the narrative I invented for my promotion."
     ],
-    "leveraged": ["They should have leveraged AI on this."],
     "intro": ["Btw, I'm Gary, Head of Strategic Alignment & Cross-Functional Synergy Enablement."],
     "profile": ["Check out my profile while you're on here. I'm a Disruptive Synergist & Trendsetter."],
     "keep-going": [
@@ -39,7 +38,8 @@
     ],
     "remarks": [
       "If you like this, wait until you see my keynote.",
-      "Endorse me for 'Visionary'. It takes one click."
+      "Endorse me for 'Visionary'. It takes one click.",
+      "It's time to unlock the potential and scale operations."
     ]
   },
   "packs": ["remarks"],
@@ -53,7 +53,7 @@
         { "say": "#bio" },
         { "walkTo": { "x": 0.33, "y": 0.68 } },
         { "wait": 1 },
-        { "say": "#leveraged" },
+        { "say": "#bio-roast" },
         { "walkTo": { "x": 0.2 } },
         { "say": "#intro" },
         { "say": "#profile" }

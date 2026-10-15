@@ -122,7 +122,9 @@ const SCENARIOS = {
     await h.scroll(700);
     await h.pause(3500);
     await h.scroll(900);
-    await h.pause(4500);
+    // Let the last line be read before the clip ends.
+    await h.line(/./, 8_000).catch(() => {});
+    await h.pause(6000);
   },
 
   // Bring your own character: Mugsy on the coffee blog.

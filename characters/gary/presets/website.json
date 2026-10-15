@@ -2,12 +2,14 @@
   "schemaVersion": 1,
   "lines": {
     "leveraged": ["They should have leveraged AI on this."],
+    "remarks": ["It's time to unlock the potential and scale operations."],
     "scrolled": [
       "Scrolling already? We haven't aligned on the top half.",
       "Hold on. I'm still reading the header.",
       "Bold. Skipping straight to the bottom line."
     ]
   },
+  "packs": ["core", "remarks"],
   "entrance": "arrive",
   "scenes": {
     "arrive": [{ "enter": "left", "y": 0.5 }, { "walkTo": { "x": 0.5 } }, { "wait": 0.8 }, { "say": "#leveraged" }],
