@@ -145,7 +145,7 @@ test('the 404 example: in from the left, onto the 404, the line, a remark if cli
 });
 
 test('the personal example: the inspection script in order', async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(120_000);
   await page.addInitScript(() => {
     (window as any).__spoke = [];
     const iv = setInterval(() => {
@@ -157,12 +157,13 @@ test('the personal example: the inspection script in order', async ({ page }) =>
     }, 20);
   });
   await page.goto('/examples/personal/');
-  await page.waitForFunction(() => (window as any).__spoke.length >= 3, null, { timeout: 60_000 });
+  await page.waitForFunction(() => (window as any).__spoke.length >= 4, null, { timeout: 80_000 });
   const spoke: string[] = await page.evaluate(() => (window as any).__spoke);
   const preset = await (await page.request.get('/characters/gary/presets/personal.json')).json();
   expect(preset.lines.bio).toContain(spoke[0]);
   expect(spoke[1]).toBe('They should have leveraged AI on this.');
-  expect(spoke[2]).toMatch(/^Check out my profile/);
+  expect(spoke[2]).toMatch(/^Btw, I'm Gary/);
+  expect(spoke[3]).toMatch(/^Check out my profile/);
   const d = await debug(page);
   expect(d.feetX / 1280).toBeGreaterThan(0.15);
 });
