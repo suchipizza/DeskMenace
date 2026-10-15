@@ -279,7 +279,7 @@ test.describe('menu, removal and preferences', () => {
     await page.mouse.click(opaque!.x, opaque!.y, { button: 'right' });
     const menu = page.locator('[data-garyjs] >> [role="menu"]');
     await expect(menu).toBeVisible();
-    await expect(menu.getByRole('menuitem')).toHaveText(['Mute', 'Remove Mugsy', 'Powered by gary.js']);
+    await expect(menu.getByRole('menuitem')).toHaveText(['Stop talking', 'Remove Mugsy', 'Powered by gary.js']);
     const dismissed = page.evaluate(() => new Promise((r) => (window as any).Gary.on('dismissed', r)));
     await menu.getByRole('menuitem', { name: 'Remove Mugsy' }).click();
     await dismissed;
@@ -319,9 +319,13 @@ test.describe('menu, removal and preferences', () => {
     await expect.poll(focused).toBe('handle');
     await page.keyboard.press('Shift+F10');
     await expect.poll(focused).toBe('menuitem');
-    await page.keyboard.press('Enter'); // Mute
+    await page.keyboard.press('Enter'); // Stop talking
     expect(await page.evaluate(() => sessionStorage.getItem('gary.js:muted'))).toBe('1');
     expect(await page.evaluate(() => (window as any).Gary.say('quiet please'))).toBe(false);
+    await expect.poll(focused).toBe('handle');
+    await page.keyboard.press('Shift+F10');
+    await expect.poll(focused).toBe('menuitem');
+    expect(await page.evaluate(() => (document.querySelector('[data-garyjs]')!.shadowRoot!.activeElement as HTMLElement).textContent)).toBe('Let Mugsy talk');
   });
 
   test('mute and unmute through the API', async ({ page }) => {

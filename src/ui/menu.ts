@@ -1,4 +1,4 @@
-// Character menu: Mute / Remove / credit link. Opened from the options button, a right-click or
+// Character menu: Stop talking / Remove / credit link. Opened from the options button, a right-click or
 // long-press on the character, or Enter / ContextMenu / Shift+F10 on the focused button.
 // Arrow keys move, Escape closes and returns focus. Links open only on an explicit click.
 
@@ -77,7 +77,7 @@ export class Menu {
     this.el.textContent = '';
     const muted = this.actions.isMuted();
     this.el.append(
-      this.item(muted ? 'Unmute' : 'Mute', () => this.actions.toggleMute()),
+      this.item(muted ? `Let ${this.name} talk` : 'Stop talking', () => this.actions.toggleMute()),
       this.item(`Remove ${this.name}`, () => this.actions.remove(), false),
     );
     if (this.credit) {

@@ -21,7 +21,7 @@ Gary walks onto your page, stands around unproductively, judges your visitors an
 - **One script tag.** No build step, no framework, no backend, no account.
 - **Small and polite.** About 26 KB gzipped. Artwork loads only after your page has painted, causes no layout shift, stops entirely in background tabs, and rests when nobody's around.
 - **Never in the way.** Clicks pass straight through every transparent pixel. Forms, links and buttons behind him keep working.
-- **Visitor-friendly.** Mute or remove him from a menu (mouse, keyboard or touch). Removal sticks. No tracking, no cookies.
+- **Visitor-friendly.** Visitors can make him stop talking or remove him from a menu (mouse, keyboard or touch). Removal sticks. No tracking, no cookies.
 - **Yours to script.** Your own lines, page triggers and a small JavaScript API.
 - **Bring your own character.** Gary is one character; the engine plays any character you describe in a JSON manifest.
 
