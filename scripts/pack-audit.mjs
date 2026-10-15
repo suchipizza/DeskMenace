@@ -17,10 +17,11 @@ const ALLOW = [
   /^dist\/.*\.d\.ts$/,
   /^schema\/(character|config)\.schema\.json$/,
   /^characters\/sample\/(character\.json|LICENSE\.md|README\.md|atlas\/[a-z]+\.webp|presets\/[a-z0-9-]+\.json)$/,
+  /^characters\/gary\/(character\.json|LICENSE\.md|README\.md|atlas\/[a-z_]+(@hd)?\.webp|presets\/[a-z0-9-]+\.json)$/,
 ];
 const problems = [];
 for (const f of files) if (!ALLOW.some((re) => re.test(f))) problems.push(`not on the package allowlist: ${f}`);
-for (const need of ['dist/gary.js', 'dist/gary.core.js', 'dist/gary.mjs', 'dist/index.d.ts', 'LICENSE', 'README.md']) {
+for (const need of ['dist/gary.js', 'dist/gary.core.js', 'dist/gary.mjs', 'dist/index.d.ts', 'LICENSE', 'README.md', 'characters/gary/character.json', 'characters/gary/LICENSE.md']) {
   if (!files.includes(need)) problems.push(`missing from package: ${need}`);
 }
 const j = (...p) => p.join('');

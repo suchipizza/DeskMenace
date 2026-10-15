@@ -9,8 +9,10 @@ const character = ajv.compile(read('schema/character.schema.json'));
 const config = ajv.compile(read('schema/config.schema.json'));
 
 describe('published JSON schemas', () => {
-  it('accept the sample character', () => {
-    expect(character(read('characters/sample/character.json')), JSON.stringify(character.errors)).toBe(true);
+  it('accept the bundled characters', () => {
+    for (const id of ['sample', 'gary']) {
+      expect(character(read(`characters/${id}/character.json`)), `${id}: ${JSON.stringify(character.errors)}`).toBe(true);
+    }
   });
 
   it('accept fixture manifests and reject broken ones', () => {
@@ -23,7 +25,7 @@ describe('published JSON schemas', () => {
 
   it('accept every example configuration', () => {
     const inline = (f: string) => JSON.parse(readFileSync(f, 'utf8').match(/<script type="application\/json" data-gary-config>([\s\S]*?)<\/script>/)![1]);
-    const presets = ['404', 'personal', 'website', 'staging'].map((n) => read(`characters/sample/presets/${n}.json`));
+    const presets = ['sample', 'gary'].flatMap((id) => ['404', 'personal', 'website', 'staging'].map((n) => read(`characters/${id}/presets/${n}.json`)));
     for (const cfg of [inline('tests/pages/portfolio/index.html'), ...presets]) {
       expect(config(cfg), JSON.stringify(config.errors)).toBe(true);
     }

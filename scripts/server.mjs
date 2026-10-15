@@ -1,6 +1,6 @@
 // Minimal static file server for examples and browser tests (127.0.0.1 only).
 //   cors:     send Access-Control-Allow-Origin: *
-//   garyDir:  serve a local copy of Gary's artwork at /characters/gary/ (never part of this repo)
+//   garyDir:  serve another copy of Gary's artwork at /characters/gary/ (e.g. a new export to try)
 //   headers:  extra response headers for HTML pages (e.g. a Content-Security-Policy)
 import { createServer } from 'node:http';
 import { createReadStream, statSync } from 'node:fs';

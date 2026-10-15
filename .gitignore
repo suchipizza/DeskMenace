@@ -9,9 +9,7 @@ test-results/
 playwright-report/
 tests/reports/local/
 
-# Local character assets that are not part of this repository.
-# Gary's artwork is distributed under its own licence and is added only through a reviewed release.
-characters/gary/
+# Local scratch folders
 .local/
 .private/
 

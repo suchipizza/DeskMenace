@@ -1,10 +1,8 @@
-// Checks for the default character's artwork. Runs only when a local copy is provided:
+// Checks for the default character's artwork in characters/gary/. To check another export instead:
 //   GARY_ASSET_DIR=/path/to/gary npx playwright test default-character
-// The artwork is not part of this repository, so CI skips these tests.
 import { expect, test } from '@playwright/test';
 import { canvasBox, debug, pageUrl, probePoints, QUIET, waitState } from './helpers';
 
-test.skip(!process.env.GARY_ASSET_DIR, 'GARY_ASSET_DIR not set');
 test.use({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1 });
 
 const EXPECTED_ROLES: Record<string, string> = {

@@ -1,0 +1,721 @@
+{
+ "schemaVersion": 1,
+ "id": "gary",
+ "name": "Gary",
+ "licence": {
+  "name": "Gary Asset Licence 1.0",
+  "url": "LICENSE.md"
+ },
+ "assetRevision": "web-4-scripts",
+ "display": {
+  "height": 320,
+  "minHeight": 160,
+  "walkSpeed": 110
+ },
+ "poster": {
+  "clip": "stand",
+  "frame": 0
+ },
+ "bubble": {
+  "anchor": [
+   0.468,
+   0.0944
+  ]
+ },
+ "menu": {
+  "credit": {
+   "label": "Hire Gary",
+   "url": "https://github.com/suchipizza/DeskMenace"
+  }
+ },
+ "lines": {
+  "hello": [
+   "Oh good, a visitor. I'll add you to the meeting.",
+   "Welcome to {site}. I've taken the liberty of reviewing it.",
+   "Hi. Gary. I'm sort of the manager of this website.",
+   "Ah, you're here. Per my last email, so am I."
+  ],
+  "core": [
+   "Let's circle back on this page later.",
+   "Quick question. Is this the final version? Asking for a stakeholder.",
+   "I'm not saying it's bad. I'm saying I'd have done it differently.",
+   "Great energy. Wrong direction, but great energy.",
+   "Can we take this offline? And by offline I mean never.",
+   "I've blocked out some time to judge this.",
+   "Love the hustle. Hate the font.",
+   "Let's not boil the ocean here. Just this website.",
+   "I'll need that in a spreadsheet.",
+   {
+    "text": "Synergy. I don't know what it means either, but I said it first.",
+    "weight": 0.6
+   },
+   {
+    "text": "If you need me, I'll be standing here unproductively.",
+    "weight": 0.7
+   }
+  ],
+  "idle": [
+   "Still here? Bold. I respect bold.",
+   "No activity detected. I'm going to put that in your review.",
+   "You've gone quiet. In my experience that means a resignation letter."
+  ],
+  "boast": [
+   "{owner} built this. I supervised. Emotionally.",
+   "Impressive. I'll present it as my idea on Monday.",
+   "This project? Mine. Spiritually.",
+   "Look at that. Almost as good as my slides."
+  ],
+  "roast": [
+   "Bold choice. Not a good one, but bold.",
+   "Interesting. Who approved this?",
+   "I see we skipped the review step again.",
+   "That's one way to do it. The other ways are better."
+  ],
+  "404": [
+   "This page doesn't exist. Like the budget I promised you.",
+   "404. I'd escalate, but I am the escalation.",
+   "Nothing here. Classic Friday deploy.",
+   "You're lost. Don't worry, so is the roadmap."
+  ],
+  "staging": [
+   "This is staging. Please don't show the client. Or me.",
+   "Staging environment. Everything here is a lie, like my calendar.",
+   "Not production. Lower your expectations accordingly."
+  ],
+  "status": [
+   "All systems operational. Suspicious.",
+   "Everything's green. Someone hasn't checked properly."
+  ],
+  "hover": [
+   "Go on. Click it. I dare you.",
+   "Hovering is not a decision.",
+   "Are we clicking or are we just thinking about clicking?"
+  ],
+  "clicked": [
+   "Please don't touch the manager.",
+   "That's HR's problem now.",
+   "I'll pretend that was a high five.",
+   "Was that a click or a cry for help?"
+  ],
+  "exit": [
+   "Leaving before the meeting's over? Noted.",
+   "Going so soon? I had three more agenda items."
+  ],
+  "leave": [
+   "Fine. I'll be in my office. Door's always closed.",
+   "Understood. I'll schedule a follow-up."
+  ],
+  "dragged": [
+   "Very mature.",
+   "That's harassment.",
+   "I'll report this to HR."
+  ]
+ },
+ "presets": {
+  "404": "presets/404.json",
+  "personal": "presets/personal.json",
+  "staging": "presets/staging.json",
+  "website": "presets/website.json"
+ },
+ "clips": {
+  "stand": {
+   "role": "idle",
+   "loop": true,
+   "load": "initial",
+   "size": [
+    219,
+    360
+   ],
+   "anchor": {
+    "feet": [
+     0.49315,
+     1.0
+    ]
+   },
+   "hit": [
+    27,
+    31,
+    158,
+    321
+   ],
+   "frameMs": [
+    82,
+    82,
+    82,
+    82,
+    83,
+    82,
+    82,
+    82,
+    82,
+    82,
+    82,
+    82,
+    82,
+    83,
+    82,
+    82,
+    82,
+    82,
+    82,
+    82,
+    82,
+    82,
+    82,
+    83,
+    82,
+    82,
+    82,
+    82,
+    82,
+    82,
+    82,
+    82,
+    83,
+    82
+   ],
+   "durationMs": 2792,
+   "sources": [
+    {
+     "type": "atlas",
+     "url": "atlas/stand.webp",
+     "mime": "image/webp",
+     "bytes": 321004,
+     "grid": {
+      "columns": 8,
+      "rows": 5,
+      "frames": 34
+     }
+    },
+    {
+     "type": "atlas",
+     "url": "atlas/stand@hd.webp",
+     "mime": "image/webp",
+     "bytes": 749966,
+     "grid": {
+      "columns": 8,
+      "rows": 5,
+      "frames": 34
+     },
+     "size": [
+      389,
+      640
+     ]
+    }
+   ]
+  },
+  "walk_right": {
+   "role": "walk.right",
+   "loop": true,
+   "load": "initial",
+   "size": [
+    219,
+    360
+   ],
+   "anchor": {
+    "feet": [
+     0.49315,
+     1.0
+    ]
+   },
+   "hit": [
+    0,
+    28,
+    192,
+    332
+   ],
+   "frameMs": [
+    42,
+    41,
+    42,
+    42,
+    41,
+    42,
+    42,
+    41,
+    42,
+    42,
+    41,
+    42,
+    42,
+    41,
+    42,
+    42,
+    41,
+    42,
+    42,
+    41,
+    42,
+    42,
+    41,
+    42,
+    42
+   ],
+   "durationMs": 1042,
+   "mirror": true,
+   "sources": [
+    {
+     "type": "atlas",
+     "url": "atlas/walk_right.webp",
+     "mime": "image/webp",
+     "bytes": 206330,
+     "grid": {
+      "columns": 7,
+      "rows": 4,
+      "frames": 25
+     }
+    },
+    {
+     "type": "atlas",
+     "url": "atlas/walk_right@hd.webp",
+     "mime": "image/webp",
+     "bytes": 457406,
+     "grid": {
+      "columns": 7,
+      "rows": 4,
+      "frames": 25
+     },
+     "size": [
+      389,
+      640
+     ]
+    }
+   ]
+  },
+  "stare": {
+   "role": "judge",
+   "loop": false,
+   "load": "lazy",
+   "size": [
+    219,
+    360
+   ],
+   "anchor": {
+    "feet": [
+     0.49315,
+     1.0
+    ]
+   },
+   "hit": [
+    27,
+    31,
+    159,
+    322
+   ],
+   "frameMs": [
+    82,
+    83,
+    82,
+    82,
+    83,
+    82,
+    82,
+    83,
+    82,
+    82,
+    83,
+    82,
+    82,
+    83,
+    82,
+    82,
+    83,
+    82,
+    82,
+    83,
+    82,
+    83,
+    82,
+    82,
+    83,
+    82,
+    82,
+    83,
+    82,
+    82,
+    83,
+    82,
+    82,
+    83,
+    82,
+    82,
+    83,
+    82,
+    82,
+    83,
+    82,
+    82
+   ],
+   "durationMs": 3458,
+   "sources": [
+    {
+     "type": "atlas",
+     "url": "atlas/stare.webp",
+     "mime": "image/webp",
+     "bytes": 402708,
+     "grid": {
+      "columns": 9,
+      "rows": 5,
+      "frames": 42
+     }
+    },
+    {
+     "type": "atlas",
+     "url": "atlas/stare@hd.webp",
+     "mime": "image/webp",
+     "bytes": 965206,
+     "grid": {
+      "columns": 9,
+      "rows": 5,
+      "frames": 42
+     },
+     "size": [
+      389,
+      640
+     ]
+    }
+   ]
+  },
+  "look_cursor": {
+   "role": "judge.pointer",
+   "loop": false,
+   "load": "lazy",
+   "size": [
+    219,
+    360
+   ],
+   "anchor": {
+    "feet": [
+     0.49315,
+     1.0
+    ]
+   },
+   "hit": [
+    27,
+    32,
+    158,
+    320
+   ],
+   "frameMs": [
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83
+   ],
+   "durationMs": 1833,
+   "sources": [
+    {
+     "type": "atlas",
+     "url": "atlas/look_cursor.webp",
+     "mime": "image/webp",
+     "bytes": 202402,
+     "grid": {
+      "columns": 7,
+      "rows": 4,
+      "frames": 22
+     }
+    },
+    {
+     "type": "atlas",
+     "url": "atlas/look_cursor@hd.webp",
+     "mime": "image/webp",
+     "bytes": 480820,
+     "grid": {
+      "columns": 7,
+      "rows": 4,
+      "frames": 22
+     },
+     "size": [
+      389,
+      640
+     ]
+    }
+   ]
+  },
+  "phone_check": {
+   "role": "idle.variant",
+   "loop": false,
+   "load": "lazy",
+   "size": [
+    219,
+    360
+   ],
+   "anchor": {
+    "feet": [
+     0.49315,
+     1.0
+    ]
+   },
+   "hit": [
+    15,
+    32,
+    170,
+    321
+   ],
+   "frameMs": [
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84
+   ],
+   "durationMs": 3917,
+   "sources": [
+    {
+     "type": "atlas",
+     "url": "atlas/phone_check.webp",
+     "mime": "image/webp",
+     "bytes": 446244,
+     "grid": {
+      "columns": 9,
+      "rows": 6,
+      "frames": 47
+     }
+    },
+    {
+     "type": "atlas",
+     "url": "atlas/phone_check@hd.webp",
+     "mime": "image/webp",
+     "bytes": 1042468,
+     "grid": {
+      "columns": 9,
+      "rows": 6,
+      "frames": 47
+     },
+     "size": [
+      389,
+      640
+     ]
+    }
+   ]
+  },
+  "dragged": {
+   "role": "held",
+   "loop": true,
+   "load": "lazy",
+   "size": [
+    219,
+    360
+   ],
+   "anchor": {
+    "feet": [
+     0.49315,
+     1.0
+    ]
+   },
+   "hit": [
+    28,
+    0,
+    172,
+    344
+   ],
+   "frameMs": [
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83,
+    84,
+    83,
+    83
+   ],
+   "durationMs": 1833,
+   "sources": [
+    {
+     "type": "atlas",
+     "url": "atlas/dragged.webp",
+     "mime": "image/webp",
+     "bytes": 228466,
+     "grid": {
+      "columns": 7,
+      "rows": 4,
+      "frames": 22
+     }
+    },
+    {
+     "type": "atlas",
+     "url": "atlas/dragged@hd.webp",
+     "mime": "image/webp",
+     "bytes": 520588,
+     "grid": {
+      "columns": 7,
+      "rows": 4,
+      "frames": 22
+     },
+     "size": [
+      389,
+      640
+     ]
+    }
+   ]
+  },
+  "fall": {
+   "role": "drop",
+   "loop": false,
+   "load": "lazy",
+   "size": [
+    219,
+    360
+   ],
+   "anchor": {
+    "feet": [
+     0.49315,
+     1.0
+    ]
+   },
+   "hit": [
+    -8,
+    0,
+    227,
+    352
+   ],
+   "frameMs": [
+    84,
+    85,
+    84,
+    84,
+    85,
+    84,
+    84,
+    85,
+    84,
+    84,
+    85,
+    84,
+    84,
+    85,
+    84,
+    84,
+    85,
+    84,
+    84,
+    85,
+    84,
+    84,
+    84,
+    85,
+    84,
+    84,
+    85,
+    84,
+    84,
+    85,
+    84,
+    84,
+    85,
+    84,
+    84,
+    85,
+    84,
+    84,
+    85,
+    84,
+    84,
+    85
+   ],
+   "durationMs": 3542,
+   "sources": [
+    {
+     "type": "atlas",
+     "url": "atlas/fall.webp",
+     "mime": "image/webp",
+     "bytes": 393934,
+     "grid": {
+      "columns": 9,
+      "rows": 5,
+      "frames": 42
+     }
+    },
+    {
+     "type": "atlas",
+     "url": "atlas/fall@hd.webp",
+     "mime": "image/webp",
+     "bytes": 892666,
+     "grid": {
+      "columns": 9,
+      "rows": 5,
+      "frames": 42
+     },
+     "size": [
+      389,
+      640
+     ]
+    }
+   ]
+  }
+ }
+}

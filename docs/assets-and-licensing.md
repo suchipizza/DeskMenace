@@ -7,13 +7,15 @@ gary.js has two kinds of content with different licences. They live in different
 | Engine, bundles, TypeScript types | `src/`, `dist/` | [MIT](../LICENSE) |
 | JSON Schemas, examples, tests, tooling | `schema/`, `examples/`, `tests/`, `scripts/` | [MIT](../LICENSE) |
 | Mugsy, the sample character | `characters/sample/` | [CC0 1.0](../characters/sample/LICENSE.md) |
-| Gary's artwork, name and lines | `characters/gary/` | Gary's own licence, shipped as `characters/gary/LICENSE.md`. **Not MIT** |
+| Gary's artwork, lines and identity | `characters/gary/` | [Gary Asset Licence](../characters/gary/LICENSE.md). **Not MIT** |
 | Your character | wherever you host it | Your choice, declared in your manifest's `licence` field |
 
 ## In practice
 
 - You can use, modify and redistribute the engine under MIT, including commercially, with or without Gary.
-- Using Gary on your website through the published package or CDN is what his artwork licence is for. Read `characters/gary/LICENSE.md` for what it allows beyond that (for example, modifying or redistributing his artwork).
+- You can show Gary on any website, personal or commercial, through gary.js: from the npm package, a CDN, or a copy on your own server. You can change his lines and settings, compress or convert his images, and share screenshots, videos and ads of your site with him on it.
+- You can't modify his artwork, use him outside gary.js (apps, videos starring him, stickers, merchandise), redistribute his files on their own, train AI on him or make look-alikes. The full terms are in [`characters/gary/LICENSE.md`](../characters/gary/LICENSE.md); for anything beyond them, ask.
+- The structure of Gary's `character.json` and preset files is MIT: copy them as a template for your own character, with your own art and lines.
 - `gary.core.js` and the ES module contain no reference to Gary and never download him. A site that uses only its own character uses only MIT code plus its own art.
 - Mugsy is public domain: copy him, edit him, use him as the starting point for your own character.
 

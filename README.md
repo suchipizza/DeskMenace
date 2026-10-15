@@ -163,7 +163,7 @@ Pages for checking the engine by hand (ES module, host compatibility, page-defin
 ## Licence
 
 - **Code** (engine, schemas, examples, tooling): [MIT](LICENSE).
-- **Gary's artwork and lines** are not MIT. They are distributed under their own licence, included with the artwork in `characters/gary/`.
+- **Gary** (his artwork, lines and identity, in `characters/gary/`) is not MIT. He is under the [Gary Asset Licence](characters/gary/LICENSE.md): free to use on any website, personal or commercial, through gary.js, and to show in recordings of your site; not to modify or reuse outside gary.js.
 - **Mugsy**, the sample character: [CC0](characters/sample/LICENSE.md).
 - **Your characters** are yours, under whatever licence you choose.
 

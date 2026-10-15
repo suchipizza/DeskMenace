@@ -1,5 +1,5 @@
 // Scans every file git would publish (tracked + staged) for material that must never be public:
-// local machine paths, credentials, the default character's artwork and planning notes.
+// local machine paths, credentials and planning notes. Gary's artwork must ship with its licence.
 // Run before any push or release:  npm run audit:private
 import { execFileSync } from 'node:child_process';
 import { readFileSync, statSync } from 'node:fs';
@@ -21,7 +21,7 @@ const RULES = [
   ['work-item id', new RegExp(j('\\bW', '-0[0-9]\\b'))],
   ['gate id', new RegExp(j('\\bG[1-7]', '\\b(?! ?(?:Pro|Max))'))],
 ];
-const FORBIDDEN_PATHS = [/^characters\/gary\//, /\.env(\..*)?$/, /\.(mov|mp4|webm|wav|mp3|psd|aep)$/i];
+const FORBIDDEN_PATHS = [/\.env(\..*)?$/, /\.(mov|mp4|webm|wav|mp3|psd|aep)$/i];
 const TEXT = /\.(ts|mjs|js|json|md|html|css|yml|yaml|txt|py|cjs)$|^(LICENSE|\.gitignore)/;
 
 const problems = [];
@@ -39,6 +39,7 @@ for (const f of files) {
     for (const [name, re] of RULES) if (re.test(line)) problems.push(`${f}:${i + 1}: ${name}`);
   });
 }
+if (files.some((f) => f.startsWith('characters/gary/')) && !files.includes('characters/gary/LICENSE.md')) problems.push('characters/gary/: LICENSE.md missing');
 if (problems.length) {
   console.error(`no-private-assets: ${problems.length} problem(s)\n  ${problems.join('\n  ')}`);
   process.exit(1);

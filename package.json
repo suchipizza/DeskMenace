@@ -2,7 +2,7 @@
   "name": "gary.js",
   "version": "0.1.0",
   "description": "A passive-aggressive coworker for your website. An animated browser character engine with speech bubbles, triggers and custom characters.",
-  "license": "MIT",
+  "license": "MIT AND LicenseRef-Gary-Asset-Licence",
   "author": "Noémie Rakotomalala",
   "homepage": "https://github.com/suchipizza/DeskMenace#readme",
   "repository": {
@@ -50,6 +50,7 @@
     "dist/**/*.d.ts",
     "schema/",
     "characters/sample/",
+    "characters/gary/",
     "LICENSE",
     "README.md"
   ],

@@ -80,8 +80,8 @@ test.describe('loading and isolation', () => {
     await waitState(page, 'idle');
   });
 
-  test('zero-config classic script without a default character installed fails quietly', async ({ page }) => {
-    test.skip(!!process.env.GARY_ASSET_DIR, 'default character is installed locally');
+  test('zero-config classic script fails quietly when the default character is unreachable', async ({ page }) => {
+    await page.route('**/characters/gary/**', (r) => r.fulfill({ status: 404, body: 'not found' }));
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(pageUrl({ bundle: 'classic', cfg: QUIET }));

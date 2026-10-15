@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "lines": {
+    "bio": [
+      "Wow, you're actually visiting this page.",
+      "This bio is missing key milestones.",
+      "This backstory is almost as impressive as the narrative I invented for my promotion."
+    ],
+    "leveraged": ["They should have leveraged AI on this."],
+    "intro": ["Btw, I'm Gary, Head of Strategic Alignment & Cross-Functional Synergy Enablement."],
+    "profile": ["Check out my profile while you're on here. I'm a Disruptive Synergist & Trendsetter."],
+    "keep-going": [
+      "Clicking harder won't bring it back.",
+      "Scrolling won't help. I've been scrolling my inbox since 2019.",
+      "Let's take this to the homepage. Offline.",
+      "I can see you're frustrated. Have you tried a strategy offsite?"
+    ],
+    "dragged": [
+      "Very mature.",
+      "That's harassment.",
+      "I'll report this to HR.",
+      "This is not in my job description.",
+      "You can't just reorg me like that.",
+      "Put me down. I'm a thought leader.",
+      "I didn't consent to this pivot."
+    ],
+    "scrolled": [
+      "Whoa. Nobody approved scrolling.",
+      "Slow down, I'm not done reading the bio.",
+      "Scrolling past the best part. Which was me.",
+      "Let's not rush to the footer. Nothing good happens in the footer.",
+      "Still scrolling? It doesn't get better.",
+      "You've now spent longer on this page than its owner."
+    ],
+    "projects": [
+      "Impressive. I'll present it as my idea on Monday.",
+      "This project? Mine. Spiritually.",
+      "Look at that. Almost as good as my slides."
+    ],
+    "remarks": [
+      "If you like this, wait until you see my keynote.",
+      "Endorse me for 'Visionary'. It takes one click."
+    ]
+  },
+  "packs": ["remarks"],
+  "entrance": "inspect",
+  "scenes": {
+    "inspect": {
+      "steps": [
+        { "enter": "left", "y": 0.5 },
+        { "walkTo": { "x": 0.5 } },
+        { "wait": 1 },
+        { "say": "#bio" },
+        { "walkTo": { "x": 0.33, "y": 0.68 } },
+        { "wait": 1 },
+        { "say": "#leveraged" },
+        { "walkTo": { "x": 0.2 } },
+        { "say": "#intro" },
+        { "say": "#profile" }
+      ],
+      "interrupted": "#keep-going"
+    },
+    "scrolled": [{ "play": "judge" }, { "say": "#scrolled" }]
+  },
+  "triggers": [
+    { "on": "drag", "say": "#dragged", "cooldown": 2 },
+    { "on": "click", "during": "inspect", "say": "#keep-going", "cooldown": 3 },
+    { "on": "scrolling", "during": "inspect", "say": "#keep-going", "cooldown": 3 },
+    { "on": "scrolling", "scene": "scrolled", "cooldown": 25 },
+    { "on": "visible", "selector": "[data-gary-projects], #projects", "say": "#projects", "once": true },
+    { "on": "visible", "selector": "[data-gary-stealth]", "say": "Fourteen startups, all in stealth. Mostly from investors.", "once": true },
+    { "on": "visible", "selector": "[data-gary-visionary]", "say": "He used 'visionary' three times. I counted.", "once": true },
+    { "on": "idle", "after": 40, "say": "#remarks", "cooldown": 90 },
+    { "on": "exit", "say": "#exit", "maxPerSession": 1 }
+  ],
+  "position": { "side": "left", "x": [0.2, 0.8] },
+  "dropTo": "here",
+  "limits": { "minGapSeconds": 6, "maxLinesPerMinute": 4 }
+}
