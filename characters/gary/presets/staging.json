@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "entrance": "inspect",
+  "scenes": {
+    "inspect": [{ "enter": "left", "y": 0.5 }, { "walkTo": { "x": 0.5 } }, { "wait": 0.8 }, { "play": "judge" }, { "say": "#staging" }]
+  },
+  "triggers": [
+    { "on": "drag", "say": "#dragged", "cooldown": 2 },
+    { "on": "time", "after": 60, "every": 90, "say": "#staging" },
+    { "on": "exit", "say": "#exit", "maxPerSession": 1 }
+  ],
+  "position": { "side": "left", "x": [0.2, 0.8] },
+  "dropTo": "here"
+}

@@ -1,0 +1,28 @@
+# Dependencies and build output
+node_modules/
+dist/
+_site/
+*.tgz
+coverage/
+
+# Test output
+test-results/
+playwright-report/
+tests/reports/local/
+
+# Local scratch folders
+.local/
+.private/
+
+# Media and debug captures
+*.trace.zip
+docs/media/*.local.*
+screenshots/
+
+# Editors, OS, secrets
+.DS_Store
+.idea/
+.vscode/
+*.log
+.env
+.env.*

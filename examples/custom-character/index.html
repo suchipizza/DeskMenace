@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notes from a Third-Wave Barista · gary.js</title>
+<link rel="stylesheet" href="../examples.css">
+<!-- Bring your own character: gary.core.js has no default character, so the page names one.
+     Mugsy is public-domain sample art. Clip URLs resolve against the manifest, not the page, so
+     the manifest can live on another origin too. data-preset picks Mugsy's own "personal"
+     package. -->
+<script defer src="../../dist/gary.core.js"
+        data-character="../../characters/sample/character.json"
+        data-preset="personal"></script>
+<style>
+  :root { --bean: #7a4a2b; --crema: #f3e6d6; }
+  @media (prefers-color-scheme: dark) { :root { --bean: #d9a37a; --crema: #2a221c; } }
+  header { text-align: center; padding: 8px 0 36px; border-bottom: 1px solid var(--line); margin-bottom: 40px; }
+  header h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: -0.01em; }
+  header h1 b { color: var(--bean); font-weight: 700; }
+  header .lead { margin: 0; font-style: italic; }
+  .about { display: grid; grid-template-columns: 96px 1fr; gap: 20px; align-items: center; background: var(--crema); border-radius: 16px; padding: 20px; margin-bottom: 48px; }
+  .about img { width: 96px; height: 96px; border-radius: 50%; }
+  .about p { margin: 0; }
+  .post { margin-bottom: 44px; }
+  .post .meta { color: var(--muted); font-size: 14px; margin: 0 0 6px; }
+  .post h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 28px; margin: 0 0 10px; }
+  .post h2 a { color: var(--fg); text-decoration: none; }
+  .post img { width: 100%; height: 200px; border-radius: 12px; margin: 6px 0 12px; }
+  .note { margin-top: 56px; }
+  @media (max-width: 600px) { .about { grid-template-columns: 1fr; text-align: center; } .about img { margin: 0 auto; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Notes from a <b>Third-Wave</b> Barista</h1>
+    <p class="lead">Extraction, ratios, and other things nobody at the party asked about.</p>
+  </header>
+
+  <section class="about">
+    <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Crect width='10' height='10' fill='%23c08552'/%3E%3Ccircle cx='5' cy='5' r='3' fill='%235e3023'/%3E%3Cpath d='M5 2.2c-1 1-1 4.6 0 5.6' stroke='%23c08552' stroke-width='.5' fill='none'/%3E%3C/svg%3E">
+    <p>Hi, I'm Rowan. I weigh my water, I name my grinders, and I once returned a flat white because it was "emotionally flat". This blog documents my pour-over journey, one gram at a time.</p>
+  </section>
+
+  <article class="post">
+    <p class="meta">Part 31 · 18 min read</p>
+    <h2><a href="#">My pour-over journey, part 31: the bloom</a></h2>
+    <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23e8c39e'/%3E%3C/svg%3E">
+    <p>After 30 parts, I finally understand the bloom. You pour a little water, then you wait 45 seconds and think about your choices. I now bloom twice, once for the coffee and once for me.</p>
+  </article>
+
+  <article class="post">
+    <p class="meta">Part 30 · 22 min read</p>
+    <h2><a href="#">Why I stopped using a kettle and started using a feeling</a></h2>
+    <p>Temperature is a social construct. I heat my water until it looks ready, which is 94.2 °C.</p>
+  </article>
+
+  <article class="post">
+    <p class="meta">Part 29 · 9 min read</p>
+    <h2><a href="#">Decaf: a conversation we need to have (no)</a></h2>
+    <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23b5c9a8'/%3E%3C/svg%3E">
+    <p>Short post. The answer is no.</p>
+  </article>
+
+  <article class="post">
+    <p class="meta">Part 28 · 31 min read</p>
+    <h2><a href="#">I tasted 40 beans blind. Here's what my tongue said.</a></h2>
+    <p>Mostly "ow". Remember to let it cool.</p>
+  </article>
+
+  <p class="note">This page brings its own character. Mugsy the mug is public-domain sample art, loaded with <code>gary.core.js</code> and a <code>data-character</code> URL instead of the default character, and uses Mugsy's own "personal" package. Rowan and this blog are made up.</p>
+</main>
+</body>
+</html>

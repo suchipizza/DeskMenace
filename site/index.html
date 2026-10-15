@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gary.js · A passive-aggressive coworker for your website</title>
+<meta name="description" content="Gary is an animated browser character who walks around your website, judges your visitors and makes unsolicited corporate comments. One script tag. Open source.">
+<meta property="og:title" content="gary.js · A passive-aggressive coworker for your website">
+<meta property="og:description" content="An animated character who walks around your website and has opinions about it. One script tag. Open source.">
+<meta property="og:image" content="media/gary-website.jpg">
+<link rel="stylesheet" href="site.css">
+<!-- Gary himself, on his own website. -->
+<script defer src="dist/gary.js" data-preset="website"></script>
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="./">gary.js</a>
+  <nav>
+    <a href="#demos">Demos</a>
+    <a href="#customize">Customize</a>
+    <a href="#characters">Your character</a>
+    <a href="https://github.com/suchipizza/DeskMenace#readme">Docs</a>
+    <a class="gh" href="https://github.com/suchipizza/DeskMenace">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="eyebrow">Open-source JavaScript library</p>
+    <h1>A passive-aggressive coworker <span>for your website.</span></h1>
+    <p class="lead">Gary walks around your pages, judges your visitors and offers unsolicited corporate feedback. Add him with one script tag, make him say your things, or swap him for a character of your own.</p>
+    <div class="ctas">
+      <a class="btn primary" href="https://github.com/suchipizza/DeskMenace">★ Star on GitHub</a>
+      <a class="btn" href="https://github.com/suchipizza/DeskMenace/fork">Fork it</a>
+      <a class="btn ghost" href="#demos">See the demos</a>
+    </div>
+    <div class="snippet">
+      <pre><code id="snippet">&lt;script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"&gt;&lt;/script&gt;</code></pre>
+      <button type="button" class="copy" data-copy="snippet">Copy</button>
+    </div>
+    <p class="hint">He's on this page right now. Pick him up and drop him somewhere. Right-click him for his menu.</p>
+  </section>
+
+  <section id="demos" class="demos">
+    <h2>One attribute, a whole personality</h2>
+    <p class="sub">Ready-made presets for the pages that need him most. Each demo is a plain HTML page with one script tag.</p>
+
+    <article class="demo">
+      <video muted loop playsinline preload="none" poster="media/gary-404.jpg" data-src="media/gary-404.mp4" aria-label="Gary on a 404 page"></video>
+      <div class="text">
+        <h3>404 pages</h3>
+        <p>He walks onto your "404", explains what went wrong and leaves. Keep clicking and he keeps answering, a little less patiently each time.</p>
+        <code>data-preset="404"</code>
+        <a class="live" href="examples/404/">Open the live demo →</a>
+      </div>
+    </article>
+
+    <article class="demo flip">
+      <video muted loop playsinline preload="none" poster="media/gary-website.jpg" data-src="media/gary-website.mp4" aria-label="Gary on a product page"></video>
+      <div class="text">
+        <h3>Any website</h3>
+        <p>He reviews your landing page, objects to being dragged around, walks back to where he was and has notes about your scrolling.</p>
+        <code>data-preset="website"</code>
+        <a class="live" href="examples/website/">Open the live demo →</a>
+      </div>
+    </article>
+
+    <article class="demo">
+      <video muted loop playsinline preload="none" poster="media/gary-personal.jpg" data-src="media/gary-personal.mp4" aria-label="Gary on a personal website"></video>
+      <div class="text">
+        <h3>Personal websites</h3>
+        <p>He inspects your bio, introduces himself with his full job title and has thoughts about your side projects.</p>
+        <code>data-preset="personal"</code>
+        <a class="live" href="examples/personal/">Open the live demo →</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="features">
+    <h2>Annoying on purpose. Polite by design.</h2>
+    <ul>
+      <li><b>One script tag</b>No build step, no framework, no backend, no account.</li>
+      <li><b>Small</b>About 26 KB gzipped. Artwork loads after your page has painted, with no layout shift.</li>
+      <li><b>Never in the way</b>Clicks pass through every transparent pixel. Your links, forms and buttons keep working.</li>
+      <li><b>Visitors are in charge</b>They can drag him, mute him or send him home, by mouse, keyboard or touch.</li>
+      <li><b>No tracking</b>No analytics, no cookies, no network calls beyond his own images.</li>
+      <li><b>Easy on batteries</b>Stops in background tabs and rests when nobody's around. Respects reduced motion.</li>
+    </ul>
+  </section>
+
+  <section id="customize" class="split">
+    <div>
+      <h2>Make him say your things</h2>
+      <p>Write your own lines and decide when he says them: on load, on hover, on click, when something scrolls into view, when the visitor goes quiet. Scenes walk him onto your headings and buttons.</p>
+      <p><a href="https://github.com/suchipizza/DeskMenace/blob/main/docs/configuration.md">Configuration reference →</a></p>
+    </div>
+    <pre class="code"><code>&lt;script type="application/json" data-gary-config&gt;
+{
+  "schemaVersion": 1,
+  "lines": {
+    "pricing": ["Pricing? Let's set up a call
+                 to discuss a call."]
+  },
+  "triggers": [
+    { "on": "click", "selector": "#contact",
+      "say": "#pricing" },
+    { "on": "idle", "after": 30,
+      "say": "Still there? Bold." }
+  ]
+}
+&lt;/script&gt;</code></pre>
+  </section>
+
+  <section id="characters" class="split flip">
+    <div>
+      <h2>Bring your own character</h2>
+      <p>The engine knows nothing about Gary. Describe any character in a JSON manifest with one image per animation, and it walks, talks and gets dragged around just the same. Mugsy, the public-domain mug, is a complete example to start from.</p>
+      <p><a href="https://github.com/suchipizza/DeskMenace/blob/main/docs/character-format.md">Character format →</a> · <a href="examples/custom-character/">Live demo →</a></p>
+    </div>
+    <video muted loop playsinline preload="none" poster="media/mugsy.jpg" data-src="media/mugsy.mp4" aria-label="Mugsy the mug on a coffee blog"></video>
+  </section>
+
+  <section class="outro">
+    <h2>Give Gary a desk.</h2>
+    <p>Star the repo so other people find him. Fork it to make him yours, or build a new character and send it in.</p>
+    <div class="ctas">
+      <a class="btn primary" href="https://github.com/suchipizza/DeskMenace">★ Star on GitHub</a>
+      <a class="btn" href="https://github.com/suchipizza/DeskMenace/fork">Fork it</a>
+      <a class="btn ghost" href="https://github.com/suchipizza/DeskMenace/blob/main/CONTRIBUTING.md">Contribute</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>The gary.js engine is <a href="https://github.com/suchipizza/DeskMenace/blob/main/LICENSE">MIT</a>. Gary's artwork, lines and identity are under the <a href="https://github.com/suchipizza/DeskMenace/blob/main/characters/gary/LICENSE.md">Gary Asset Licence</a>: free to use on your website through gary.js. Mugsy is <a href="https://github.com/suchipizza/DeskMenace/blob/main/characters/sample/LICENSE.md">CC0</a>.</p>
+  <p>The companies and people in the demos are fictional.</p>
+</footer>
+
+<script>
+  // Copy buttons.
+  for (const b of document.querySelectorAll('[data-copy]')) {
+    b.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(document.getElementById(b.dataset.copy).textContent);
+        b.textContent = 'Copied';
+      } catch {
+        b.textContent = 'Select and copy';
+      }
+      setTimeout(() => (b.textContent = 'Copy'), 1800);
+    });
+  }
+  // Videos load and play only while on screen, and not at all with reduced motion.
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const io = 'IntersectionObserver' in window && new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      const v = e.target;
+      if (e.isIntersecting) {
+        if (!v.src) v.src = v.dataset.src;
+        v.play().catch(() => {});
+      } else v.pause();
+    }
+  }, { rootMargin: '200px' });
+  for (const v of document.querySelectorAll('video[data-src]')) {
+    if (still || !io) { v.controls = true; v.preload = 'metadata'; v.src = v.dataset.src; }
+    else io.observe(v);
+  }
+</script>
+</body>
+</html>

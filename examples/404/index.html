@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found · gary.js</title>
+<link rel="stylesheet" href="../examples.css">
+<!-- The "404" preset: the character walks onto the element marked data-gary-404 (or the first
+     h1), comments, and gets more irritated each time the visitor clicks or scrolls. -->
+<script defer src="../../dist/gary.js" data-preset="404"></script>
+<style>
+  main.lost { min-height: 100vh; min-height: 100dvh; display: grid; align-content: end; justify-items: center; text-align: center; padding: 24px 20px 10vh; }
+  /* A line box no taller than the digits, so the character stands on the numbers themselves. */
+  .big { font-size: clamp(96px, 20vw, 180px); line-height: .56; font-weight: 800; margin: 0 0 44px; letter-spacing: -0.04em; }
+</style>
+</head>
+<body>
+<main class="lost">
+  <h1 class="big" data-gary-404>404</h1>
+  <p class="lead">This page doesn't exist. Someone is going to hear about it.</p>
+  <p><a href="/">Back to the homepage</a></p>
+</main>
+</body>
+</html>

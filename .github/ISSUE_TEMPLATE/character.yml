@@ -1,0 +1,31 @@
+name: New character
+description: Share or propose a character for the engine
+labels: [character]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Character name
+    validations:
+      required: true
+  - type: textarea
+    id: about
+    attributes:
+      label: About the character
+      description: Personality, clips you have (idle, walk, judge, held, drop…), a link to a demo if you have one.
+    validations:
+      required: true
+  - type: dropdown
+    id: licence
+    attributes:
+      label: Licence for the artwork and lines
+      options: [CC0-1.0, CC-BY-4.0, MIT, Other (explain below)]
+    validations:
+      required: true
+  - type: checkboxes
+    id: rights
+    attributes:
+      label: Rights
+      options:
+        - label: I created this artwork or have the right to share it under the licence above.
+          required: true

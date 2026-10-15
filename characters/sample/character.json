@@ -1,0 +1,303 @@
+{
+  "schemaVersion": 1,
+  "id": "mugsy",
+  "name": "Mugsy",
+  "licence": {
+    "name": "CC0-1.0",
+    "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "assetRevision": "1",
+  "display": {
+    "height": 170,
+    "minHeight": 110,
+    "walkSpeed": 70
+  },
+  "poster": {
+    "clip": "idle",
+    "frame": 0
+  },
+  "bubble": {
+    "anchor": [
+      0.5,
+      0.12
+    ]
+  },
+  "lines": {
+    "hello": [
+      "Oh. A visitor. I'll pretend I wasn't napping.",
+      "Welcome to {site}. Please keep your hands off the handle.",
+      "Hi. I'm the mug. Yes, the website has a mug. Don't make it weird."
+    ],
+    "core": [
+      "I've been refilled four times today. Nobody asked how I'm doing.",
+      "Is it decaf? Be honest.",
+      "I hold things. Mostly grudges.",
+      "Somebody put me in the microwave once. I remember.",
+      {
+        "text": "Do you ever just... steep?",
+        "weight": 0.5
+      },
+      "I'm not judging. I'm brewing."
+    ],
+    "idle": [
+      "Still there? I can hear you scrolling.",
+      "I'm going cold over here."
+    ],
+    "clicked": [
+      "Fingerprints. Great. Love that.",
+      "I'm ceramic, not a button.",
+      "Tap me again and I'm going in the dishwasher on purpose."
+    ],
+    "exit": [
+      "Leaving already? I just got warm."
+    ],
+    "leave": [
+      "Fine. I'll be in the cupboard."
+    ],
+    "dragged": [
+      "Careful. I spill.",
+      "Handle, not hostage.",
+      "Put me down. I'm full."
+    ]
+  },
+  "presets": {
+    "404": "presets/404.json",
+    "personal": "presets/personal.json",
+    "website": "presets/website.json",
+    "staging": "presets/staging.json"
+  },
+  "clips": {
+    "idle": {
+      "role": "idle",
+      "loop": true,
+      "load": "initial",
+      "size": [
+        150,
+        200
+      ],
+      "anchor": {
+        "feet": [
+          0.5,
+          1.0
+        ]
+      },
+      "hit": [
+        17,
+        17,
+        131,
+        183
+      ],
+      "frameMs": [
+        160,
+        160,
+        160,
+        160,
+        160,
+        160,
+        160,
+        160,
+        160,
+        160
+      ],
+      "durationMs": 1600,
+      "sources": [
+        {
+          "type": "atlas",
+          "url": "atlas/idle.webp",
+          "mime": "image/webp",
+          "bytes": 42870,
+          "grid": {
+            "columns": 8,
+            "rows": 2,
+            "frames": 10
+          }
+        }
+      ]
+    },
+    "walk": {
+      "role": "walk.right",
+      "loop": true,
+      "load": "initial",
+      "mirror": true,
+      "size": [
+        150,
+        200
+      ],
+      "anchor": {
+        "feet": [
+          0.5,
+          1.0
+        ]
+      },
+      "hit": [
+        19,
+        16,
+        131,
+        184
+      ],
+      "frameMs": [
+        105,
+        105,
+        105,
+        105,
+        105,
+        105,
+        105,
+        105
+      ],
+      "durationMs": 840,
+      "sources": [
+        {
+          "type": "atlas",
+          "url": "atlas/walk.webp",
+          "mime": "image/webp",
+          "bytes": 39260,
+          "grid": {
+            "columns": 8,
+            "rows": 1,
+            "frames": 8
+          }
+        }
+      ]
+    },
+    "judge": {
+      "role": "judge",
+      "loop": false,
+      "load": "lazy",
+      "size": [
+        150,
+        200
+      ],
+      "anchor": {
+        "feet": [
+          0.5,
+          1.0
+        ]
+      },
+      "hit": [
+        17,
+        19,
+        131,
+        181
+      ],
+      "frameMs": [
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150
+      ],
+      "durationMs": 1800,
+      "sources": [
+        {
+          "type": "atlas",
+          "url": "atlas/judge.webp",
+          "mime": "image/webp",
+          "bytes": 44454,
+          "grid": {
+            "columns": 8,
+            "rows": 2,
+            "frames": 12
+          }
+        }
+      ]
+    },
+    "held": {
+      "role": "held",
+      "loop": true,
+      "load": "lazy",
+      "size": [
+        150,
+        200
+      ],
+      "anchor": {
+        "feet": [
+          0.5,
+          1.0
+        ]
+      },
+      "hit": [
+        23,
+        54,
+        121,
+        146
+      ],
+      "frameMs": [
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110
+      ],
+      "durationMs": 880,
+      "sources": [
+        {
+          "type": "atlas",
+          "url": "atlas/held.webp",
+          "mime": "image/webp",
+          "bytes": 37838,
+          "grid": {
+            "columns": 8,
+            "rows": 1,
+            "frames": 8
+          }
+        }
+      ]
+    },
+    "drop": {
+      "role": "drop",
+      "loop": false,
+      "load": "lazy",
+      "size": [
+        150,
+        200
+      ],
+      "anchor": {
+        "feet": [
+          0.5,
+          1.0
+        ]
+      },
+      "hit": [
+        14,
+        19,
+        136,
+        181
+      ],
+      "frameMs": [
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110
+      ],
+      "durationMs": 880,
+      "sources": [
+        {
+          "type": "atlas",
+          "url": "atlas/drop.webp",
+          "mime": "image/webp",
+          "bytes": 33112,
+          "grid": {
+            "columns": 8,
+            "rows": 1,
+            "frames": 8
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "lines": {
+    "404": ["They should have leveraged AI."],
+    "keep-going": [
+      "Clicking harder won't bring it back.",
+      "Scrolling won't help. I've been scrolling my inbox since 2019.",
+      "Let's take this to the homepage. Offline.",
+      "I can see you're frustrated. Have you tried a strategy offsite?",
+      "Per my last stare: there's nothing here.",
+      "Still a 404. I'll set up a working group.",
+      "Clicking harder won't create the page.",
+      "I've escalated this to the page's manager. Also missing.",
+      "Let's take this offline. Like the page.",
+      "Great initiative. Wrong page.",
+      "It's time to unlock the potential and scale operations.",
+      "At this point, you're the 404."
+    ]
+  },
+  "inOrder": ["keep-going"],
+  "entrance": "arrive",
+  "scenes": {
+    "arrive": {
+      "steps": [
+        { "enter": "left", "on": "[data-gary-404], h1" },
+        { "walkTo": "[data-gary-404], h1", "at": "center" },
+        { "wait": 1 },
+        { "say": "#404" },
+        { "wait": 0.6 },
+        { "exit": "right" }
+      ],
+      "interrupted": "#keep-going"
+    }
+  },
+  "triggers": [
+    { "on": "click", "during": "arrive", "say": "#keep-going", "cooldown": 3 },
+    { "on": "scrolling", "during": "arrive", "say": "#keep-going", "cooldown": 3 },
+    { "on": "drag", "say": "#dragged", "cooldown": 2 }
+  ],
+  "dropTo": "here",
+  "ambient": false,
+  "limits": { "minGapSeconds": 3, "maxLinesPerMinute": 8 }
+}

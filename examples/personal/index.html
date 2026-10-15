@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sam Griffin · gary.js</title>
+<!-- The "personal" preset: the character walks in, reads the bio, comments, and reacts to the
+     projects and to scrolling. Elements marked data-gary-* give it something to point at. -->
+<script defer src="../../dist/gary.js" data-preset="personal"></script>
+<style>
+  :root {
+    --bg: #faf8f4; --fg: #1f1d1a; --muted: #6f6a62; --rule: #e6e0d6; --link: #a8492a; --soft: #f1ece3;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Charter, Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #171614; --fg: #ece8e1; --muted: #a29b90; --rule: #2e2b27; --link: #e08c68; --soft: #221f1c; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.65 var(--sans); }
+  a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 0 20px; }
+
+  .top { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 28px 0 0; font-size: 15px; }
+  .top .name { white-space: nowrap; font-family: var(--serif); font-size: 18px; color: var(--fg); text-decoration: none; }
+  .top nav { display: flex; gap: 18px; flex-wrap: wrap; }
+  .top nav a { color: var(--muted); text-decoration: none; }
+  .top nav a:hover { color: var(--fg); }
+
+  .intro { padding: 72px 0 8px; }
+  .intro img { width: 76px; height: 76px; border-radius: 50%; display: block; margin-bottom: 26px; }
+  .intro h1 { font: 400 clamp(34px, 6vw, 44px)/1.15 var(--serif); letter-spacing: -0.01em; margin: 0 0 18px; }
+  .intro .big { font: 400 21px/1.55 var(--serif); margin: 0 0 16px; }
+
+  section { padding-top: 56px; }
+  h2 { font: 600 13px/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 20px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+  p { margin: 0 0 16px; }
+
+  .now { background: var(--soft); border-radius: 6px; padding: 20px 22px; }
+  .now h2 { border: 0; padding: 0; margin-bottom: 12px; }
+  .now h2 span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+  .now ul { margin: 0; padding-left: 18px; }
+  .now li { margin: 4px 0; }
+
+  .rows { list-style: none; margin: 0; padding: 0; }
+  .rows li { display: grid; grid-template-columns: 112px 1fr; gap: 16px; padding: 9px 0; }
+  .rows .when { color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; padding-top: 1px; }
+  .rows .what span { display: block; color: var(--muted); font-size: 15px; }
+  .rows a { color: var(--fg); text-decoration-color: var(--rule); }
+  .rows a:hover { text-decoration-color: var(--link); }
+
+  .invested { color: var(--muted); font-size: 15px; }
+
+  blockquote { margin: 0; font: italic 400 20px/1.55 var(--serif); }
+  blockquote footer { font: 15px/1.5 var(--sans); font-style: normal; color: var(--muted); margin-top: 10px; }
+
+  .contact { padding-bottom: 8px; }
+  .elsewhere { display: flex; gap: 20px; flex-wrap: wrap; }
+  .fine { border-top: 1px solid var(--rule); margin-top: 64px; padding: 20px 0 360px; color: var(--muted); font-size: 14px; }
+
+  @media (max-width: 560px) {
+    body { font-size: 16px; }
+    .intro { padding-top: 48px; }
+    .intro .big { font-size: 19px; }
+    .rows li { grid-template-columns: 1fr; gap: 0; }
+    .top { flex-direction: column; gap: 6px; }
+    .top nav { gap: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="name" href="#">Sam Griffin</a>
+    <nav><a href="#work">Work</a><a href="#projects">Projects</a><a href="#writing">Writing</a><a href="#contact">Contact</a></nav>
+  </header>
+
+  <main>
+    <div class="intro">
+      <img alt="Sam Griffin" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%23d9c7ae'/%3E%3Cpath d='M14 80c2-15 13-22 26-22s24 7 26 22z' fill='%23344a5e'/%3E%3Cpath d='M34 50h12v10c-2 3-10 3-12 0z' fill='%23c99a78'/%3E%3Cellipse cx='40' cy='37' rx='13' ry='15' fill='%23deb08d'/%3E%3Cpath d='M27 36c-1-12 6-18 14-18 9 0 14 6 13 17-2-6-7-9-14-9-6 0-11 3-13 10z' fill='%233b2a20'/%3E%3C/svg%3E">
+      <h1>Hi, I'm Sam.</h1>
+      <p class="big">I run <a href="../website/">Leveragely</a>, a small company that builds software for sales teams. Before that I spent fifteen years selling software, first as a rep and later running revenue teams.</p>
+      <p>I believe the best sales teams are led by people who combine a visionary product sense with the discipline to follow up on every lead. Most of what I write about is the second part. I live in Austin with my partner, our two kids and a beagle who does not respect meetings.</p>
+    </div>
+
+    <section>
+      <div class="now">
+        <h2>Now <span>· October 2026</span></h2>
+        <ul>
+          <li>Hiring our first two engineers in Lisbon.</li>
+          <li>Recording season four of the podcast.</li>
+          <li>Training for the Austin half marathon, slowly.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="work">
+      <h2>Work</h2>
+      <ul class="rows">
+        <li><span class="when">2023 – now</span><span class="what"><a href="../website/">Leveragely</a>, founder &amp; CEO<span>An assistant for sales reps: outreach, follow-ups and CRM updates.</span></span></li>
+        <li><span class="when">2017 – 2021</span><span class="what">Cartwheel Analytics, co-founder<span>Pipeline analytics for mid-market sales teams. Acquired in 2021.</span></span></li>
+        <li><span class="when">2013 – 2017</span><span class="what">Halden, VP Sales<span>Grew the team from 3 to 40 reps.</span></span></li>
+        <li><span class="when">2009 – 2013</span><span class="what">Brightwell, account executive<span>Where I learned to sell, mostly by losing deals.</span></span></li>
+      </ul>
+    </section>
+
+    <section id="projects">
+      <h2>Projects</h2>
+      <ul class="rows">
+        <li><span class="when">Company</span><span class="what"><a href="../website/">Leveragely</a><span>AI assistant for sales teams. 1,200 customers.</span></span></li>
+        <li><span class="when">Podcast</span><span class="what"><a href="#">Revenue Rewired</a><span>Conversations with sales leaders about building teams that scale. 60 episodes.</span></span></li>
+        <li><span class="when">Open source</span><span class="what"><a href="#">crm-sync</a><span>Syncs email activity to Salesforce and HubSpot.</span></span></li>
+      </ul>
+    </section>
+
+    <section id="writing">
+      <h2>Writing</h2>
+      <ul class="rows">
+        <li><span class="when">Mar 2026</span><span class="what"><a href="#">What I learned scaling a sales team from 3 to 40</a></span></li>
+        <li><span class="when">Jan 2026</span><span class="what"><a href="#">What my cold plunge taught me about B2B sales</a></span></li>
+        <li><span class="when">Nov 2025</span><span class="what"><a href="#">Why the follow-up matters more than the first email</a></span></li>
+        <li><span class="when">Aug 2025</span><span class="what"><a href="#">Selling to enterprises as a five-person startup</a></span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Investing</h2>
+      <p data-gary-stealth>I've backed 14 startups as an angel investor and advisor, several of them still in stealth.</p>
+      <p class="invested">Including Tessaro, Halvery, Corvale and Fernway.</p>
+    </section>
+
+    <section>
+      <h2>Kind words</h2>
+      <blockquote>"Sam is a visionary leader who builds teams people want to stay in. He hired me as his first rep and taught me everything I know about sales."
+        <footer>Dana Whitfield, VP Sales at Cartwheel Analytics</footer></blockquote>
+    </section>
+
+    <section>
+      <h2>Speaking</h2>
+      <p>I speak at sales and SaaS conferences about AI in sales, building a revenue team and what it takes to be a <span data-gary-visionary>visionary</span> founder. Recent talks: RevOps Summit, Chicago (2025) and Pipeline Live, London (2026).</p>
+    </section>
+
+    <section id="contact" class="contact">
+      <h2>Contact</h2>
+      <p>Email is best: <a href="#">sam@leveragely.example</a>. I answer everything, eventually.</p>
+      <p class="elsewhere"><a href="#">LinkedIn</a><a href="#">GitHub</a><a href="#">Podcast</a></p>
+    </section>
+  </main>
+
+  <footer class="fine">© 2026 Sam Griffin. Sam, Leveragely and the people and companies on this page are fictional, made up for the gary.js examples.</footer>
+</div>
+</body>
+</html>

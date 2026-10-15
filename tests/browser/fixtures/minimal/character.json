@@ -1,0 +1,125 @@
+{
+ "schemaVersion": 1,
+ "id": "minimal",
+ "name": "Minimal",
+ "licence": {
+  "name": "CC0-1.0",
+  "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+ },
+ "assetRevision": "1",
+ "display": {
+  "height": 170,
+  "minHeight": 110,
+  "walkSpeed": 70
+ },
+ "poster": {
+  "clip": "idle",
+  "frame": 0
+ },
+ "bubble": {
+  "anchor": [
+   0.5,
+   0.12
+  ]
+ },
+ "clips": {
+  "idle": {
+   "role": "idle",
+   "loop": true,
+   "load": "initial",
+   "size": [
+    150,
+    200
+   ],
+   "anchor": {
+    "feet": [
+     0.5,
+     1.0
+    ]
+   },
+   "hit": [
+    17,
+    17,
+    131,
+    183
+   ],
+   "frameMs": [
+    160,
+    160,
+    160,
+    160,
+    160,
+    160,
+    160,
+    160,
+    160,
+    160
+   ],
+   "durationMs": 1600,
+   "sources": [
+    {
+     "type": "atlas",
+     "url": "../../../../characters/sample/atlas/idle.webp",
+     "mime": "image/webp",
+     "bytes": 42870,
+     "grid": {
+      "columns": 8,
+      "rows": 2,
+      "frames": 10
+     }
+    }
+   ]
+  },
+  "walk": {
+   "role": "walk.right",
+   "loop": true,
+   "load": "initial",
+   "mirror": true,
+   "size": [
+    150,
+    200
+   ],
+   "anchor": {
+    "feet": [
+     0.5,
+     1.0
+    ]
+   },
+   "hit": [
+    19,
+    16,
+    131,
+    184
+   ],
+   "frameMs": [
+    105,
+    105,
+    105,
+    105,
+    105,
+    105,
+    105,
+    105
+   ],
+   "durationMs": 840,
+   "sources": [
+    {
+     "type": "atlas",
+     "url": "../../../../characters/sample/atlas/walk.webp",
+     "mime": "image/webp",
+     "bytes": 39260,
+     "grid": {
+      "columns": 8,
+      "rows": 1,
+      "frames": 8
+     }
+    }
+   ]
+  }
+ },
+ "lines": {
+  "core": [
+   "Only line."
+  ]
+ }
+}
