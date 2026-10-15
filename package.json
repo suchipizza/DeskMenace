@@ -69,7 +69,8 @@
     "audit:private": "node scripts/no-private-assets.mjs",
     "serve": "node scripts/serve.mjs",
     "sample:build": "python3 scripts/sample-character/build.py",
-    "demo:gif": "npm run build && node scripts/record-demo.mjs",
+    "demo:record": "npm run build && node scripts/record-demo.mjs",
+    "site": "node scripts/build-site.mjs",
     "ci": "npm run typecheck && npm run test:unit && npm run build && npm run budget && npm run audit:private && npm run audit:pack"
   },
   "devDependencies": {

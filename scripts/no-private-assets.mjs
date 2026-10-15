@@ -26,7 +26,8 @@ const TEXT = /\.(ts|mjs|js|json|md|html|css|yml|yaml|txt|py|cjs)$|^(LICENSE|\.gi
 
 const problems = [];
 for (const f of files) {
-  if (FORBIDDEN_PATHS.some((re) => re.test(f))) problems.push(`${f}: path must not be published`);
+  // Website demo videos are the only media files allowed besides images.
+  if (FORBIDDEN_PATHS.some((re) => re.test(f)) && !/^site\/media\/[a-z0-9-]+\.mp4$/.test(f)) problems.push(`${f}: path must not be published`);
   if (f === 'package-lock.json' || !TEXT.test(f.split('/').pop())) continue;
   let text;
   try {

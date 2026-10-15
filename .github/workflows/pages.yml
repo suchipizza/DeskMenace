@@ -1,6 +1,6 @@
 name: Live demo
 
-# Publishes the examples to GitHub Pages: https://suchipizza.github.io/DeskMenace/
+# Publishes the website (site/) and the examples to GitHub Pages: https://suchipizza.github.io/DeskMenace/
 on:
   push:
     branches: [main]
@@ -29,12 +29,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - name: Assemble the site
-        run: |
-          mkdir -p _site/dist
-          cp dist/gary.js dist/gary.core.js dist/gary.mjs _site/dist/
-          cp -R examples characters _site/
-          printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=examples/"><title>gary.js</title><a href="examples/">gary.js examples</a>\n' > _site/index.html
+      - run: npm run site
       - uses: actions/upload-pages-artifact@v3
       - id: deployment
         uses: actions/deploy-pages@v4

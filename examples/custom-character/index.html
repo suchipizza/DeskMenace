@@ -6,11 +6,11 @@
 <title>Notes from a Third-Wave Barista · gary.js</title>
 <link rel="stylesheet" href="../examples.css">
 <!-- Bring your own character: gary.core.js has no default character, so the page names one.
-     Mugsy is public-domain sample art, served here from a second origin (port 8701) to show that
-     clip URLs resolve against the manifest, not the page. data-preset picks Mugsy's own
-     "personal" package. -->
+     Mugsy is public-domain sample art. Clip URLs resolve against the manifest, not the page, so
+     the manifest can live on another origin too. data-preset picks Mugsy's own "personal"
+     package. -->
 <script defer src="../../dist/gary.core.js"
-        data-character="http://127.0.0.1:8701/characters/sample/character.json"
+        data-character="../../characters/sample/character.json"
         data-preset="personal"></script>
 <style>
   :root { --bean: #7a4a2b; --crema: #f3e6d6; }
