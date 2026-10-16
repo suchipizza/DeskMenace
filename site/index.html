@@ -9,11 +9,14 @@
 <meta property="og:description" content="An animated character who walks around your website and has opinions about it. One script tag. Open source.">
 <meta property="og:image" content="media/gary-website.jpg">
 <link rel="stylesheet" href="site.css">
-<!-- Gary himself, on his own website. "fired" is played by the Fire Gary button. -->
+<!-- Gary himself, on his own website. "hired" and "fired" are played by the Hire / Fire Gary buttons. -->
 <script type="application/json" data-gary-config>
 {
   "schemaVersion": 1,
   "scenes": {
+    "hired": [
+      { "say": "It's time to unlock the potential and scale operations." }
+    ],
     "fired": [
       { "play": "judge" },
       { "say": "Replacing me with an average Deloitte consultant?" },
@@ -37,7 +40,7 @@
     <a href="#customize">Customize</a>
     <a href="#characters">Replace him</a>
     <a href="https://github.com/suchipizza/DeskMenace#readme">Docs</a>
-    <a class="gh" href="https://github.com/suchipizza/DeskMenace">GitHub</a>
+    <a class="gh" href="https://github.com/suchipizza/DeskMenace" aria-label="GitHub" title="GitHub"><svg viewBox="0 0 16 16" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
   </nav>
 </header>
 
@@ -49,33 +52,25 @@
       <p class="lead">Meet Gary. He walks around your website, judges your visitors, and takes credit for things he didn't do.</p>
       <div class="ctas">
         <a class="btn primary" href="https://github.com/suchipizza/DeskMenace">★ Star on GitHub</a>
-        <a class="btn" href="https://github.com/suchipizza/DeskMenace/fork">Fork it</a>
         <a class="btn ghost" href="#demos">Observe Gary at work*</a>
       </div>
       <p class="hint">He's on this page right now. Pick him up and drop him somewhere. Right-click him for his menu.</p>
       <p class="footnote">* Actual work not guaranteed.</p>
     </div>
 
-    <aside class="profile-wrap">
-      <article class="profile" aria-label="Gary's professional profile">
-        <div class="banner"></div>
-        <img class="avatar" src="media/gary-head.webp" width="240" height="237" alt="Gary: a mullet, a moustache, large vintage glasses and a skeptical look.">
-        <h2 class="name">Gary <span class="badge" title="Verified by Gary">✓</span></h2>
-        <p class="headline">Head of Strategic Alignment &amp; Cross-Functional Synergy Enablement | Disruptive Synergist &amp; Trendsetter | Thought Leader (self-appointed)</p>
-        <p class="meta">Your website · Open plan, near the snacks<br><b>500+ connections</b> · 3 meetings in common</p>
-        <p class="open"><b>Open to:</b> taking credit, circling back, a corner office</p>
-        <div class="about">
-          <h3>About</h3>
-          <p>Results-adjacent leader with 15+ years of experience in meetings about meetings. I help teams unlock their potential by scheduling a sync to discuss it. Passionate about alignment, bandwidth and taking things offline. Opinions are my own. Achievements are usually someone else's.</p>
+    <aside class="visual">
+      <div class="portrait">
+        <img src="media/gary-head.webp" width="400" height="395" alt="Gary: a mullet, a moustache, large vintage glasses and a skeptical look.">
+      </div>
+      <article class="li-card" aria-label="Gary's professional profile">
+        <div class="li-head">
+          <img src="media/gary-head.webp" width="40" height="40" alt="">
+          <p><b>Gary</b><span>Head of Strategic Alignment &amp; Cross-Functional Synergy Enablement</span></p>
         </div>
-        <ul class="skills">
-          <li><b>Visionary</b> · endorsed by 1 person (Gary)</li>
-          <li><b>Synergy</b> · 0 endorsements, pending alignment</li>
-        </ul>
-        <p class="activity">Gary reacted <i>Insightful</i> to his own post.</p>
+        <p class="li-bio">Strategic, results-oriented leader with 15+ years of experience driving cross-functional alignment, facilitating high-impact stakeholder engagement, and optimizing organizational synergies.</p>
       </article>
       <div class="hire-fire">
-        <a class="btn primary" href="#hire">Hire Gary</a>
+        <a class="btn primary" href="#hire" id="hire-gary">Hire Gary</a>
         <a class="btn" href="#characters" id="fire-gary">Fire Gary</a>
       </div>
     </aside>
@@ -98,7 +93,7 @@
   </section>
 
   <section id="demos" class="demos">
-    <h2>One attribute, a whole personality</h2>
+    <h2>Gary has been everywhere.</h2>
     <p class="sub">Ready-made presets for the pages that need him most. Each demo is a plain HTML page with one script tag.</p>
 
     <article class="demo">
@@ -155,11 +150,17 @@
   "schemaVersion": 1,
   "lines": {
     "pricing": ["Pricing? Let's set up a call
-                 to discuss a call."]
+                 to discuss a call."],
+    "jargon": ["Let's not boil the ocean.",
+               "Can we double-click on that?",
+               "Let's take this offline.",
+               "Is there bandwidth for a quick win?"]
   },
   "triggers": [
     { "on": "click", "selector": "#contact",
       "say": "#pricing" },
+    { "on": "visible", "selector": "#roadmap",
+      "say": "#jargon" },
     { "on": "idle", "after": 30,
       "say": "Still there? Bold." }
   ]
@@ -177,7 +178,7 @@
   </section>
 
   <section class="outro">
-    <h2>Gary would appreciate some visibility.</h2>
+    <h2>Gary would appreciate some synergy.</h2>
     <p>Star the repo, fork the engine, or build a character that's slightly more useful than him. The bar is low.</p>
     <div class="ctas">
       <a class="btn primary" href="https://github.com/suchipizza/DeskMenace">★ Star on GitHub</a>
@@ -204,11 +205,19 @@
       setTimeout(() => (b.textContent = 'Copy'), 1800);
     });
   }
+  const smooth = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
+  // Hire Gary: scroll to the onboarding section; Gary is already thinking about scale.
+  document.getElementById('hire-gary').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('hire').scrollIntoView({ behavior: smooth(), block: 'start' });
+    history.replaceState(null, '', '#hire');
+    if (window.Gary) setTimeout(() => window.Gary.do('hired'), 500);
+  });
   // Fire Gary: scroll to the replacement section; Gary takes it about as well as expected.
   document.getElementById('fire-gary').addEventListener('click', (e) => {
     e.preventDefault();
     const target = document.getElementById('characters');
-    target.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    target.scrollIntoView({ behavior: smooth(), block: 'start' });
     history.replaceState(null, '', '#characters');
     if (window.Gary) setTimeout(() => window.Gary.do('fired'), 700);
   });
