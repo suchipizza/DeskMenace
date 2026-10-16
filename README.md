@@ -1,43 +1,309 @@
 <h1 align="center">gary.js</h1>
 
-<p align="center"><b>A passive-aggressive coworker for your website.</b></p>
+<p align="center">
+  <strong>Put a passive-aggressive coworker on your website with one script tag.</strong>
+</p>
+
+<p align="center">
+  Gary walks around your page, judges your visitors, comments on what they're doing,
+  and takes credit for things he didn't do.
+</p>
+
+<p align="center">
+  <a href="https://suchipizza.github.io/DeskMenace/"><strong>Live demo</strong></a> ·
+  <a href="#add-gary-in-one-line">Quick start</a> ·
+  <a href="#see-gary-at-work">Examples</a> ·
+  <a href="#make-him-say-your-things">Customize</a> ·
+  <a href="#replace-gary">Bring your own character</a>
+</p>
 
 <p align="center">
   <img src="docs/media/gary-404.gif" width="800" alt="On a 404 page, Gary walks in, stands on the 404, says &quot;They should have leveraged AI.&quot;, answers a visitor's click and walks off.">
 </p>
 
-<p align="center">More demos: <a href="#examples">any website</a> · <a href="#examples">personal website</a> · <a href="#examples">your own character</a></p>
+Your portfolio does not need another gradient.
 
-<p align="center">
-  <a href="https://suchipizza.github.io/DeskMenace/"><b>Live demo</b></a> ·
-  <a href="#quick-start">Quick start</a> ·
-  <a href="examples/">Examples</a> ·
-  <a href="docs/configuration.md">Configuration</a> ·
-  <a href="docs/api.md">API</a> ·
-  <a href="docs/character-format.md">Make your own character</a>
-</p>
+Your 404 page does not need another sad robot.
 
----
+**It needs Gary.**
 
-Gary walks onto your page, stands around unproductively, judges your visitors and offers unsolicited corporate feedback. Visitors can drag him around, mute him or send him home. You decide what he says and when he says it, or swap him for a completely different character on the same engine.
+He can be an interactive easter egg, a 404-page menace, a portfolio sidekick, a staging-server
+reminder, or the starting point for a completely different character of your own.
 
-- **One script tag.** No build step, no framework, no backend, no account.
-- **Small and polite.** About 26 KB gzipped. Artwork loads only after your page has painted, causes no layout shift, stops entirely in background tabs, and rests when nobody's around.
-- **Never in the way.** Clicks pass straight through every transparent pixel. Forms, links and buttons behind him keep working.
-- **Visitor-friendly.** Visitors can make him stop talking or remove him from a menu (mouse, keyboard or touch). Removal sticks. No tracking, no cookies.
-- **Yours to script.** Your own lines, page triggers and a small JavaScript API.
-- **Bring your own character.** Gary is one character; the engine plays any character you describe in a JSON manifest.
+No framework. No backend. No account. No tracking.
 
-## Quick start
+## Add Gary in one line
 
 ```html
 <script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"></script>
 ```
 
-That's it. Gary walks in once the page has loaded. Pin the version in production.
+That's it.
 
-<details>
-<summary>npm / ES modules</summary>
+Reload the page and Gary walks in.
+
+Want a ready-made 404 version?
+
+```html
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"
+  data-preset="404">
+</script>
+```
+
+Pin the version in production.
+
+---
+
+## Why put this man on your website?
+
+Because websites are allowed to have a personality.
+
+Gary gives you a tiny interactive character without making you build an animation engine, event
+system, drag interaction, speech bubbles, accessibility controls, or character runtime yourself.
+
+Use him for:
+
+- **404 pages** — let someone take responsibility for the routing situation.
+- **Personal sites** — give your portfolio an unwanted middle manager.
+- **Landing pages** — let him comment on pricing, buttons, scrolling, or whatever else deserves feedback.
+- **Internal/staging pages** — deploy a reminder that is harder to ignore than another banner.
+- **Easter eggs** — make a page people actually send to someone else.
+- **Your own character** — keep the engine and replace Gary completely.
+
+Visitors can drag him around, mute him, or send him home.
+
+---
+
+## See Gary at work
+
+### 404 page
+
+[**Open the live 404 demo →**](https://suchipizza.github.io/DeskMenace/examples/404/)
+
+Gary walks onto the 404, assesses the incident, and leaves. Keep clicking and he keeps answering.
+(It's the demo at the top.)
+
+### Personal website
+
+[**Open the personal-site demo →**](https://suchipizza.github.io/DeskMenace/examples/personal/)
+
+He inspects the bio, introduces himself with an unnecessarily senior job title, and remains
+available for unsolicited feedback.
+
+<p align="center">
+  <img src="docs/media/gary-personal.gif" width="800" alt="Gary walks across a founder's personal site, roasting the bio and introducing himself.">
+</p>
+
+### Any website
+
+[**Open the website demo →**](https://suchipizza.github.io/DeskMenace/examples/website/)
+
+Gary reviews a SaaS landing page, objects to being dragged, walks back to work, and develops
+opinions about the visitor's scrolling.
+
+<p align="center">
+  <img src="docs/media/gary-website.gif" width="800" alt="Gary on a product page: comments, gets dragged and dropped, walks back to the centre, and complains when the visitor scrolls.">
+</p>
+
+### A completely different character
+
+[**Open the custom-character demo →**](https://suchipizza.github.io/DeskMenace/examples/custom-character/)
+
+Same engine. No Gary.
+
+<p align="center">
+  <img src="docs/media/mugsy-demo.gif" width="480" alt="Mugsy, a coffee mug with legs, walks onto a coffee blog and comments on it.">
+</p>
+
+---
+
+## What Gary can do
+
+| Behaviour | What happens |
+|---|---|
+| Walk in | Enters from the edge of the screen after the page loads |
+| Wander | Takes short, largely unnecessary walks around the page |
+| Stand on things | Can walk onto headings, images, and configured page surfaces |
+| Judge | Stops for a long managerial stare |
+| Talk | Shows speech bubbles while staying inside the viewport |
+| React | Responds to clicks, scrolling, hovering, idling, visibility and custom events |
+| Get dragged | Pick him up, move him, drop him; he recovers |
+| Check his phone | Remains visibly busy without producing measurable output |
+| Leave | Visitors can remove him, and the decision sticks |
+
+Gary respects `prefers-reduced-motion`, stays out of the way of focused form fields, and can be
+controlled by mouse, keyboard, and touch.
+
+---
+
+## Ready-made presets
+
+Use one attribute to give Gary a job:
+
+```html
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"
+  data-preset="personal">
+</script>
+```
+
+Current presets:
+
+| Preset | Good for |
+|---|---|
+| `404` | Error pages |
+| `personal` | Portfolios and personal websites |
+| `website` | Product and landing pages |
+| `staging` | Internal or staging environments |
+
+Your own configuration always wins over preset defaults. On a 404 page he walks in from the left,
+stops on the "404", tells your visitor what went wrong and walks off.
+
+See the [configuration reference](docs/configuration.md).
+
+---
+
+## Make him say your things
+
+You decide what Gary says and when he says it.
+
+```html
+<script type="application/json" data-gary-config>
+{
+  "schemaVersion": 1,
+  "lines": {
+    "pricing": [
+      "Pricing? Let's set up a call to discuss a call."
+    ],
+    "bio": [
+      "Strong personal brand. Let's circle back on the personality."
+    ]
+  },
+  "triggers": [
+    {
+      "on": "click",
+      "selector": "#pricing",
+      "say": "#pricing"
+    },
+    {
+      "on": "visible",
+      "selector": "#about",
+      "say": "#bio"
+    },
+    {
+      "on": "idle",
+      "after": 30,
+      "say": "Still there? Bold."
+    }
+  ]
+}
+</script>
+
+<script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"></script>
+```
+
+Triggers include:
+
+`load` · `idle` · `hover` · `click` · `visible` · `scroll` · `scrolling` · `near` · `exit` ·
+`gary-click` · `time` · custom `event`s
+
+`#name` picks a random line from a pool. Lines are rate-limited (by default at most 2 a minute,
+20 seconds apart) so he stays funny instead of exhausting. You can also build
+[scenes](docs/configuration.md#scenes) that move the character onto elements, play animations,
+speak, wait, and leave.
+
+The full reference is in [docs/configuration.md](docs/configuration.md).
+
+---
+
+## Script him
+
+The small JavaScript API lets the host page intervene directly:
+
+```js
+Gary.say('Per my last email…');   // a line, or '#pool'
+Gary.do('judge');                 // a behaviour or a scene
+Gary.emit('deploy');              // fire your own { "on": "event" } triggers
+
+Gary.on('spoke', (line) => {
+  console.log(line);
+});
+
+Gary.mute();
+Gary.dismiss();
+```
+
+Available APIs include `ready`, `init`, `say`, `do`, `mute`, `unmute`, `dismiss`, `reset`,
+`emit`, `on`, and `destroy`.
+
+See [docs/api.md](docs/api.md).
+
+---
+
+## Replace Gary
+
+Gary is the default character.
+
+The engine itself is character-agnostic.
+
+A character is a JSON manifest plus sprite-atlas images for the animations you want to support.
+You can start with only an idle animation; behaviours that need missing clips simply switch off.
+
+```html
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.core.js"
+  data-character="https://your.site/my-character/character.json">
+</script>
+```
+
+[Mugsy](characters/sample/), the public-domain coffee mug used in the demo above, is a complete
+example character you can copy.
+
+To build your own:
+
+1. Create a character manifest.
+2. Add sprite atlases for the animations you want.
+3. Choose the character's display size and behaviour roles.
+4. Load it through `gary.core.js`.
+
+See [Make your own character](docs/character-format.md).
+
+If you build a good one, contributions are welcome.
+
+---
+
+## Designed to be a good guest
+
+Putting somebody else's JavaScript on your site is a reasonable thing to be suspicious about.
+
+gary.js is deliberately constrained.
+
+- **~26 KB gzipped.**
+- **No runtime dependencies.**
+- **No backend.**
+- **No analytics, cookies, fingerprinting, or telemetry.**
+- **No reading form values, page text, or clipboard contents.**
+- **No layout shift.**
+- **Stops work in background tabs.**
+- **Transparent pixels do not block the page underneath.**
+- **Visitors can mute or remove the character.**
+- **Removal persists on your origin** (`localStorage`; mute lasts the session).
+- **`prefers-reduced-motion` is respected.**
+- **Speech is inserted as text, never HTML.**
+- **No `eval`.**
+- **Works under a strict CSP:** allow the script origin in `script-src` and the character's origin in `connect-src`.
+
+The only normal network requests are for the script and the active character's manifest/images.
+
+More detail: [privacy, accessibility and host-page behaviour](docs/privacy-and-accessibility.md).
+
+---
+
+## npm / ES modules
 
 ```sh
 npm install gary.js
@@ -46,152 +312,122 @@ npm install gary.js
 ```js
 import Gary from 'gary.js';
 
-await Gary.init({ character: '/characters/my-character/character.json' });
+await Gary.init({
+  character: '/characters/my-character/character.json'
+});
+
 Gary.say('Hello from the API.');
 ```
 
-The ES module has no default character and never loads one on its own; pass a manifest URL. To use Gary from npm, self-host `node_modules/gary.js/characters/gary/` and point `character` at its `character.json`.
-</details>
+The ES module does not load Gary automatically. Pass a character manifest explicitly.
 
-## What he does
+To use Gary from npm, self-host `node_modules/gary.js/characters/gary/` and point `character` at its
+`character.json`.
 
-| Behaviour | What happens |
-|---|---|
-| `enter` | Walks in from the side of the screen once your page has loaded |
-| `walk` | Short, aimless walks along the bottom of the screen, or over headings and images when you let him |
-| `idle` | Stands there. Occasionally checks his phone |
-| `judge` | A long managerial stare, or a pointed look at whatever you're doing |
-| `say` | A speech bubble, placed above his head and kept inside the screen |
-| `drag` | Pick him up, he dangles; let go, he falls and gets back up |
-| `react-clicks` | Click him three times and he lets you know how he feels about that |
-| `leave` | Walks off when a visitor removes him, and stays gone |
+---
 
-He respects `prefers-reduced-motion` (a still pose, no walking or falling) and steps out of the way of a focused form field.
+## Browser support
 
-## Ready-made packages
+Current support:
 
-One attribute turns him into a 404 page, a personal-site sidekick, a general nuisance or a staging-server reminder:
+- Chrome
+- Edge
+- Firefox
+- Safari 15+
+- desktop and mobile
+- touch input
+- keyboard interaction
+- reduced-motion environments
 
-```html
-<script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js" data-preset="404"></script>
+The project is tested in Chromium, Firefox, and WebKit.
+
+If a required browser capability (canvas, `createImageBitmap`) is unavailable, the character fails
+closed: nothing is shown and the host page keeps working.
+
+**Accessibility:** a keyboard-reachable options button (Enter, Shift+F10 or the context-menu key),
+an arrow-key menu, Escape returns focus, long-press on touch, and the decorative animation is hidden
+from screen readers. Speech bubbles are announced only if you opt in with `"announce": true`.
+
+---
+
+## Local development
+
+```sh
+git clone https://github.com/suchipizza/DeskMenace.git
+cd DeskMenace
+
+npm install
+npx playwright install chromium firefox webkit
+
+npm run build
+npm run serve
 ```
 
-On a 404 page he walks in from the left, stops on the "404", tells your visitor what went wrong and walks off. Click or scroll while he's there and he has something to say about that too. Presets: `404`, `personal`, `website`, `staging`; anything you configure yourself wins. See [presets](docs/configuration.md#presets).
+Then open:
 
-## Make him say your things
-
-Add a JSON block anywhere in the page:
-
-```html
-<script type="application/json" data-gary-config>
-{
-  "schemaVersion": 1,
-  "vars": { "owner": "Sam" },
-  "lines": {
-    "boast": ["{owner} built this. I supervised. Emotionally."],
-    "pricing": ["Pricing? Let's set up a call to discuss a call."]
-  },
-  "triggers": [
-    { "on": "load", "after": 2, "say": "#hello", "once": true },
-    { "on": "hover", "selector": "#projects a", "say": "#boast", "cooldown": 30 },
-    { "on": "click", "selector": "#contact", "say": "#pricing" },
-    { "on": "idle", "after": 30, "say": "Still there? Bold." }
-  ]
-}
-</script>
-<script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"></script>
+```text
+http://127.0.0.1:8700/examples/
 ```
 
-`#name` picks a random line from a pool. Triggers: `load`, `idle`, `hover`, `click`, `visible`, `scroll`, `scrolling`, `near`, `exit`, `gary-click`, `time` and your own `event`s, and they can play [scenes](docs/configuration.md#scenes) that walk him onto page elements. Lines are rate-limited (by default at most 2 a minute, 20 seconds apart) so he stays funny instead of exhausting. Full reference: [docs/configuration.md](docs/configuration.md).
+Useful checks:
 
-## Script him
-
-```js
-Gary.say('Per my last email…');      // a line, or '#pool'
-Gary.do('judge');                    // walk, idle, judge, say, react-clicks, leave
-Gary.emit('deploy');                 // fire your own { "on": "event" } triggers
-Gary.on('spoke', (line) => console.log(line));
-Gary.mute(); Gary.dismiss(); Gary.destroy();
+```sh
+npm run typecheck
+npm test
+npm run test:browser
+npm run budget
+npm run audit:private
+npm run audit:pack
 ```
 
-`ready`, `init`, `say`, `do`, `mute`, `unmute`, `dismiss`, `reset`, `emit`, `on` and `destroy` are documented in [docs/api.md](docs/api.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
-## Bring your own character
+---
 
-<p align="center"><img src="docs/media/mugsy-demo.gif" width="480" alt="Mugsy, a coffee mug with legs, walks onto a page and comments on it."></p>
+## Project principles
 
-The engine knows nothing about Gary. A character is a JSON manifest plus one sprite-atlas image per animation clip:
+gary.js should remain:
 
-```html
-<script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.core.js"
-        data-character="https://your.site/mugsy/character.json"></script>
-```
+- **character-agnostic** — the engine should not need Gary-specific logic;
+- **small** — bundle size is checked in CI;
+- **dependency-free at runtime**;
+- **safe for the host page** — no blocked clicks, hidden tracking, or unexpected content access;
+- **accessible** — mouse interactions should have keyboard/touch equivalents where applicable;
+- **easy to remove** — the joke stops when the visitor wants it to stop.
 
-```json
-{
-  "schemaVersion": 1,
-  "id": "mugsy",
-  "name": "Mugsy",
-  "licence": "CC0-1.0",
-  "assetRevision": "1",
-  "display": { "height": 170 },
-  "clips": {
-    "idle": { "role": "idle", "loop": true, "load": "initial", "size": [150, 200],
-              "frameMs": [160, 160, 160, 160],
-              "sources": [{ "type": "atlas", "url": "atlas/idle.webp", "grid": { "columns": 4, "rows": 1, "frames": 4 } }] },
-    "walk": { "role": "walk.right", "mirror": true, "loop": true, "load": "initial", "size": [150, 200],
-              "frameMs": [105, 105, 105, 105],
-              "sources": [{ "type": "atlas", "url": "atlas/walk.webp", "grid": { "columns": 4, "rows": 1, "frames": 4 } }] }
-  }
-}
-```
-
-An idle clip is all you need; add walks, a stare, a held pose and a fall when you have them. Missing clips simply switch off the behaviours that need them. `gary.core.js` contains no default character and never requests one. [Mugsy](characters/sample/), the public-domain mug above, is a complete example. The guide: [docs/character-format.md](docs/character-format.md).
-
-## Examples
-
-Each example is a plain HTML page with one script tag. Try them live, drag Gary around, right-click him:
-
-### [404 page](https://suchipizza.github.io/DeskMenace/examples/404/) · `data-preset="404"`
-
-Walks onto the 404, has a word about it, leaves. Keeps answering if you keep clicking. (It's the demo at the top.)
-
-### [Any website](https://suchipizza.github.io/DeskMenace/examples/website/) · `data-preset="website"`
-
-Reviews a SaaS landing page, objects to being dragged, walks back to the centre and comments on your scrolling.
-
-<p align="center"><img src="docs/media/gary-website.gif" width="800" alt="Gary on a product page: comments, gets dragged and dropped, walks back to the centre, and complains when the visitor scrolls."></p>
-
-### [Personal website](https://suchipizza.github.io/DeskMenace/examples/personal/) · `data-preset="personal"`
-
-Inspects a founder's bio, introduces himself with his full job title, comments on your scrolling.
-
-<p align="center"><img src="docs/media/gary-personal.gif" width="800" alt="Gary walks across a founder's personal site, roasting the bio and introducing himself."></p>
-
-### [Bring your own character](https://suchipizza.github.io/DeskMenace/examples/custom-character/)
-
-Mugsy the mug, reading a coffee blog. Same engine, different character (shown [above](#bring-your-own-character)).
-
-Their source is in [examples/](examples/). To run them locally: `npm install && npm run build && npm run serve`, then open <http://127.0.0.1:8700/examples/>.
-
-Pages for checking the engine by hand (ES module, host compatibility, page-defined lines) are in [tests/pages/](tests/pages/).
-
-## Browser support, privacy and accessibility
-
-- **Browsers:** current Chrome, Edge, Firefox and Safari (15+), desktop and mobile. Tested in Chromium, Firefox and WebKit, including touch on phone-sized viewports. Where `createImageBitmap` or canvas is unavailable, nothing is shown and the page is unaffected.
-- **Privacy:** gary.js sends nothing anywhere. No analytics, beacons, cookies or fingerprinting. It never reads form values, page text or the clipboard. Pointer position and page events are used in the page, in memory, to animate the character. The only network requests are the script and the active character's manifest and images. Mute and removal are stored in `sessionStorage` / `localStorage` on your origin.
-- **Security:** lines are inserted as text only, never HTML. No `eval`. Works under a strict CSP: allow the script origin in `script-src` and the character's origin in `connect-src`. See [docs/privacy-and-accessibility.md](docs/privacy-and-accessibility.md).
-- **Accessibility:** keyboard-reachable options button (Enter, Shift+F10 or the context-menu key), arrow-key menu, Escape returns focus, long-press on touch, `prefers-reduced-motion` respected, decorative animation hidden from screen readers. Speech bubbles are only announced if you opt in with `"announce": true`.
+---
 
 ## Licence
 
-- **Code** (engine, schemas, examples, tooling): [MIT](LICENSE).
-- **Gary** (his artwork, lines and identity, in `characters/gary/`) is not MIT. He is under the [Gary Asset Licence](characters/gary/LICENSE.md): free to use on any website, personal or commercial, through gary.js, and to show in recordings of your site; not to modify or reuse outside gary.js.
-- **Mugsy**, the sample character: [CC0](characters/sample/LICENSE.md).
-- **Your characters** are yours, under whatever licence you choose.
+There are deliberately two licensing layers:
 
-Details: [docs/assets-and-licensing.md](docs/assets-and-licensing.md).
+- **Engine, schemas, examples, tooling:** MIT — see [LICENSE](LICENSE).
+- **Gary's artwork, lines and identity:** [Gary Asset Licence](characters/gary/LICENSE.md). Gary is
+  free to use on any website, personal or commercial, through gary.js, and to show in recordings of
+  your site; not to modify or reuse outside gary.js. His assets are not MIT-licensed.
+- **Mugsy sample character:** [CC0](characters/sample/LICENSE.md).
+- **Characters you create:** yours, under the licence you choose.
+
+See [assets and licensing](docs/assets-and-licensing.md) for details.
+
+---
 
 ## Contributing
 
-Bug reports, ideas, new triggers and especially new characters are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: [SECURITY.md](SECURITY.md).
+Bug reports, ideas, new triggers, examples, and especially new characters are welcome.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Security issues should be reported privately as described in [SECURITY.md](SECURITY.md).
+
+---
+
+<p align="center">
+  <strong>Have you tried leveraging Gary?</strong>
+</p>
+
+<p align="center">
+  <a href="https://suchipizza.github.io/DeskMenace/">Live demo</a> ·
+  <a href="https://github.com/suchipizza/DeskMenace">Star the repo</a> ·
+  <a href="https://github.com/suchipizza/DeskMenace/fork">Fork it</a>
+</p>
