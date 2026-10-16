@@ -8,6 +8,7 @@
 <meta property="og:title" content="gary.js · A passive-aggressive coworker for your website">
 <meta property="og:description" content="An animated character who walks around your website and has opinions about it. One script tag. Open source.">
 <meta property="og:image" content="media/gary-website.jpg">
+<link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
 <!-- Gary himself, on his own website. "hired" and "fired" are played by the Hire / Fire Gary buttons. -->
 <script type="application/json" data-gary-config>
@@ -33,7 +34,7 @@
 <body>
 
 <header class="top">
-  <a class="brand" href="./">gary.js</a>
+  <a class="brand" href="./"><span class="mark" aria-hidden="true"></span>gary.js</a>
   <nav>
     <a href="#hire">Hire</a>
     <a href="#demos">Demos</a>
@@ -47,37 +48,43 @@
 <main>
   <section class="hero">
     <div class="pitch">
-      <p class="eyebrow">Open-source JavaScript library</p>
-      <h1>A passive-aggressive coworker <span>for your website.</span></h1>
+      <p class="tag">Open-source JavaScript library · MIT</p>
+      <h1>A <mark>passive-aggressive</mark> coworker for your website.</h1>
       <p class="lead">Meet Gary. He walks around your website, judges your visitors, and takes credit for things he didn't do.</p>
       <div class="ctas">
         <a class="btn primary" href="https://github.com/suchipizza/DeskMenace">★ Star on GitHub</a>
-        <a class="btn ghost" href="#demos">Observe Gary at work*</a>
+        <a class="btn" href="#demos">Observe Gary at work*</a>
       </div>
       <p class="hint">He's on this page right now. Pick him up and drop him somewhere. Right-click him for his menu.</p>
       <p class="footnote">* Actual work not guaranteed.</p>
     </div>
 
-    <aside class="visual">
-      <div class="portrait">
-        <img src="media/gary-head.webp" width="400" height="395" alt="Gary: a mullet, a moustache, large vintage glasses and a skeptical look.">
-      </div>
-      <article class="li-card" aria-label="Gary's professional profile">
-        <div class="li-head">
-          <img src="media/gary-head.webp" width="40" height="40" alt="">
-          <p><b>Gary</b><span>Head of Strategic Alignment &amp; Cross-Functional Synergy Enablement</span></p>
+    <article class="profile" aria-label="Gary's professional profile">
+      <div class="banner" aria-hidden="true"></div>
+      <img class="avatar" src="media/gary-head.webp" width="400" height="395" alt="Gary: a mullet, a moustache, large vintage glasses and a skeptical look.">
+      <div class="body">
+        <h2 class="name">Gary</h2>
+        <p class="headline">Head of Strategic Alignment &amp; Cross-Functional Synergy Enablement</p>
+        <p class="connections">500+ connections</p>
+        <div class="actions">
+          <a class="li-btn solid" href="#hire" id="hire-gary">Hire Gary</a>
+          <a class="li-btn" href="#characters" id="fire-gary">Fire Gary</a>
         </div>
-        <p class="li-bio">Strategic, results-oriented leader with 15+ years of experience driving cross-functional alignment, facilitating high-impact stakeholder engagement, and optimizing organizational synergies.</p>
-      </article>
-      <div class="hire-fire">
-        <a class="btn primary" href="#hire" id="hire-gary">Hire Gary</a>
-        <a class="btn" href="#characters" id="fire-gary">Fire Gary</a>
       </div>
-    </aside>
+      <div class="about">
+        <h3>About</h3>
+        <p>Strategic, results-oriented leader with 15+ years of experience driving cross-functional alignment, facilitating high-impact stakeholder engagement, and optimizing organizational synergies.</p>
+      </div>
+    </article>
   </section>
 
-  <section id="hire" class="hire">
-    <p class="eyebrow">Hire Gary</p>
+  <div class="ticker" aria-hidden="true"><div class="track">
+    <span>Let's circle back</span><span>Synergy</span><span>Take it offline</span><span>Low-hanging fruit</span><span>Let's not boil the ocean</span><span>Move the needle</span><span>Can we double-click on that?</span><span>Bandwidth</span><span>Per my last email</span><span>Quick sync</span>
+    <span>Let's circle back</span><span>Synergy</span><span>Take it offline</span><span>Low-hanging fruit</span><span>Let's not boil the ocean</span><span>Move the needle</span><span>Can we double-click on that?</span><span>Bandwidth</span><span>Per my last email</span><span>Quick sync</span>
+  </div></div>
+
+  <section id="hire" class="band navy">
+    <p class="kicker">Agenda item 1 · Onboarding</p>
     <h2>Onboarding takes one line.</h2>
     <p class="sub">Add him with one script tag, make him say your things, or swap him for a character of your own.</p>
     <ol class="steps">
@@ -92,12 +99,13 @@
     </ol>
   </section>
 
-  <section id="demos" class="demos">
+  <section id="demos" class="band paper">
+    <p class="kicker">Agenda item 2 · Track record</p>
     <h2>Gary has been everywhere.</h2>
     <p class="sub">Ready-made presets for the pages that need him most. Each demo is a plain HTML page with one script tag.</p>
 
     <article class="demo">
-      <video muted loop playsinline preload="none" poster="media/gary-404.jpg" data-src="media/gary-404.mp4" aria-label="Gary on a 404 page"></video>
+      <div class="frame red"><video muted loop playsinline preload="none" poster="media/gary-404.jpg" data-src="media/gary-404.mp4" aria-label="Gary on a 404 page"></video></div>
       <div class="text">
         <h3>404 pages</h3>
         <p>He walks onto your 404, questions your routing architecture, and leaves. Keep clicking and he starts drafting an incident report.</p>
@@ -107,7 +115,7 @@
     </article>
 
     <article class="demo flip">
-      <video muted loop playsinline preload="none" poster="media/gary-personal.jpg" data-src="media/gary-personal.mp4" aria-label="Gary on a personal website"></video>
+      <div class="frame mustard"><video muted loop playsinline preload="none" poster="media/gary-personal.jpg" data-src="media/gary-personal.mp4" aria-label="Gary on a personal website"></video></div>
       <div class="text">
         <h3>Personal websites</h3>
         <p>He inspects your bio, notes that you've listed "Rust" after writing one Hello World, and sighs.</p>
@@ -117,7 +125,7 @@
     </article>
 
     <article class="demo">
-      <video muted loop playsinline preload="none" poster="media/gary-website.jpg" data-src="media/gary-website.mp4" aria-label="Gary on a product page"></video>
+      <div class="frame navy"><video muted loop playsinline preload="none" poster="media/gary-website.jpg" data-src="media/gary-website.mp4" aria-label="Gary on a product page"></video></div>
       <div class="text">
         <h3>Any website</h3>
         <p>He reviews your landing page, objects to being dragged around, walks back to where he was and has notes about your scrolling.</p>
@@ -127,68 +135,77 @@
     </article>
   </section>
 
-  <section class="features">
+  <section class="band mustard features">
+    <p class="kicker">Agenda item 3 · Compliance</p>
     <h2>Annoying on purpose. Polite by design.</h2>
     <ul>
-      <li><b>One script tag</b>No build step, no framework, no backend, no account.</li>
-      <li><b>Small</b>About 26 KB gzipped. Artwork loads after your page has painted, with no layout shift.</li>
-      <li><b>Never in the way</b>Clicks pass through every transparent pixel. Your links, forms and buttons keep working.</li>
-      <li><b>Visitors are in charge</b>They can drag him, mute him or send him home, by mouse, keyboard or touch.</li>
-      <li><b>No tracking</b>No analytics, no cookies, no network calls beyond his own images.</li>
-      <li><b>Easy on batteries</b>Stops in background tabs and rests when nobody's around. Respects reduced motion.</li>
+      <li><span>01</span><b>One script tag</b>No build step, no framework, no backend, no account.</li>
+      <li><span>02</span><b>Small</b>About 26 KB gzipped. Artwork loads after your page has painted, with no layout shift.</li>
+      <li><span>03</span><b>Never in the way</b>Clicks pass through every transparent pixel. Your links, forms and buttons keep working.</li>
+      <li><span>04</span><b>Visitors are in charge</b>They can drag him, mute him or send him home, by mouse, keyboard or touch.</li>
+      <li><span>05</span><b>No tracking</b>No analytics, no cookies, no network calls beyond his own images.</li>
+      <li><span>06</span><b>Easy on batteries</b>Stops in background tabs and rests when nobody's around. Respects reduced motion.</li>
     </ul>
   </section>
 
-  <section id="customize" class="split">
+  <section id="customize" class="band ink split">
     <div>
-      <h2>Make him say your things</h2>
+      <p class="kicker">Agenda item 4 · Messaging</p>
+      <h2>Make him say your things.</h2>
       <p>Write your own lines and decide when he says them: on load, on hover, on click, when something scrolls into view, when the visitor goes quiet. Scenes walk him onto your headings and buttons.</p>
-      <p><a href="https://github.com/suchipizza/DeskMenace/blob/main/docs/configuration.md">Configuration reference →</a></p>
+      <p><a class="live" href="https://github.com/suchipizza/DeskMenace/blob/main/docs/configuration.md">Configuration reference →</a></p>
     </div>
-    <pre class="code"><code>&lt;script type="application/json" data-gary-config&gt;
+    <div class="editor">
+      <div class="editor-bar" aria-hidden="true"><i></i><i></i><i></i><span>index.html</span></div>
+      <pre><code><span class="t">&lt;script type="application/json" data-gary-config&gt;</span>
 {
-  "schemaVersion": 1,
-  "lines": {
-    "pricing": ["Pricing? Let's set up a call
-                 to discuss a call."],
-    "jargon": ["Let's not boil the ocean.",
-               "Can we double-click on that?",
-               "Let's take this offline.",
-               "Is there bandwidth for a quick win?"]
+  <span class="k">"schemaVersion"</span>: <span class="n">1</span>,
+  <span class="k">"lines"</span>: {
+    <span class="k">"pricing"</span>: [<span class="s">"Pricing? Let's set up a call
+                 to discuss a call."</span>],
+    <span class="k">"jargon"</span>: [<span class="s">"Let's not boil the ocean."</span>,
+               <span class="s">"Can we double-click on that?"</span>,
+               <span class="s">"Let's take this offline."</span>,
+               <span class="s">"Is there bandwidth for a quick win?"</span>]
   },
-  "triggers": [
-    { "on": "click", "selector": "#contact",
-      "say": "#pricing" },
-    { "on": "visible", "selector": "#roadmap",
-      "say": "#jargon" },
-    { "on": "idle", "after": 30,
-      "say": "Still there? Bold." }
+  <span class="k">"triggers"</span>: [
+    { <span class="k">"on"</span>: <span class="s">"click"</span>, <span class="k">"selector"</span>: <span class="s">"#contact"</span>,
+      <span class="k">"say"</span>: <span class="s">"#pricing"</span> },
+    { <span class="k">"on"</span>: <span class="s">"visible"</span>, <span class="k">"selector"</span>: <span class="s">"#roadmap"</span>,
+      <span class="k">"say"</span>: <span class="s">"#jargon"</span> },
+    { <span class="k">"on"</span>: <span class="s">"idle"</span>, <span class="k">"after"</span>: <span class="n">30</span>,
+      <span class="k">"say"</span>: <span class="s">"Still there? Bold."</span> }
   ]
 }
-&lt;/script&gt;</code></pre>
+<span class="t">&lt;/script&gt;</span></code></pre>
+    </div>
   </section>
 
-  <section id="characters" class="split flip">
+  <section id="characters" class="band paper split flip">
     <div>
+      <p class="kicker">Agenda item 5 · Succession planning</p>
       <h2>Don't like Gary? Replace him.</h2>
       <p>The engine knows nothing about Gary. Describe any character in a JSON manifest with one image per animation, and it walks, talks and gets dragged around just the same. Mugsy, the public-domain mug, is a complete example to start from.</p>
-      <p><a href="https://github.com/suchipizza/DeskMenace/blob/main/docs/character-format.md">Character format →</a> · <a href="examples/custom-character/">Live demo →</a></p>
+      <p><a class="live" href="https://github.com/suchipizza/DeskMenace/blob/main/docs/character-format.md">Character format →</a> <a class="live" href="examples/custom-character/">Live demo →</a></p>
     </div>
-    <video muted loop playsinline preload="none" poster="media/mugsy.jpg" data-src="media/mugsy.mp4" aria-label="Mugsy the mug on a coffee blog"></video>
+    <div class="frame teal"><video muted loop playsinline preload="none" poster="media/mugsy.jpg" data-src="media/mugsy.mp4" aria-label="Mugsy the mug on a coffee blog"></video></div>
   </section>
 
-  <section class="outro">
-    <h2>Gary would appreciate some synergy.</h2>
-    <p>Star the repo, fork the engine, or build a character that's slightly more useful than him. The bar is low.</p>
-    <div class="ctas">
-      <a class="btn primary" href="https://github.com/suchipizza/DeskMenace">★ Star on GitHub</a>
-      <a class="btn" href="https://github.com/suchipizza/DeskMenace/fork">Fork it</a>
+  <section class="band plaid outro">
+    <div class="outro-card">
+      <p class="kicker">Agenda item 6 · Visibility</p>
+      <h2>Gary would appreciate some synergy.</h2>
+      <p>Star the repo, fork the engine, or build a character that's slightly more useful than him. The bar is low.</p>
+      <div class="ctas">
+        <a class="btn primary" href="https://github.com/suchipizza/DeskMenace">★ Star on GitHub</a>
+        <a class="btn" href="https://github.com/suchipizza/DeskMenace/fork">Fork it</a>
+      </div>
     </div>
   </section>
 </main>
 
 <footer>
-  <p>The gary.js engine is <a href="https://github.com/suchipizza/DeskMenace/blob/main/LICENSE">MIT</a>. Gary's artwork, lines and identity are under the <a href="https://github.com/suchipizza/DeskMenace/blob/main/characters/gary/LICENSE.md">Gary Asset Licence</a>: free to use on your website through gary.js. Mugsy is <a href="https://github.com/suchipizza/DeskMenace/blob/main/characters/sample/LICENSE.md">CC0</a>.</p>
+  <p>The gary.js engine is <a href="https://github.com/suchipizza/DeskMenace/blob/main/LICENSE">MIT</a>. Gary's artwork, lines and identity are under the <a href="https://github.com/suchipizza/DeskMenace/blob/main/characters/gary/LICENSE.md">Gary Asset Licence</a>: free to use on your website through gary.js. Mugsy is <a href="https://github.com/suchipizza/DeskMenace/blob/main/characters/sample/LICENSE.md">CC0</a>. Headings are set in <a href="fonts/OFL.txt">Bricolage Grotesque</a> (SIL Open Font License).</p>
   <p>The companies and people in the demos are fictional.</p>
 </footer>
 
