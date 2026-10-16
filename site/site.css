@@ -54,10 +54,10 @@ code, pre { font: 14px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 .top nav { align-items: center; }
 @media (max-width: 720px) { .top nav a:not(.gh) { display: none; } }
 
-.hero { padding: 48px 0 64px; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 56px; align-items: start; }
+.hero { padding: 48px 0 64px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 40px; align-items: start; }
 @media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 40px; } }
 .eyebrow { text-transform: uppercase; letter-spacing: 0.12em; font-size: 13px; font-weight: 700; color: var(--accent); margin: 0 0 14px; }
-.hero h1 { font-size: clamp(38px, 7vw, 68px); font-weight: 800; }
+.hero h1 { font-size: clamp(38px, 6vw, 60px); font-weight: 800; }
 .hero h1 span { color: var(--muted); }
 .lead { font-size: 20px; color: var(--muted); margin: 0 0 28px; max-width: 640px; }
 .ctas { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -82,17 +82,12 @@ code, pre { font: 14px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
 /* Gary's portrait, with his profile card pinned beside it */
 .hero .pitch { padding-top: 24px; }
-.visual { position: relative; width: 100%; max-width: 440px; justify-self: end; }
-@media (max-width: 900px) { .visual { justify-self: center; } }
-.portrait {
-  aspect-ratio: 1; border-radius: 32px; overflow: hidden; display: flex; align-items: flex-end; justify-content: center;
-  background: radial-gradient(120% 90% at 50% 100%, color-mix(in srgb, var(--tie) 55%, var(--bg)), color-mix(in srgb, var(--tie) 22%, var(--bg)));
-}
-.portrait img { display: block; width: 92%; height: auto; }
+.visual { display: grid; grid-template-columns: minmax(0, 1fr) 236px; align-items: center; width: 100%; }
+.portrait img { display: block; width: 100%; height: auto; }
 .li-card {
-  position: absolute; left: -96px; bottom: 76px; width: 300px; padding: 12px 14px 14px;
+  position: relative; z-index: 1; margin-left: 10px; padding: 12px 14px 14px;
   background: #fff; color: #1d2226; border: 1px solid rgb(0 0 0 / 0.12); border-radius: 10px;
-  box-shadow: 0 6px 24px rgb(0 0 0 / 0.22); transform: rotate(-2deg);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.22); transform: rotate(3deg);
   font: 13px/1.4 -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; letter-spacing: 0;
 }
 .li-head { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
@@ -101,13 +96,14 @@ code, pre { font: 14px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 .li-head b { display: block; font-size: 14px; }
 .li-head span { display: block; color: #6b7378; font-size: 12px; line-height: 1.35; }
 .li-bio { margin: 0; color: #333a3f; }
-@media (max-width: 1180px) { .li-card { left: -40px; } }
-@media (max-width: 900px) {
-  .visual { max-width: 380px; }
-  .li-card { position: relative; left: auto; bottom: auto; width: auto; margin: -64px 16px 0; transform: none; }
+.hire-fire { grid-column: 1 / -1; display: flex; justify-content: center; gap: 10px; margin-top: 14px; }
+.hire-fire .btn { padding: 8px 18px; font-size: 14px; }
+@media (max-width: 900px) { .visual { max-width: 560px; } }
+@media (max-width: 520px) {
+  .visual { grid-template-columns: 1fr; justify-items: center; }
+  .portrait { max-width: 300px; }
+  .li-card { margin: 10px 8px 0; transform: rotate(2deg); }
 }
-.hire-fire { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-.hire-fire .btn { text-align: center; }
 
 /* Hire Gary */
 .hire { background: var(--card); border: 1px solid var(--line); border-radius: calc(var(--radius) + 6px); padding: 48px; margin: 8px 0 24px; }
