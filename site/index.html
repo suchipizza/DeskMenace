@@ -27,17 +27,23 @@
       { "enter": "left", "y": 0.5 },
       { "walkTo": { "x": 0.5 } },
       { "wait": 0.8 },
-      { "say": "They think this is funny? I've seen better design layouts in a 1998 Excel sheet." },
+      { "say": "They think this is funny?" },
       { "walkTo": { "x": 0.15 } },
       { "wait": 0.5 },
       { "say": "#leveraged" },
       { "wait": 4 },
-      { "walkTo": { "x": 0.7 } }
+      { "walkTo": { "x": 0.5 } }
     ],
+    "visit-onboarding": [{ "walkTo": { "x": 0.75 } }, { "say": "#onboarding" }],
+    "visit-track-record": [{ "walkTo": { "x": 0.3 } }, { "say": "#track-record" }],
+    "visit-compliance": [{ "walkTo": { "x": 0.7 } }, { "play": "judge" }, { "say": "#compliance" }],
+    "visit-messaging": [{ "walkTo": { "x": 0.3 } }, { "say": "#messaging" }],
+    "visit-visibility": [{ "walkTo": { "x": 0.75 } }, { "say": "#visibility" }],
     "hired": [
       { "say": "It's time to unlock the potential and scale operations." }
     ],
     "fired": [
+      { "walkTo": { "x": 0.55 } },
       { "play": "judge" },
       { "say": "Replacing me with an average Deloitte consultant?" },
       { "walkTo": { "x": 0.85 } },
@@ -49,12 +55,12 @@
     ]
   },
   "triggers": [
-    { "on": "visible", "selector": "#hire", "say": "#onboarding", "threshold": 0.15, "once": true },
-    { "on": "visible", "selector": "#demos", "say": "#track-record", "threshold": 0.15, "once": true },
-    { "on": "visible", "selector": ".features", "say": "#compliance", "threshold": 0.15, "once": true },
-    { "on": "visible", "selector": "#customize", "say": "#messaging", "threshold": 0.15, "once": true },
+    { "on": "visible", "selector": "#hire", "scene": "visit-onboarding", "threshold": 0.15, "once": true },
+    { "on": "visible", "selector": "#demos", "scene": "visit-track-record", "threshold": 0.15, "once": true },
+    { "on": "visible", "selector": ".features", "scene": "visit-compliance", "threshold": 0.15, "once": true },
+    { "on": "visible", "selector": "#customize", "scene": "visit-messaging", "threshold": 0.15, "once": true },
     { "on": "visible", "selector": "#characters", "scene": "fired", "threshold": 0.15, "once": true },
-    { "on": "visible", "selector": ".outro", "say": "#visibility", "threshold": 0.15, "once": true },
+    { "on": "visible", "selector": ".outro", "scene": "visit-visibility", "threshold": 0.15, "once": true },
     { "on": "drag", "say": "#dragged", "cooldown": 2 },
     { "on": "near", "distance": 60, "scene": "glance", "cooldown": 20 },
     { "on": "gary-click", "count": 1, "scene": "glance", "cooldown": 5 },
