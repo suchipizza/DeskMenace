@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- A `visible` rule whose element comes into view while the character is busy (in a scene, or just after a line) is retried while the element stays in view, instead of being missed until it scrolls in again.
+
 ## 0.1.0 — 2026-10-17
 
 First version.

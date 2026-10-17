@@ -190,6 +190,21 @@ test.describe('visitor reactions', () => {
     expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['first', 'second']);
   });
 
+  test('an element seen while a scene plays gets its line once the scene ends', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, lines, scenes: { long: [{ wait: 2 }] }, limits: { minGapSeconds: 0, maxLinesPerMinute: 30 }, triggers: [] } });
+    await page.evaluate(() => {
+      void (window as any).Gary.do('long');
+    });
+    await page.waitForFunction(() => (window as any).Gary._debug().scene === 'long');
+    // #target is already on screen: the rule is refused while the scene plays, then retried.
+    await page.evaluate(() => (window as any).Gary.init({ triggers: [{ on: 'visible', selector: '#target', say: '#a', once: true }] }));
+    await page.waitForTimeout(500);
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual([]);
+    await page.waitForFunction(() => (window as any).__spoke.length === 1, null, { timeout: 6_000 });
+    await page.waitForTimeout(1500);
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['first']);
+  });
+
   test('a scene started by the page does not cut into a running scene', async ({ page }) => {
     await boot(page, { cfg: { ...QUIET, lines, scenes: { long: [{ wait: 2 }, { say: '#a' }], other: [{ say: '#b' }] }, limits: { minGapSeconds: 0, maxLinesPerMinute: 30 }, triggers: [{ on: 'click', scene: 'other' }] } });
     await page.evaluate(() => {

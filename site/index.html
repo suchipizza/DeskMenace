@@ -10,11 +10,39 @@
 <meta property="og:image" content="media/gary-website.jpg">
 <link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
-<!-- Gary himself, on his own website. "hired" and "fired" are played by the Hire / Fire Gary buttons. -->
+<!-- Gary himself, on his own website, with the "website" preset underneath. "hired" and "fired" are
+     played by the Hire / Fire Gary buttons. Triggers listed here replace the preset's, so its own are repeated. -->
 <script type="application/json" data-gary-config>
 {
   "schemaVersion": 1,
+  "lines": {
+    "haircut": [
+      "Business in the front. Strategy in the back.",
+      "Great headshot. The mullet tested very well with stakeholders.",
+      "This haircut has been on the roadmap since 1987."
+    ],
+    "onboarding": ["One line to onboard. Mine took three offsites and a trust fall."],
+    "track-record": ["My track record. I'd like to thank everyone I took credit from."],
+    "compliance": ["Polite by design. Nobody consulted me on that."],
+    "messaging": ["Scripted? I prefer 'aligned in advance'."],
+    "succession": ["Replace me? With a mug? Bold succession plan."],
+    "visibility": ["Go on, star it. I'll present it as my initiative."]
+  },
   "scenes": {
+    "arrive": [
+      { "enter": "left", "y": 0.5 },
+      { "walkTo": { "x": 0.5 } },
+      { "wait": 0.8 },
+      { "say": "They think this is funny?" },
+      { "walkTo": { "x": 0.54 } },
+      { "play": "judge" },
+      { "say": "#haircut" },
+      { "walkTo": { "x": 0.15 } },
+      { "wait": 0.5 },
+      { "say": "#leveraged" },
+      { "wait": 4 },
+      { "walkTo": { "x": 0.7 } }
+    ],
     "hired": [
       { "say": "It's time to unlock the potential and scale operations." }
     ],
@@ -26,7 +54,21 @@
       { "walkTo": { "x": 0.3 } },
       { "say": "So cooked." }
     ]
-  }
+  },
+  "triggers": [
+    { "on": "visible", "selector": "#hire", "say": "#onboarding", "threshold": 0.15, "once": true },
+    { "on": "visible", "selector": "#demos", "say": "#track-record", "threshold": 0.15, "once": true },
+    { "on": "visible", "selector": ".features", "say": "#compliance", "threshold": 0.15, "once": true },
+    { "on": "visible", "selector": "#customize", "say": "#messaging", "threshold": 0.15, "once": true },
+    { "on": "visible", "selector": "#characters", "say": "#succession", "threshold": 0.15, "once": true },
+    { "on": "visible", "selector": ".outro", "say": "#visibility", "threshold": 0.15, "once": true },
+    { "on": "drag", "say": "#dragged", "cooldown": 2 },
+    { "on": "near", "distance": 60, "scene": "glance", "cooldown": 20 },
+    { "on": "gary-click", "count": 1, "scene": "glance", "cooldown": 5 },
+    { "on": "idle", "after": 40, "say": "#idle", "cooldown": 90 },
+    { "on": "exit", "say": "#exit", "maxPerSession": 1 }
+  ],
+  "limits": { "minGapSeconds": 4, "maxLinesPerMinute": 8 }
 }
 </script>
 <script defer src="dist/gary.js" data-preset="website"></script>
