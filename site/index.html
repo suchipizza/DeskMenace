@@ -16,27 +16,18 @@
 {
   "schemaVersion": 1,
   "lines": {
-    "haircut": [
-      "Business in the front. Strategy in the back.",
-      "Great headshot. The mullet tested very well with stakeholders.",
-      "This haircut has been on the roadmap since 1987."
-    ],
-    "onboarding": ["One line to onboard. Mine took three offsites and a trust fall."],
-    "track-record": ["My track record. I'd like to thank everyone I took credit from."],
-    "compliance": ["Polite by design. Nobody consulted me on that."],
-    "messaging": ["Scripted? I prefer 'aligned in advance'."],
-    "succession": ["Replace me? With a mug? Bold succession plan."],
-    "visibility": ["Go on, star it. I'll present it as my initiative."]
+    "onboarding": ["One line to onboard? Typical low-effort integration. My onboarding required four weeks of executive alignment."],
+    "track-record": ["I didn't just 'visit' these pages; I drove their overarching strategic engagement."],
+    "compliance": ["Nobody consulted me on that."],
+    "messaging": ["Let's not boil the ocean."],
+    "visibility": ["Fork the repo? Go ahead. It's not like you'll know how to optimize the codebase anyway."]
   },
   "scenes": {
     "arrive": [
       { "enter": "left", "y": 0.5 },
       { "walkTo": { "x": 0.5 } },
       { "wait": 0.8 },
-      { "say": "They think this is funny?" },
-      { "walkTo": { "x": 0.54 } },
-      { "play": "judge" },
-      { "say": "#haircut" },
+      { "say": "They think this is funny? I've seen better design layouts in a 1998 Excel sheet." },
       { "walkTo": { "x": 0.15 } },
       { "wait": 0.5 },
       { "say": "#leveraged" },
@@ -49,6 +40,8 @@
     "fired": [
       { "play": "judge" },
       { "say": "Replacing me with an average Deloitte consultant?" },
+      { "walkTo": { "x": 0.85 } },
+      { "say": "Good luck getting Mugsy to present to the board!" },
       { "exit": "right" },
       { "enter": "left", "y": 0.6 },
       { "walkTo": { "x": 0.3 } },
@@ -60,7 +53,7 @@
     { "on": "visible", "selector": "#demos", "say": "#track-record", "threshold": 0.15, "once": true },
     { "on": "visible", "selector": ".features", "say": "#compliance", "threshold": 0.15, "once": true },
     { "on": "visible", "selector": "#customize", "say": "#messaging", "threshold": 0.15, "once": true },
-    { "on": "visible", "selector": "#characters", "say": "#succession", "threshold": 0.15, "once": true },
+    { "on": "visible", "selector": "#characters", "scene": "fired", "threshold": 0.15, "once": true },
     { "on": "visible", "selector": ".outro", "say": "#visibility", "threshold": 0.15, "once": true },
     { "on": "drag", "say": "#dragged", "cooldown": 2 },
     { "on": "near", "distance": 60, "scene": "glance", "cooldown": 20 },
@@ -278,7 +271,15 @@
     const target = document.getElementById('characters');
     target.scrollIntoView({ behavior: smooth(), block: 'start' });
     history.replaceState(null, '', '#characters');
-    if (window.Gary) setTimeout(() => window.Gary.do('fired'), 700);
+    // The section plays the same scene the first time it comes into view; only replay it on later clicks.
+    if (window.Gary && firedSeen) setTimeout(() => window.Gary.do('fired'), 700);
+  });
+  let firedSeen = false;
+  // gary.js is deferred, so it is ready by DOMContentLoaded.
+  document.addEventListener('DOMContentLoaded', () => {
+    window.Gary?.on('spoke', (line) => {
+      if (String(line).startsWith('Replacing me')) firedSeen = true;
+    });
   });
   // Videos load and play only while on screen, and not at all with reduced motion.
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
