@@ -7,6 +7,8 @@ import { prefs } from '../ui/storage';
 export type RuleHandler = (rule: TriggerRule, target: Element | null) => boolean;
 
 const MAX_OBSERVED = 100;
+/** How often a "visible" rule refused while the character was busy is tried again. */
+const VISIBLE_RETRY_MS = 1000;
 const ACTIVITY = ['pointermove', 'pointerdown', 'keydown', 'scroll', 'touchstart', 'wheel'] as const;
 /** A scroll gesture ends after this much quiet; the next scroll input starts a new one. */
 const GESTURE_GAP_MS = 600;
@@ -61,11 +63,14 @@ export class Triggers {
     });
   }
 
-  private fire(i: number, target: Element | null = null): void {
+  /** 'busy' means the rule was eligible but the character could not act on it right now. */
+  private fire(i: number, target: Element | null = null): 'done' | 'skipped' | 'busy' {
     const rule = this.rules[i];
-    if (document.visibilityState === 'hidden') return;
-    if (!this.gate.eligible(rule, i)) return;
-    if (this.handler(rule, target)) this.gate.record(i);
+    if (document.visibilityState === 'hidden') return 'busy';
+    if (!this.gate.eligible(rule, i)) return 'skipped';
+    if (!this.handler(rule, target)) return 'busy';
+    this.gate.record(i);
+    return 'done';
   }
 
   private listen(target: EventTarget, type: string, fn: EventListener, opts: AddEventListenerOptions = { passive: true }): void {
@@ -134,7 +139,8 @@ export class Triggers {
           // Without a selector: a click anywhere on the page (clicks on the character never get here).
           if (!sel) {
             if (!(e.target instanceof Element) || e.target.closest('[data-garyjs]')) return;
-            return this.fire(i);
+            this.fire(i);
+            return;
           }
           const el = closest(e.target, sel);
           if (el) this.fire(i, el);
@@ -196,14 +202,36 @@ export class Triggers {
       case 'visible': {
         if (typeof IntersectionObserver === 'undefined') break;
         const threshold = rule.threshold ?? 0.5;
+        // An element that comes into view while the character is busy (mid-scene, or just spoke)
+        // is retried while it stays in view, instead of being missed until it scrolls in again.
+        const waiting = new Set<Element>();
+        let retry = 0;
+        const attempt = (el: Element) => {
+          if (this.fire(i, el) !== 'busy') waiting.delete(el);
+          else waiting.add(el);
+        };
+        const tick = () => {
+          waiting.forEach(attempt);
+          if (!waiting.size) {
+            clearInterval(retry);
+            retry = 0;
+          }
+        };
         const io = new IntersectionObserver(
           (entries) => {
-            for (const en of entries) if (en.isIntersecting && en.intersectionRatio >= threshold - 0.001) this.fire(i, en.target);
+            for (const en of entries) {
+              if (en.isIntersecting && en.intersectionRatio >= threshold - 0.001) attempt(en.target);
+              else waiting.delete(en.target);
+            }
+            if (waiting.size && !retry) retry = window.setInterval(tick, VISIBLE_RETRY_MS);
           },
           { threshold },
         );
         document.querySelectorAll(sel!).forEach((el, n) => n < MAX_OBSERVED && io.observe(el));
-        this.cleanups.push(() => io.disconnect());
+        this.cleanups.push(() => {
+          io.disconnect();
+          clearInterval(retry);
+        });
         break;
       }
       case 'scroll': {

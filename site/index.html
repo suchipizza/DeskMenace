@@ -10,23 +10,75 @@
 <meta property="og:image" content="media/gary-website.jpg">
 <link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="site.css">
-<!-- Gary himself, on his own website. "hired" and "fired" are played by the Hire / Fire Gary buttons. -->
+<!-- Gary himself, on his own website, with the "website" preset underneath. The script at the end of the
+     page plays the scenes: a tour of the sections, and the Hire / Fire / Observe buttons.
+     Triggers listed here replace the preset's, so its own are repeated. -->
 <script type="application/json" data-gary-config>
 {
   "schemaVersion": 1,
+  "lines": {
+    "clicked": [
+      "Is this a meeting invite? I'll need an agenda.",
+      "Hey! Mind the bespoke polyester! This isn't how you handle C-suite talent!",
+      "Want to take this offline?",
+      "Not now, I'm in the middle of driving high-impact value.",
+      "Every click is just another entry in my billable hours log for this session.",
+      "This is harassment.",
+      "Careful where you point that cursor. I've logged worse behavior to HR.",
+      "Please don't touch the talent."
+    ],
+    "onboarding": ["One line to onboard? Typical low-effort integration. My onboarding required four weeks of executive alignment."],
+    "track-record": ["I didn't just 'visit' these pages; I drove their overarching strategic engagement."],
+    "compliance": ["Nobody consulted me on that."],
+    "messaging": ["Let's not boil the ocean."],
+    "visibility": ["Fork the repo? Go ahead. It's not like you'll know how to optimize the codebase anyway."]
+  },
   "scenes": {
+    "arrive": [{ "enter": "left", "y": 0.5 }],
+    "intro": [
+      { "walkTo": { "x": 0.5 } },
+      { "wait": 0.8 },
+      { "say": "They think this is funny?" },
+      { "walkTo": { "x": 0.15 } },
+      { "say": "#leveraged" }
+    ],
+    "visit-onboarding": [{ "walkTo": { "x": 0.88, "y": 0.5 } }, { "say": "#onboarding" }, { "play": "judge" }],
+    "visit-track-record": [{ "walkTo": { "x": 0.78, "y": 0.3 } }, { "say": "#track-record" }, { "play": "judge" }],
+    "visit-compliance": [{ "walkTo": { "x": 0.8, "y": 0.2 } }, { "say": "#compliance" }, { "play": "judge" }],
+    "visit-messaging": [{ "walkTo": { "x": 0.47, "y": 0.74 } }, { "say": "#messaging" }, { "play": "judge" }],
+    "visit-visibility": [{ "walkTo": { "x": 0.88, "y": 0.6 } }, { "say": "#visibility" }, { "play": "judge" }],
     "hired": [
+      { "walkTo": { "x": 0.88, "y": 0.5 } },
       { "say": "It's time to unlock the potential and scale operations." }
     ],
     "fired": [
+      { "walkTo": { "x": 0.47, "y": 0.66 } },
       { "play": "judge" },
       { "say": "Replacing me with an average Deloitte consultant?" },
+      { "walkTo": { "x": 0.85 } },
+      { "say": "Good luck getting Mugsy to present to the board!" },
       { "exit": "right" },
-      { "enter": "left", "y": 0.6 },
-      { "walkTo": { "x": 0.3 } },
+      { "enter": "left", "y": 0.66 },
+      { "walkTo": { "x": 0.47 } },
       { "say": "So cooked." }
     ]
-  }
+  },
+  "triggers": [
+    { "on": "drag", "say": "#dragged", "cooldown": 2 },
+    { "on": "near", "distance": 60, "scene": "glance", "cooldown": 20 },
+    { "on": "gary-click", "say": "#clicked", "do": "judge", "cooldown": 3 },
+    { "on": "gary-click", "during": "intro", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "visit-onboarding", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "visit-track-record", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "visit-compliance", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "visit-messaging", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "visit-visibility", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "hired", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "fired", "say": "#clicked", "cooldown": 3 },
+    { "on": "idle", "after": 40, "say": "#idle", "cooldown": 90 },
+    { "on": "exit", "say": "#exit", "maxPerSession": 1 }
+  ],
+  "limits": { "minGapSeconds": 4, "maxLinesPerMinute": 8 }
 }
 </script>
 <script defer src="dist/gary.js" data-preset="website"></script>
@@ -53,7 +105,7 @@
       <p class="lead">Meet Gary. He walks around your website, judges your visitors, and takes credit for things he didn't do.</p>
       <div class="ctas">
         <a class="btn primary" href="https://github.com/suchipizza/DeskMenace">★ Star on GitHub</a>
-        <a class="btn" href="#demos">Observe Gary at work*</a>
+        <a class="btn" href="#demos" id="observe-gary">Observe Gary at work*</a>
       </div>
       <p class="hint">He's on this page right now. Pick him up and drop him somewhere. Right-click him for his menu.</p>
       <p class="footnote">* Actual work not guaranteed.</p>
@@ -135,7 +187,7 @@
     </article>
   </section>
 
-  <section class="band mustard features">
+  <section id="compliance" class="band mustard features">
     <p class="kicker">Agenda item 3 · Compliance</p>
     <h2>Annoying on purpose. Polite by design.</h2>
     <ul>
@@ -191,7 +243,7 @@
     <div class="frame teal"><video muted loop playsinline preload="none" poster="media/mugsy.jpg" data-src="media/mugsy.mp4" aria-label="Mugsy the mug on a coffee blog"></video></div>
   </section>
 
-  <section class="band plaid outro">
+  <section id="visibility" class="band plaid outro">
     <div class="outro-card">
       <p class="kicker">Agenda item 6 · Visibility</p>
       <h2>Gary would appreciate some synergy.</h2>
@@ -223,20 +275,82 @@
     });
   }
   const smooth = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
-  // Hire Gary: scroll to the onboarding section; Gary is already thinking about scale.
-  document.getElementById('hire-gary').addEventListener('click', (e) => {
+  // Gary's tour. After his intro he walks through the sections in order and the page scrolls
+  // with him. As soon as the visitor scrolls, they lead: each section gets its line the first time
+  // it is on screen while Gary is free. The buttons send him to their section straight away.
+  const SECTIONS = [
+    ['hire', 'visit-onboarding', 'start'],
+    ['demos', 'visit-track-record', 'start'],
+    ['compliance', 'visit-compliance', 'start'],
+    ['customize', 'visit-messaging', 'start'],
+    ['characters', 'fired', 'center'],
+    ['visibility', 'visit-visibility', 'start'],
+  ].map(([id, scene, block]) => ({ el: document.getElementById(id), scene, block, done: false, onScreen: false }));
+  let touring = false;
+  let playing = 0; // id of the scene the page started last; 0 when none is running
+  let nextId = 1;
+  const play = async (scene) => {
+    const id = (playing = nextId++);
+    const ok = await window.Gary.do(scene).catch(() => false);
+    if (playing === id) playing = 0;
+    return ok;
+  };
+  const show = (s) => s.el.scrollIntoView({ behavior: smooth(), block: s.block });
+  // Visitor-led: the first section on screen that has not had its line yet.
+  const visitNext = async () => {
+    if (touring || playing || !window.Gary) return;
+    const s = SECTIONS.find((x) => x.onScreen && !x.done);
+    if (!s) return;
+    s.done = true;
+    await play(s.scene);
+    visitNext();
+  };
+  const seen = 'IntersectionObserver' in window && new IntersectionObserver((entries) => {
+    for (const e of entries) SECTIONS.find((s) => s.el === e.target).onScreen = e.isIntersecting;
+    visitNext();
+  }, { threshold: 0.15 });
+  const tour = async () => {
+    touring = true;
+    for (const s of SECTIONS) {
+      if (!touring) break;
+      if (s.done) continue;
+      s.done = true;
+      show(s);
+      if (!(await play(s.scene))) break;
+    }
+    touring = false;
+    visitNext();
+  };
+  // The visitor taking over the scroll ends the tour after the current line.
+  const takeOver = () => (touring = false);
+  for (const ev of ['wheel', 'touchstart', 'keydown']) addEventListener(ev, takeOver, { passive: true });
+  // A button: scroll to its section and play its scene now, ending the tour.
+  const button = (id, section, scene) => document.getElementById(id).addEventListener('click', (e) => {
     e.preventDefault();
-    document.getElementById('hire').scrollIntoView({ behavior: smooth(), block: 'start' });
-    history.replaceState(null, '', '#hire');
-    if (window.Gary) setTimeout(() => window.Gary.do('hired'), 500);
+    const s = SECTIONS.find((x) => x.el.id === section);
+    touring = false;
+    if (scene === s.scene) s.done = true;
+    show(s);
+    history.replaceState(null, '', '#' + section);
+    if (window.Gary) play(scene).then(visitNext);
   });
-  // Fire Gary: scroll to the replacement section; Gary takes it about as well as expected.
-  document.getElementById('fire-gary').addEventListener('click', (e) => {
-    e.preventDefault();
-    const target = document.getElementById('characters');
-    target.scrollIntoView({ behavior: smooth(), block: 'start' });
-    history.replaceState(null, '', '#characters');
-    if (window.Gary) setTimeout(() => window.Gary.do('fired'), 700);
+  button('hire-gary', 'hire', 'hired');
+  button('observe-gary', 'demos', 'visit-track-record');
+  button('fire-gary', 'characters', 'fired');
+  // gary.js is deferred, so it is ready by DOMContentLoaded.
+  document.addEventListener('DOMContentLoaded', () => {
+    const G = window.Gary;
+    if (!G) return;
+    const off = G.on('entered', () => {
+      off();
+      // After the entrance scene has put him at the edge of the screen.
+      setTimeout(async () => {
+        const ok = await play('intro');
+        for (const s of SECTIONS) if (seen) seen.observe(s.el);
+        // The tour only runs for a visitor still at the top who has not asked for less motion.
+        if (ok && scrollY < 100 && !matchMedia('(prefers-reduced-motion: reduce)').matches) tour();
+      }, 0);
+    });
   });
   // Videos load and play only while on screen, and not at all with reduced motion.
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
