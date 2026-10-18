@@ -17,15 +17,15 @@
 {
   "schemaVersion": 1,
   "lines": {
-    "style": [
-      "Careful. This tie has seniority.",
-      "The plaid is a power move. HR disagreed.",
-      "Business in the front. Strategy in the back.",
-      "These glasses are vintage. So are my opinions.",
-      "I dress for the job I want. Yours.",
-      "This mullet has survived three reorgs.",
-      "Please don't touch the talent.",
-      "Is this a meeting invite? I'll need an agenda."
+    "clicked": [
+      "Is this a meeting invite? I'll need an agenda.",
+      "Hey! Mind the bespoke polyester! This isn't how you handle C-suite talent!",
+      "Want to take this offline?",
+      "Not now, I'm in the middle of driving high-impact value.",
+      "Every click is just another entry in my billable hours log for this session.",
+      "This is harassment.",
+      "Careful where you point that cursor. I've logged worse behavior to HR.",
+      "Please don't touch the talent."
     ],
     "onboarding": ["One line to onboard? Typical low-effort integration. My onboarding required four weeks of executive alignment."],
     "track-record": ["I didn't just 'visit' these pages; I drove their overarching strategic engagement."],
@@ -66,15 +66,15 @@
   "triggers": [
     { "on": "drag", "say": "#dragged", "cooldown": 2 },
     { "on": "near", "distance": 60, "scene": "glance", "cooldown": 20 },
-    { "on": "gary-click", "say": "#style", "do": "judge", "cooldown": 3 },
-    { "on": "gary-click", "during": "intro", "say": "#style", "cooldown": 3 },
-    { "on": "gary-click", "during": "visit-onboarding", "say": "#style", "cooldown": 3 },
-    { "on": "gary-click", "during": "visit-track-record", "say": "#style", "cooldown": 3 },
-    { "on": "gary-click", "during": "visit-compliance", "say": "#style", "cooldown": 3 },
-    { "on": "gary-click", "during": "visit-messaging", "say": "#style", "cooldown": 3 },
-    { "on": "gary-click", "during": "visit-visibility", "say": "#style", "cooldown": 3 },
-    { "on": "gary-click", "during": "hired", "say": "#style", "cooldown": 3 },
-    { "on": "gary-click", "during": "fired", "say": "#style", "cooldown": 3 },
+    { "on": "gary-click", "say": "#clicked", "do": "judge", "cooldown": 3 },
+    { "on": "gary-click", "during": "intro", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "visit-onboarding", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "visit-track-record", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "visit-compliance", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "visit-messaging", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "visit-visibility", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "hired", "say": "#clicked", "cooldown": 3 },
+    { "on": "gary-click", "during": "fired", "say": "#clicked", "cooldown": 3 },
     { "on": "idle", "after": 40, "say": "#idle", "cooldown": 90 },
     { "on": "exit", "say": "#exit", "maxPerSession": 1 }
   ],
