@@ -5,7 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sam Griffin · gary.js</title>
 <!-- The "personal" preset: the character walks in, reads the bio, comments, and reacts to the
-     projects and to scrolling. Elements marked data-gary-* give it something to point at. -->
+     projects and to scrolling. The two rules below are added to the preset's own triggers
+     (addTriggers) for remarks about this particular profile. -->
+<script type="application/json" data-gary-config>
+{
+  "schemaVersion": 1,
+  "addTriggers": [
+    { "on": "visible", "selector": "[data-gary-stealth]", "say": "Fourteen startups, all in stealth. Mostly from investors.", "once": true },
+    { "on": "visible", "selector": "[data-gary-visionary]", "say": "He used 'visionary' three times. I counted.", "once": true }
+  ]
+}
+</script>
 <script defer src="../../dist/gary.js" data-preset="personal"></script>
 <style>
   :root {

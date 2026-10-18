@@ -39,6 +39,7 @@ export function defaults(): ResolvedConfig {
     lines: {},
     vars: {},
     triggers: DEFAULT_TRIGGERS.map((t) => ({ ...t })),
+    addTriggers: [],
     scenes: {},
     entrance: null,
     dropTo: 'floor',
@@ -162,12 +163,13 @@ export function mergeConfig(base: ResolvedConfig, layer: unknown, source: string
           else warnings.push(`${source}: variable "${k}" must be a string; ignored`);
         }
         break;
-      case 'triggers': {
+      case 'triggers':
+      case 'addTriggers': {
         if (!Array.isArray(v)) { warn(key, 'must be an array'); break; }
-        out.triggers = v.flatMap((r, i) => {
+        out[key] = v.flatMap((r, i) => {
           const res = validateRule(r);
           if (typeof res === 'string') {
-            warnings.push(`${source}: triggers[${i}] ${res}; ignored`);
+            warnings.push(`${source}: ${key}[${i}] ${res}; ignored`);
             return [];
           }
           return [res];

@@ -90,9 +90,13 @@ export function interpolate(text: string, vars: Record<string, string>): string 
     .slice(0, 500);
 }
 
-/** Global speech caps for automatic lines: a minimum gap and a per-minute maximum. */
+/**
+ * Global speech caps for automatic lines: a minimum gap and a per-minute maximum. Every line
+ * shown restarts the gap; only automatic lines count towards the per-minute maximum.
+ */
 export class SpeechLimiter {
   private times: number[] = [];
+  private last: number | undefined;
 
   constructor(private limits: { minGapSeconds: number; maxLinesPerMinute: number }, private readonly now: () => number = () => Date.now()) {}
 
@@ -103,12 +107,13 @@ export class SpeechLimiter {
   canSpeak(): boolean {
     const t = this.now();
     this.times = this.times.filter((x) => t - x < 60_000);
-    const last = this.times[this.times.length - 1];
-    if (last !== undefined && t - last < this.limits.minGapSeconds * 1000) return false;
+    if (this.last !== undefined && t - this.last < this.limits.minGapSeconds * 1000) return false;
     return this.times.length < this.limits.maxLinesPerMinute;
   }
 
-  record(): void {
-    this.times.push(this.now());
+  /** A line was shown; `counted`: an automatic line, which uses up the per-minute budget. */
+  record(counted = true): void {
+    this.last = this.now();
+    if (counted) this.times.push(this.last);
   }
 }

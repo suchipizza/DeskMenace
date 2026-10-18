@@ -323,7 +323,7 @@ export class Engine {
     this.menu?.setCredit(this.creditFor(ch));
     this.stages.clear();
     this.triggers?.stop();
-    this.triggers = new Triggers(this.config.triggers, (rule, target) => this.onRule(rule, target), ch.id, () => (this.overlay && this.state !== 'loading' ? this.overlay.box() : null));
+    this.triggers = new Triggers([...this.config.triggers, ...this.config.addTriggers], (rule, target) => this.onRule(rule, target), ch.id, () => (this.overlay && this.state !== 'loading' ? this.overlay.box() : null));
     if (this.state !== 'loading' && this.state !== 'entering') this.triggers.start();
     this.scheduleAmbient();
   }
@@ -804,7 +804,7 @@ export class Engine {
           if (resumed && step.enter) continue;
           // A line shows as soon as its step starts, so a drag during it carries on after it.
           mine.step = step.say !== undefined ? i + 1 : i;
-          await this.sceneStep(step, t, prio);
+          await this.sceneStep(step, t);
         }
       } finally {
         if (this.sceneRun === mine) this.sceneRun = null;
@@ -818,7 +818,7 @@ export class Engine {
     return r && !r.token.cancelled && this.activity?.token === r.token ? r.name : null;
   }
 
-  private async sceneStep(step: SceneStep, t: Token, prio: Priority): Promise<void> {
+  private async sceneStep(step: SceneStep, t: Token): Promise<void> {
     if (step.enter !== undefined) {
       this.enterFrom(step);
     } else if (step.exit !== undefined) {
@@ -844,8 +844,9 @@ export class Engine {
       const text = this.book.resolve(step.say);
       if (!text) return;
       this.standStill();
-      // Scenes started by the page share the speech limits; API scenes don't.
-      await this.showLine(text, prio < PRIORITY.api);
+      // A scene's lines are part of the scene: never held back by the limits nor counted against
+      // them (the rule's cooldown paces scenes started by triggers).
+      await this.showLine(text, false);
     } else if (step.play !== undefined) {
       if (!this.has(step.play) || this.reduced || this.away) return;
       this.setState('judging');
@@ -922,7 +923,7 @@ export class Engine {
     if (!line) return false;
     const shown = bubble.show(line);
     if (!bubble.visible) return false;
-    this.limiter.record();
+    this.limiter.record(capped);
     this.events.emit('spoke', line);
     await shown;
     return true;

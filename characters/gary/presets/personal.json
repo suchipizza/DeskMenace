@@ -68,8 +68,6 @@
     { "on": "scrolling", "during": "inspect", "say": "#keep-going", "cooldown": 3 },
     { "on": "scrolling", "scene": "scrolled", "cooldown": 25 },
     { "on": "visible", "selector": "[data-gary-projects], #projects", "say": "#projects", "once": true },
-    { "on": "visible", "selector": "[data-gary-stealth]", "say": "Fourteen startups, all in stealth. Mostly from investors.", "once": true },
-    { "on": "visible", "selector": "[data-gary-visionary]", "say": "He used 'visionary' three times. I counted.", "once": true },
     { "on": "idle", "after": 40, "say": "#remarks", "cooldown": 90 },
     { "on": "exit", "say": "#exit", "maxPerSession": 1 }
   ],

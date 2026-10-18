@@ -220,7 +220,10 @@ export interface GaryConfig {
   /** Extra or replacement line pools, merged by pool name. */
   lines?: Record<string, LineEntry[]>;
   vars?: Record<string, string>;
+  /** Replaces the default triggers, or the preset's. */
   triggers?: TriggerRule[];
+  /** Rules added after the default triggers, or the preset's, instead of replacing them. */
+  addTriggers?: TriggerRule[];
   /** Named sequences of steps that triggers and `Gary.do()` can play. */
   scenes?: Record<string, SceneStep[] | SceneDef>;
   /** Scene played instead of the usual entrance; it should start with an `enter` step. */
@@ -267,6 +270,7 @@ export interface ResolvedConfig {
   lines: Record<string, LineEntry[]>;
   vars: Record<string, string>;
   triggers: TriggerRule[];
+  addTriggers: TriggerRule[];
   scenes: Record<string, SceneDef>;
   entrance: string | null;
   dropTo: 'floor' | 'here';

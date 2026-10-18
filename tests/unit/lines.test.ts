@@ -84,4 +84,23 @@ describe('speech limiter', () => {
     now = 61_000;
     expect(l.canSpeak()).toBe(true);
   });
+
+  it('lets lines outside the limits restart the gap without using up the budget', () => {
+    let now = 0;
+    const l = new SpeechLimiter({ minGapSeconds: 6, maxLinesPerMinute: 2 }, () => now);
+    for (const t of [0, 5_000, 10_000, 15_000]) {
+      now = t;
+      l.record(false); // a scene's lines
+    }
+    now = 18_000;
+    expect(l.canSpeak()).toBe(false); // 3 s after the last line
+    now = 21_000;
+    expect(l.canSpeak()).toBe(true); // the scene used none of the 2 a minute
+    l.record();
+    now = 27_000;
+    expect(l.canSpeak()).toBe(true);
+    l.record();
+    now = 33_000;
+    expect(l.canSpeak()).toBe(false); // 2 automatic lines in the last minute
+  });
 });

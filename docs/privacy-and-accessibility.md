@@ -30,7 +30,7 @@ If you load a character from someone else's server, that server sees the request
 - **Menu:** `role="menu"`, arrow keys, Home/End, Escape and Tab close it and return focus to the button. Items are at least 40 px tall.
 - **Reduced motion:** with `prefers-reduced-motion: reduce` the character appears in place as a still image, never walks, falls or animates, and dragging is disabled. Speech bubbles still work.
 - **Screen readers:** the animation is `aria-hidden`; the button has a name ("Gary options"). Bubbles are not announced unless you set `"announce": true`, which makes them a polite live region.
-- **Contrast and theming:** bubbles and the menu use readable light and dark defaults following `prefers-color-scheme`, and honour Windows high-contrast mode. Match your site by setting these CSS custom properties on `:root`: `--gary-surface`, `--gary-text`, `--gary-border`, `--gary-hover`, `--gary-focus`.
+- **Contrast and theming:** bubbles and the menu use readable light and dark defaults following `prefers-color-scheme`, and honour Windows high-contrast mode. To match your site's colours or its own dark-mode switch, set the `--gary-*` CSS custom properties: see [Getting started](getting-started.md#4-optional-match-your-colours).
 
 ## Reporting issues
 

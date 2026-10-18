@@ -216,17 +216,29 @@ test.describe('visitor reactions', () => {
     expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['first']);
   });
 
-  test('scenes started by triggers share the speech limits', async ({ page }) => {
-    await boot(page, { cfg: { ...QUIET, lines, scenes: { talk: [{ say: '#a' }] }, limits: { minGapSeconds: 0, maxLinesPerMinute: 1 }, triggers: [{ on: 'click', scene: 'talk' }] } });
-    await page.mouse.click(40, 40);
-    await page.waitForFunction(() => (window as any).__spoke.length === 1);
+  test("a scene's lines are outside the speech limits and use none of the budget", async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, lines, scenes: { talk: [{ say: '#a' }, { say: '#a' }] }, limits: { minGapSeconds: 0, maxLinesPerMinute: 1 }, triggers: [{ on: 'event', event: 'talk', scene: 'talk' }, { on: 'event', event: 'chat', say: '#b' }] } });
+    // A scene started by a trigger shows every line, even past the per-minute maximum.
+    await page.evaluate(() => (window as any).Gary.emit('talk'));
+    await page.waitForFunction(() => (window as any).__spoke.length === 2, null, { timeout: 15_000 });
     await page.waitForFunction(() => (window as any).Gary._debug().scene === null, null, { timeout: 15_000 });
-    await page.mouse.click(40, 40);
+    // The scene used none of the budget: the next automatic line shows, the one after doesn't.
+    await page.evaluate(() => (window as any).Gary.emit('chat'));
+    await page.waitForFunction(() => (window as any).__spoke.length === 3);
+    await page.waitForFunction(() => (window as any).Gary._debug().state === 'idle', null, { timeout: 15_000 });
+    await page.evaluate(() => (window as any).Gary.emit('chat'));
     await page.waitForTimeout(1500);
-    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['first']);
-    // The API isn't limited.
-    await page.evaluate(() => (window as any).Gary.do('talk'));
-    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['first', 'first']);
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['first', 'first', 'second']);
+  });
+
+  test('addTriggers rules run alongside the triggers', async ({ page }) => {
+    await boot(page, { cfg: { ...QUIET, lines, limits: { minGapSeconds: 0, maxLinesPerMinute: 30 }, triggers: [{ on: 'event', event: 'one', say: '#a' }], addTriggers: [{ on: 'event', event: 'two', say: '#b' }] } });
+    await page.evaluate(() => (window as any).Gary.emit('two'));
+    await page.waitForFunction(() => (window as any).__spoke.length === 1);
+    await page.waitForFunction(() => (window as any).Gary._debug().state === 'idle', null, { timeout: 15_000 });
+    await page.evaluate(() => (window as any).Gary.emit('one'));
+    await page.waitForFunction(() => (window as any).__spoke.length === 2);
+    expect(await page.evaluate(() => (window as any).__spoke)).toEqual(['second', 'first']);
   });
 
   test('"scrolling" ignores scrolls the visitor did not cause', async ({ page }) => {

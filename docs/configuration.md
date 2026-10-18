@@ -9,7 +9,7 @@ Configuration can come from four places. Later sources win:
 
 A **preset** offered by the character (`data-preset="404"` on the script tag, or `"preset": "404"`) sits between 1 and 2: it supplies lines, scenes and triggers for a kind of page, and anything the page sets itself wins. See [Presets](#presets).
 
-**Merging:** arrays (`packs`, `behaviours`, `triggers`) replace the earlier value. Objects (`lines`, `vars`, `limits`, `position`, `menu`) merge by key. Invalid fields are ignored with a console warning, so one typo never breaks your page. An unknown `schemaVersion` is an error and the character doesn't start. A JSON Schema is published at [`schema/config.schema.json`](../schema/config.schema.json).
+**Merging:** arrays (`packs`, `behaviours`, `triggers`, `addTriggers`) replace the earlier value; to keep the default or preset triggers and add your own, use `addTriggers`. Objects (`lines`, `vars`, `limits`, `position`, `menu`) merge by key. Invalid fields are ignored with a console warning, so one typo never breaks your page. An unknown `schemaVersion` is an error and the character doesn't start. A JSON Schema is published at [`schema/config.schema.json`](../schema/config.schema.json).
 
 ```json
 {
@@ -45,12 +45,13 @@ A **preset** offered by the character (`data-preset="404"` on the script tag, or
 | `inOrder` | — | Pools whose lines are said in the order written, one per use; after the last line, the last one repeats. E.g. `["keep-going"]` for remarks that escalate |
 | `lines` | — | Your own line pools. A pool here replaces the character's pool of the same name |
 | `vars` | `{ "site": location.hostname }` | Values for `{name}` placeholders in lines |
-| `triggers` | see below | Page triggers. Replaces the defaults |
+| `triggers` | see below | Page triggers. Replaces the defaults, or the preset's |
+| `addTriggers` | — | Rules added after the default triggers, or the preset's, instead of replacing them. See [Presets](#presets) |
 | `scenes` | — | Named step lists that triggers and `Gary.do(name)` can play. See [Scenes](#scenes) |
 | `entrance` | — | A scene played instead of the usual entrance, e.g. walking in from the left at mid-height. Start it with an `enter` step |
 | `dropTo` | `"floor"` | After a drag: `"floor"` falls to the bottom of the screen, `"here"` lands where the visitor let go |
 | `surfaces` | — | CSS selector of page elements the character may wander onto and stand on, e.g. `"h1, h2, img"`. Elements with a `data-gary-surface` attribute always qualify. See [Standing on page elements](#standing-on-page-elements) |
-| `limits.minGapSeconds` | `20` | Minimum time between automatic lines |
+| `limits.minGapSeconds` | `20` | Minimum time between an automatic line and the line before it, whatever started that one |
 | `limits.maxLinesPerMinute` | `2` | Cap on automatic lines per minute |
 | `position.side` | `"right"` | Side he enters from and starts on |
 | `position.y` | bottom | Height of the usual entrance: the body's middle as a fraction of the screen height (`0.5` = middle) |
@@ -64,7 +65,9 @@ A **preset** offered by the character (`data-preset="404"` on the script tag, or
 | `menu.credit` | character's credit | `{ label, url }` for the menu's credit link, or `false` to hide it |
 | `zIndex` | `2147483000` | Stacking order of the overlay |
 
-Lines from `Gary.say()` bypass the rate limits (you asked for them). Lines from triggers and ambient chatter respect them, and nothing is ever queued: a line that can't be shown now is dropped, so visitors returning to a background tab don't get a backlog.
+**Automatic lines** are the ones from triggers' `say`, remarks `during` a scene and ambient chatter. They respect `limits`. A line that can't be shown is dropped, never queued, so visitors returning to a background tab don't get a backlog.
+
+**Other lines** come from scenes (including the entrance), `Gary.say()`, `Gary.do()`, being picked up and repeated clicks on the character. They are always shown and don't count towards `maxLinesPerMinute`. The next automatic line still waits `minGapSeconds` after them, so he doesn't start talking again right after an intro. The pace of scenes started by triggers is set by each rule's `cooldown`.
 
 ## Lines
 
@@ -80,7 +83,7 @@ Gary's pools: `hello`, `core`, `idle`, `boast`, `roast`, `404`, `staging`, `stat
 | `idle` | the visitor hasn't moved, typed or scrolled for `after` seconds | `after` (default 30) |
 | `hover` | the mouse enters an element matching `selector` | `selector` |
 | `click` | an element matching `selector` is clicked; without `selector`, a click anywhere on the page (not on the character) | `selector` (optional) |
-| `visible` | an element matching `selector` scrolls into view | `selector`, `threshold` (0–1) |
+| `visible` | an element matching `selector` scrolls into view. If the character is busy at that moment (in a scene, or the limits hold the line back), the rule is tried again every second while the element stays in view | `selector`, `threshold` (0–1, default 0.5) |
 | `scroll` | the page is scrolled past `threshold` (0–1) of its height | `threshold` (default 0.5) |
 | `exit` | the mouse leaves through the top of the window | — |
 | `gary-click` | the character is clicked `count` times in quick succession | `count` |
@@ -135,7 +138,7 @@ A scene is a short script: a list of steps, each with exactly one action. The ch
 | `walkTo` | A point on the screen, `{ "x": 0.5, "y": 0.7 }` (fractions; `y` is the body's middle; a missing one stays as it is). Or an element: walks to it and stands on it (see below); with a selector list, the first match that has room wins; `at`: `"center"` (default), `"left"`, `"right"` or `"random"`. Or `"floor"` |
 | `exit` | `"left"` or `"right"`: walks off that edge and stays away (not removed; triggers and ambient behaviour pause until a scene with `enter` brings it back) |
 | `play` | Plays a clip by role once: `judge`, `judge.pointer`, `idle.variant`, … Skipped if the character has no such clip |
-| `say` | Shows a line or `#pool` and waits until the bubble is gone. Respects mute; not counted against `limits` (use the rule's `cooldown`) |
+| `say` | Shows a line or `#pool` and waits until the bubble is gone. Respects mute. Never held back by `limits` and not counted towards `maxLinesPerMinute` (pace scenes with the rule's `cooldown`) |
 | `wait` | Stands still for that many seconds (0–60) |
 
 Play a scene from a trigger (`"scene": "arrive"`), from code (`Gary.do('arrive')`) or as the `entrance`. A scene can be a plain list of steps or `{ "steps": [...], "interrupted": "#pool" }`: if the visitor drags the character during it, it says the `interrupted` line after the drop and carries on from the step it was in (from wherever it was dropped). Removing the character ends the scene. With reduced motion, walks are skipped and the rest still runs.
@@ -154,19 +157,34 @@ The character can stand on the top edge of page elements: headings, images, card
 A preset is a ready-made package for a kind of page, shipped with the character: lines, scenes, triggers and a few options. Add one attribute:
 
 ```html
-<script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js" data-preset="404"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.2.0/dist/gary.js" data-preset="404"></script>
 ```
 
 | Preset | For | What happens |
 |---|---|---|
 | `404` | error pages | Walks in from the left at the level of the element marked `data-gary-404` (or the first `h1`), stops on it, pauses, says his line and walks off to the right. Clicks or scroll attempts while he's there get a remark, each one the next in the list |
-| `personal` | personal sites, portfolios | Walks in from the left at mid-height, stops in the middle to comment on the bio, walks down to the left for a second remark, then a bit further for a third. Clicks or scrolls during that get a remark; later, scrolling makes him stare and comment. Reacts to `#projects` / `[data-gary-projects]` coming into view, and to `[data-gary-stealth]` and `[data-gary-visionary]` on the demo profile |
+| `personal` | personal sites, portfolios | Walks in from the left at mid-height, stops in the middle to comment on the bio, walks down to the left for a second remark, then a bit further for a third. Clicks or scrolls during that get a remark; later, scrolling makes him stare and comment. Reacts to `#projects` / `[data-gary-projects]` coming into view |
 | `website` | any site | Walks in from the left to the middle and says his line, then strolls in the middle band of the screen, glances at the mouse when it comes close, comments on scrolling |
 | `staging` | test servers | Walks in from the left to the middle, stares, reminds everyone this isn't production, and repeats it now and then |
 
 In all four he complains when he's picked up and lands where he's dropped (`"dropTo": "here"`) and never goes to the far left or right edge while idling (`"position": { "x": [0.2, 0.8] }`).
 
-Gary and Mugsy both offer these four. Anything you set yourself wins over the preset: your `triggers` replace the preset's, your `lines`, `vars` and `scenes` replace pools and scenes of the same name, and options such as `pace` or `limits.minGapSeconds` override the preset's value. To change one line pool of the `404` preset:
+Gary and Mugsy both offer these four. Read exactly what each one does in the preset files: Gary's in [`characters/gary/presets/`](../characters/gary/presets/), Mugsy's in [`characters/sample/presets/`](../characters/sample/presets/).
+
+Anything you set yourself wins over the preset: your `lines`, `vars` and `scenes` replace pools and scenes of the same name, options such as `pace` or `limits.minGapSeconds` override the preset's value, and `triggers` replaces the preset's whole list. To keep the preset's triggers and add your own, use `addTriggers`:
+
+```html
+<script type="application/json" data-gary-config>
+{
+  "addTriggers": [
+    { "on": "hover", "selector": ".project-card", "say": "I'd have scoped that differently.", "cooldown": 60 }
+  ]
+}
+</script>
+<script defer src="…/gary.js" data-preset="personal"></script>
+```
+
+To change one line pool of the `404` preset:
 
 ```html
 <script type="application/json" data-gary-config>
