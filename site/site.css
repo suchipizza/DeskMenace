@@ -124,12 +124,12 @@ p { margin: 0 0 1em; }
 }
 @media (max-width: 900px) { .profile { justify-self: center; } }
 .profile .banner { height: 112px; }
-.profile .avatar { width: 164px; height: 164px; margin: -104px 0 0 22px; position: relative; z-index: 1; }
+.profile .avatar { width: 164px; height: 164px; margin: -104px 0 12px 22px; position: relative; z-index: 1; }
 .profile .avatar img {
   display: block; width: 100%; height: 100%;
   border-radius: 50%; border: 4px solid #fff; background: #dbe4ee; object-fit: cover; object-position: 50% 30%;
 }
-/* The "open to work" style ring, with Gary's terms */
+/* The "open to work" style ring, with Gary's terms, just outside the photo */
 .profile .avatar .otw { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .profile .avatar .otw path { fill: none; stroke: #3f8a3c; stroke-width: 15; stroke-linecap: round; }
 .profile .avatar .otw text {
