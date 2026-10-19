@@ -35,7 +35,7 @@ No framework. No backend. No account. No tracking.
 ## Add Gary in one line
 
 ```html
-<script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.2.0/dist/gary.js"></script>
 ```
 
 That's it.
@@ -47,7 +47,7 @@ Want a ready-made 404 version?
 ```html
 <script
   defer
-  src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"
+  src="https://cdn.jsdelivr.net/npm/gary.js@0.2.0/dist/gary.js"
   data-preset="404">
 </script>
 ```
@@ -145,7 +145,7 @@ Use one attribute to give Gary a job:
 ```html
 <script
   defer
-  src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"
+  src="https://cdn.jsdelivr.net/npm/gary.js@0.2.0/dist/gary.js"
   data-preset="personal">
 </script>
 ```
@@ -202,7 +202,7 @@ You decide what Gary says and when he says it.
 }
 </script>
 
-<script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/gary.js@0.2.0/dist/gary.js"></script>
 ```
 
 Triggers include:
@@ -255,7 +255,7 @@ You can start with only an idle animation; behaviours that need missing clips si
 ```html
 <script
   defer
-  src="https://cdn.jsdelivr.net/npm/gary.js@0.1.0/dist/gary.core.js"
+  src="https://cdn.jsdelivr.net/npm/gary.js@0.2.0/dist/gary.core.js"
   data-character="https://your.site/my-character/character.json">
 </script>
 ```

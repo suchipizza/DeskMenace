@@ -1,8 +1,22 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-10-18
+
+Added
+
+- `addTriggers`: rules added after the default triggers, or the preset's, instead of replacing the whole list.
+- Getting started: matching your colours with the `--gary-*` CSS properties, and notes for Astro, Next.js and Vite.
+- The docs link to each character's preset files.
+
+Changed
+
+- A scene's lines (including the entrance) are always shown and no longer count towards `limits.maxLinesPerMinute`. The next automatic line still waits `limits.minGapSeconds` after them. Before, a talkative entrance could use up the whole budget, and a line in a scene started by a trigger could be skipped.
+- The `personal` preset no longer contains the two rules written for the demo profile (`data-gary-stealth`, `data-gary-visionary`); the example page adds them with `addTriggers`.
+
+Fixed
 
 - A `visible` rule whose element comes into view while the character is busy (in a scene, or just after a line) is retried while the element stays in view, instead of being missed until it scrolls in again.
+- `package-lock.json` matches `package.json` again (the licence field), so `npm install` no longer edits it on a fresh clone. CI now checks this.
 
 ## 0.1.0 — 2026-10-17
 

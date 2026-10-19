@@ -178,6 +178,18 @@ describe('configuration', () => {
     expect(() => applyPreset(page, [], 'p')).toThrow(ConfigError);
   });
 
+  it("adds the page's addTriggers after the preset's triggers", () => {
+    const page = mergeConfig(defaults(), { preset: 'personal', addTriggers: [{ on: 'load', say: 'mine' }, { on: 'hover', say: 'x' }] }, 'inline config');
+    expect(page.warnings.join()).toMatch(/addTriggers\[1\]/);
+    const preset = { triggers: [{ on: 'click', say: 'theirs' }], addTriggers: [{ on: 'load', say: 'no' }] };
+    const { config, warnings } = applyPreset(page.config, preset, 'p');
+    expect(config.triggers).toEqual([{ on: 'click', say: 'theirs' }]);
+    expect(config.addTriggers).toEqual([{ on: 'load', say: 'mine' }]);
+    expect(warnings.join()).toMatch(/"addTriggers" can't be set by a preset/);
+    // Without a preset they follow the default triggers.
+    expect(mergeConfig(defaults(), { addTriggers: [{ on: 'load', say: 'mine' }] }, 'init').config.triggers).toEqual(defaults().triggers);
+  });
+
   it('keeps valid trigger rules and drops invalid ones', () => {
     const { config, warnings } = mergeConfig(defaults(), { triggers: [{ on: 'load', say: 'hi' }, { on: 'hover', say: 'x' }] }, 'init');
     expect(config.triggers).toEqual([{ on: 'load', say: 'hi' }]);

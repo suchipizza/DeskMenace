@@ -35,7 +35,8 @@
       "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9_]{0,31}$" },
       "additionalProperties": { "type": ["string", "number"] }
     },
-    "triggers": { "description": "Replaces the default triggers.", "type": "array", "items": { "$ref": "#/$defs/trigger" } },
+    "triggers": { "description": "Replaces the default triggers, or the preset's.", "type": "array", "items": { "$ref": "#/$defs/trigger" } },
+    "addTriggers": { "description": "Rules added after the default triggers, or the preset's, instead of replacing them.", "type": "array", "items": { "$ref": "#/$defs/trigger" } },
     "scenes": { "description": "Named sequences of steps that triggers (\"scene\") and Gary.do(name) can play.", "type": "object", "maxProperties": 50, "propertyNames": { "$ref": "#/$defs/poolName" }, "additionalProperties": { "$ref": "#/$defs/scene" } },
     "entrance": { "description": "Scene played instead of the usual entrance. Start it with an \"enter\" step.", "$ref": "#/$defs/poolName" },
     "dropTo": { "description": "After a drag: \"floor\" falls to the bottom of the screen, \"here\" lands where it was let go.", "enum": ["floor", "here"], "default": "floor" },

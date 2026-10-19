@@ -1,6 +1,6 @@
 {
   "name": "gary.js",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A passive-aggressive coworker for your website. An animated browser character engine with speech bubbles, triggers and custom characters.",
   "license": "MIT AND LicenseRef-Gary-Asset-Licence",
   "author": "Noémie Rakotomalala",
@@ -67,11 +67,12 @@
     "budget": "node scripts/bundle-budget.mjs",
     "audit:pack": "node scripts/pack-audit.mjs",
     "audit:private": "node scripts/no-private-assets.mjs",
+    "lockfile:check": "node scripts/check-lockfile.mjs",
     "serve": "node scripts/serve.mjs",
     "sample:build": "python3 scripts/sample-character/build.py",
     "demo:record": "npm run build && node scripts/record-demo.mjs",
     "site": "node scripts/build-site.mjs",
-    "ci": "npm run typecheck && npm run test:unit && npm run build && npm run budget && npm run audit:private && npm run audit:pack"
+    "ci": "npm run lockfile:check && npm run typecheck && npm run test:unit && npm run build && npm run budget && npm run audit:private && npm run audit:pack"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
